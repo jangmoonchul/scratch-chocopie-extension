@@ -193,8 +193,19 @@
         return {status: 2, msg: 'ChocopieBoard connected'};
     }
 
-    var descriptor = {
-        blocks: [
+	// Check for GET param 'lang'
+	var paramString = window.location.search.replace(/^\?|\/$/g, '');
+	var vars = paramString.split("&");
+	var lang = 'en';
+	for (var i=0; i<vars.length; i++) {
+		var pair = vars[i].split('=');
+		if (pair.length > 1 && pair[0]=='lang')
+		  lang = pair[1];
+	}
+
+    
+    var blocks: {
+		en: [
             ['h', 'when %m.booleanSensor',         'whenSensorConnected', 'button pressed'],
             ['h', 'when %m.sensor %m.lessMore %n', 'whenSensorPass',      'slider', '>', 50],
             ['b', 'sensor %m.booleanSensor?',      'sensorPressed',       'button pressed'],
@@ -205,9 +216,23 @@
 			['r', '%m.potency potencyometer value','potency',             '1'],
 			['r', '%m.infrared infrared value',    'infrared',            '1'],
 			['r', '%m.acceler acceler value',      'acceler',             'X'],
-			['r', '%m.pacceler acceler value',    'p-acceler',           'U']
+			['r', '%m.pacceler personal acceler value',    'pacceler',           'U']
         ],
-        menus: {
+		ko: [
+			['h', 'when %m.booleanSensor',         'whenSensorConnected', 'button pressed'],
+            ['h', 'when %m.sensor %m.lessMore %n', 'whenSensorPass',      'slider', '>', 50],
+            ['b', 'sensor %m.booleanSensor?',      'sensorPressed',       'button pressed'],
+            ['r', '%m.sensor sensor value',        'sensor',              'Analog1'],
+			['r', '%m.touch touch-sensor value',   'touch',               '1'],
+			['r', '%m.sw button value',			   'sw',                  '1'],
+			['r', '%m.joystick joystick value',    'joystick',            'X'],
+			['r', '%m.potency potencyometer value','potency',             '1'],
+			['r', '%m.infrared infrared value',    'infrared',            '1'],
+			['r', '%m.acceler acceler value',      'acceler',             'X'],
+			['r', '%m.pacceler personal acceler value',    'pacceler',           'U']
+		]
+    var menus = {
+		en: {
             booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
             sensor: ['Analog1', 'Analog2', 'Analog3', 'Analog4', 'lux', 'temperature', 'humidity'],
 			touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
@@ -219,7 +244,26 @@
 			pacceler: ['U','V','W'],
             lessMore: ['>', '<']
         },
-        url: '/info/help/studio/tips/ext/PicoBoard/'
+		ko: {
+            booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
+            sensor: ['Analog1', 'Analog2', 'Analog3', 'Analog4', 'lux', 'temperature', 'humidity'],
+			touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
+			sw: ['1', '2', '3', '4', 'J'],
+			joystick: ['X', 'Y'],
+			potency: ['1'],
+			infrared: ['1','2','3'],
+			acceler: ['X','Y','Z'],
+			pacceler: ['U','V','W'],
+            lessMore: ['>', '<']
+        }
+	
     };
-    ScratchExtensions.register('PicoBoard', descriptor, ext, {type: 'serial'});
+
+	var descriptor = {
+		blocks: blocks[lang],
+		menus: menus[lang],
+		url: 'http://remoted.github.io/scratch-chocopie-extension'
+	};
+
+    ScratchExtensions.register('Chocopie', descriptor, ext, {type: 'serial'});
 })({});
