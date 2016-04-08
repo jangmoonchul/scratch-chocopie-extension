@@ -229,7 +229,7 @@
 			pacceler: ['U','V','W'],
             lessMore: ['>', '<']
         },
-        url: 'http://remoted.github.io/scratch-chocopie-extension/chocopieExtension.js'
+        url: '/info/help/studio/tips/ext/PicoBoard/'
     };
     ScratchExtensions.register('Chocopie', descriptor, ext, {type: 'serial'});
 })({});
