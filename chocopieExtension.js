@@ -203,8 +203,8 @@
         ],
         menus: {
             booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
-            sensor: ['Analog1', 'Analog2', 'Analog3', 'Analog4', 'lux', 'temperature', 'humidity'],
-			touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
+            sensor: ['slider','Analog1', 'Analog2', 'Analog3', 'Analog4', 'lux', 'temperature', 'humidity'],
+			touch: ['slider','1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
             lessMore: ['>', '<']
         },
         url: '/info/help/studio/tips/ext/PicoBoard/'
