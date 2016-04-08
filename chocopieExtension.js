@@ -188,9 +188,9 @@
     };
 
     ext._getStatus = function() {
-        if(!device) return {status: 1, msg: 'PicoBoard disconnected'};
-        if(watchdog) return {status: 1, msg: 'Probing for PicoBoard'};
-        return {status: 2, msg: 'PicoBoard connected'};
+        if(!device) return {status: 1, msg: 'ChocopieBoard disconnected'};
+        if(watchdog) return {status: 1, msg: 'Probing for ChocopieBoard'};
+        return {status: 2, msg: 'ChocopieBoard connected'};
     }
 
     var descriptor = {
@@ -198,11 +198,13 @@
             ['h', 'when %m.booleanSensor',         'whenSensorConnected', 'button pressed'],
             ['h', 'when %m.sensor %m.lessMore %n', 'whenSensorPass',      'slider', '>', 50],
             ['b', 'sensor %m.booleanSensor?',      'sensorPressed',       'button pressed'],
-            ['r', '%m.sensor sensor value',        'sensor',              'slider']
+            ['r', '%m.sensor sensor value',        'sensor',              'slider'],
+			['r', '%m.touch sensor value',        'touch',              'slider'],
         ],
         menus: {
             booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
-            sensor: ['slider', 'light', 'sound', 'resistance-A', 'resistance-B', 'resistance-C', 'resistance-D'],
+            sensor: ['Analog1', 'Analog2', 'Analog3', 'Analog4', 'lux', 'temperature', 'humidity'],
+			touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
             lessMore: ['>', '<']
         },
         url: '/info/help/studio/tips/ext/PicoBoard/'
