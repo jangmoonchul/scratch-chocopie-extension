@@ -200,7 +200,7 @@
             ['b', 'sensor %m.booleanSensor?',      'sensorPressed',       'button pressed'],
             ['r', '%m.sensor sensor value',        'sensor',              'Analog1'],
 			['r', '%m.touch touch-sensor value',        'touch',              '1'],
-			['r', '%m.sw button value',        'swblock',              '1'],
+			['r', '%m.sw button value',        'sw',              '1'],
 			['r', '%m.joystick joystick value',        'joystick',              'X'],
 			['r', '%m.potency potencyometer value',        'potency',              '1'],
 			['r', '%m.infrared infrared value',        'infrared',              '1'],
