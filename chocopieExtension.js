@@ -229,7 +229,7 @@
 			pacceler: ['U','V','W'],
             lessMore: ['>', '<']
         },
-        url: 'http://remoted.github.io/scratch-chocopie-extension'
+        url: 'http://remoted.github.io/scratch-chocopie-extension/chocopieExtension.js'
     };
     ScratchExtensions.register('Chocopie', descriptor, ext, {type: 'serial'});
 })({});
