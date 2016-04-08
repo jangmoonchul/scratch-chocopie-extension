@@ -205,7 +205,7 @@
 			['r', '%m.potency potencyometer value',        'potency',              '1'],
 			['r', '%m.infrared infrared value',        'infrared',              '1'],
 			['r', '%m.acceler acceler value',        'acceler',              'X'],
-			['r', '%m.p-acceler acceler value',        'p-acceler',              'U'],
+			['r', '%m.p-acceler acceler value',        'p-acceler',              'U']
 
         ],
         menus: {
