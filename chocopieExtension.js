@@ -193,33 +193,24 @@
         return {status: 2, msg: 'ChocopieBoard connected'};
     }
 
-	// Check for GET param 'lang'
-	var paramString = window.location.search.replace(/^\?|\/$/g, '');
-	var vars = paramString.split("&");
-	var lang = 'en';
-	for (var i=0; i<vars.length; i++) {
-		var pair = vars[i].split('=');
-		if (pair.length > 1 && pair[0]=='lang')
-		  lang = pair[1];
-	}
-
+	
     var descriptor = {
         blocks: [
             ['h', 'when %m.booleanSensor',         'whenSensorConnected', 'button pressed'],
             ['h', 'when %m.sensor %m.lessMore %n', 'whenSensorPass',      'slider', '>', 50],
             ['b', 'sensor %m.booleanSensor?',      'sensorPressed',       'button pressed'],
-            ['r', '%m.sensor sensor value',        'sensor',              'Analog1'],
-			['r', '%m.touch touch-sensor value',   'touch',               '1'],
-			['r', '%m.sw button value',			   'sw',                  '1'],
-			['r', '%m.joystick joystick value',    'joystick',            'X'],
-			['r', '%m.potency potencyometer value','potency',             '1'],
-			['r', '%m.infrared infrared value',    'infrared',            '1'],
-			['r', '%m.acceler acceler value',      'acceler',             'X'],
-			['r', '%m.pacceler personal acceler value',    'pacceler',           'U']
+            ['r', '%m.sensor 센서 값',        'sensor',              'Analog1'],
+			['r', '%m.touch 터치센서 값',   'touch',               '1'],
+			['r', '%m.sw 버튼 값',			   'sw',                  '1'],
+			['r', '%m.joystick 조이스틱 값',    'joystick',            'X'],
+			['r', '%m.potency 포텐시오미터 값','potency',             '1'],
+			['r', '%m.infrared 적외선 값',    'infrared',            '1'],
+			['r', '%m.acceler 가속도 값',      'acceler',             'X'],
+			['r', '%m.pacceler 각 가속도 값',    'pacceler',           'U']
         ],
         menus: {
             booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
-            sensor: ['Analog1', 'Analog2', 'Analog3', 'Analog4', 'lux', 'temperature', 'humidity'],
+            sensor: ['아날로그1', '아날로그', '아날로그3', '아날로그4', '조도', '온도', '습도'],
 			touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
 			sw: ['1', '2', '3', '4', 'J'],
 			joystick: ['X', 'Y'],
