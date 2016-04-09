@@ -554,8 +554,10 @@
       //[' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
       //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', 'rotate %m.servos to %n degrees', 'rotateServo', 'servo A', 180],
-      [' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
+      [' ', '%m.servos to %n degrees', 'rotateServo', '1', 180],
+	  [' ', '%m.servospost port motor %m.servos to %n degrees', 'rotateMServo', '1', '1', 180],
+	  [' ', 'remote %m.servospost port motor %m.servos to %n degrees', 'rotateRMServo', '1', '1', 180],
+      //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
       ['h', 'when %m.buttons is %m.btnStates', 'whenButton', '1', 'pressed'],	//Patched
       ['b', '%m.buttons pressed?', 'isButtonPressed', '1'],
@@ -614,8 +616,9 @@
       //[' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
       //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', '%m.servos 를 %n 도로 회전하기', 'rotateServo', '서보모터 A', 180],
-      [' ', '%m.servos 를 %n 도 만큼 회전하기', 'changeServo', '서보모터 A', 20],
+      [' ', '서보모터 %m.servos 각도 %n', 'rotateServo', '1', 180],										//ServoMotor, Multiple Servo and Remote Servo is defined.
+	  [' ', '%m.servospost 포트 서보모터 %m.servos 각도 %n', 'rotateMServo', '1', '1', 180],			//function_name : rotateServo	rotateMServo	rotateRMServo
+	  [' ', '원격 %m.servospost 포트 서보모터 %m.servos 각도 %n', 'rotateRMServo', '1', '1', 180],
       ['-'],
       ['h', '%m.buttons 의 상태가 %m.btnStates 일 때', 'whenButton', '1', '눌림'],		//Patched
       ['b', '%m.buttons 가 눌려져 있는가?', 'isButtonPressed', '1'],
@@ -706,7 +709,7 @@
 		ops: ['>', '=', '<'],
 		servos: ['1', '2', '3', '4'],
 		//mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
-		servoport: [ '1', '2', '3', '4', '5', '6', '7', '8'],
+		servosport: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 
 		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
 
