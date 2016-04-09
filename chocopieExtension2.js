@@ -594,13 +594,13 @@
 	  ['h', 'When remoted photogate %m.photoGate is %m.gateState', 'whenRPhoto', '1', 'blocked'],
 	  ['r', 'read remoted photogate %m.photoGate value', 'RphotoRead', '1'],
 	  ['-'],
-	  [' ', 'LED %m.leds RED %n GREEN %n BLUE %n', 'passLEDrgb', '0', '0', '0'],
-	  [' ', 'Remote LED %m.leds RED %n GREEN %n BLUE %n', 'passRLEDrgb', '0', '0', '0'],
+	  [' ', 'LED %m.leds RED %n GREEN %n BLUE %n', 'passLEDrgb', '0', '0', '0', '0'],
+	  [' ', 'Remote LED %m.leds RED %n GREEN %n BLUE %n', 'passRLEDrgb', '0', '0', '0', '0'],
 	  ['-'],
-	  [' ', 'Stepping Motor Direction %n Acceler %n', 'passSteppingDA', '0', '0'],
-	  [' ', 'Stepping Motor Direction %n Acceler %n Angle %n', 'passSteppingDAA', '0', '0', '0'],
-	  [' ', 'Remote Stepping Motor Direction %n Acceler %n', 'passRSteppingDA', '0', '0'],
-	  [' ', 'Remote Stepping Motor Direction %n Acceler %n Angle %n', 'passRSteppingDAA', '0', '0', '0']
+	  [' ', 'Stepping Motor %m.steppingMotor Direction %n Acceler %n', 'passSteppingDA', '1', '0', '0'],
+	  [' ', 'Stepping Motor %m.steppingMotor Direction %n Acceler %n Angle %n', 'passSteppingDAA', '1', '0', '0', '0'],
+	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Acceler %n', 'passRSteppingDA', '1', '0', '0'],
+	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Acceler %n Angle %n', 'passRSteppingDAA', '1', '0', '0', '0']
     ],
     ko: [
       ['h', '초코파이가 연결됐을 때', 'whenConnected'],
@@ -651,13 +651,13 @@
 	  ['h', '원격 포토게이트 %m.photoGate 가 %m.gateState', 'whenRPhoto', '1', '막히면'],	//Remote Photogate and remote gatestate is defined.
 	  ['r', '원격 포토게이트 %m.photoGate 의 값', 'RphotoRead', '1'],						//function_name : whenRPhoto	RphotoRead
 	  ['-'],																	//LED RGB definition
-	  [' ', 'LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0', '0', '0'],		//function_name : passLEDrgb
-	  [' ', '원격 LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', '0', '0'],	//function_name : passRLEDrgb
+	  [' ', 'LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0', '0', '0', '0'],		//function_name : passLEDrgb
+	  [' ', '원격 LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', '0', '0', '0'],	//function_name : passRLEDrgb
 	  ['-'],
-	  [' ', '스테핑 모터 방향 %n 속도 %n', 'passSteppingDA', '0', '0'],						//Stepping Motor definition
-	  [' ', '스테핑 모터 방향 %n 속도 %n 각도 %n', 'passSteppingDAA', '0', '0', '0'],		//function_name : passSteppingDA	passSteppingDAA
-	  [' ', '원격 스테핑 모터 방향 %n 속도 %n', 'passRSteppingDA', '0', '0'],				//Remote Stepping Motor definition
-	  [' ', '원격 스테핑 모터 방향 %n 속도 %n 각도 %n', 'passRSteppingDAA', '0', '0', '0']	//function_name : passRSteppingDA	passRSteppingDAA
+	  [' ', '스테핑 모터 %m.steppingMotor 방향 %n 속도 %n', 'passSteppingDA','1', '0', '0'],						//Stepping Motor definition
+	  [' ', '스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passSteppingDAA','1', '0', '0', '0'],		//function_name : passSteppingDA	passSteppingDAA
+	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n', 'passRSteppingDA','1', '0', '0'],				//Remote Stepping Motor definition
+	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passRSteppingDAA','1', '0', '0', '0']	//function_name : passRSteppingDA	passRSteppingDAA
     ]
   };
 
