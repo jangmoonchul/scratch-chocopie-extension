@@ -557,8 +557,8 @@
       [' ', 'rotate %m.servos to %n degrees', 'rotateServo', 'servo A', 180],
       [' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
-      ['h', 'when %m.buttons is %m.btnStates', 'whenButton', 'button A', 'pressed'],
-      ['b', '%m.buttons pressed?', 'isButtonPressed', 'button A'],
+      ['h', 'when %m.buttons is %m.btnStates', 'whenButton', '1', 'pressed'],	//Patched
+      ['b', '%m.buttons pressed?', 'isButtonPressed', '1'],
       ['-'],
       ['h', 'when %m.hwIn %m.ops %n%', 'whenInput', 'light sensor', '>', 50],
       ['r', 'read %m.hwIn', 'readInput', 'light sensor'],		//Patched
@@ -576,8 +576,11 @@
       ['-'],
       ['r', 'map %n from %n %n to %n %n', 'mapValues', 50, 0, 100, -240, 240],
 	  ['-'],
-	  ['r', '%m.touch touch sensor pressed?', 'isButtonPressed', '1'],
-	  ['r', '%m.Rtouch remoted touch sensor pressed?', 'isButtonPressed', '1']	//Writed
+	  ['b', '%m.touch touch sensor pressed?', 'isTouchButtonPressed', '1'],
+	  ['b', '%m.Rtouch remoted touch sensor pressed?', 'isRTouchButtonPressed', '1'],	//Touch Sensor is boolean block
+	  ['-'],
+	  ['r', 'read joystick value is %m.joystick', 'joystikcRead', 'X'],
+	  ['r', 'potencyometer value is %m.potency', 'potencyRead', '1']	//Joystick and potencyometer Sensor is repoter block.
     ],
     ko: [
       ['h', '초코파이가 연결됐을 때', 'whenConnected'],
@@ -591,8 +594,10 @@
       [' ', '%m.servos 를 %n 도로 회전하기', 'rotateServo', '서보모터 A', 180],
       [' ', '%m.servos 를 %n 도 만큼 회전하기', 'changeServo', '서보모터 A', 20],
       ['-'],
-      ['h', '%m.buttons 의 상태가 %m.btnStates 일 때', 'whenButton', '버튼 A', '눌림'],
-      ['b', '%m.buttons 가 눌려져 있는가?', 'isButtonPressed', '버튼 A'],
+      ['h', '%m.buttons 의 상태가 %m.btnStates 일 때', 'whenButton', '1', '눌림'],		//Patched
+      ['b', '%m.buttons 가 눌려져 있는가?', 'isButtonPressed', '1'],
+
+
       ['-'],
       ['h', '%m.hwIn 의 값이 %m.ops %n% 일 때', 'whenInput', '조도 센서', '>', 50],	//Patched 
       ['r', '%m.hwIn 의 값', 'readInput', '조도 센서'],
@@ -610,14 +615,17 @@
       ['-'],
       ['r', '%n 을(를) %n ~ %n 에서 %n ~ %n 의 범위로 바꾸기', 'mapValues', 50, 0, 100, -240, 240],
 	  ['-'],
-	  ['r', '%m.touch 터치 센서가 눌렸는가?', 'isButtonPressed', '1'],
-	  ['r', '%m.Rtouch 원격 터치 센서가 눌렸는가?', 'isButtonPressed', '1']	// Writed
+	  ['b', '%m.touch 터치 센서가 눌렸는가?', 'isTouchButtonPressed', '1'],			//Touch Sensor is boolean block
+	  ['b', '%m.Rtouch 원격 터치 센서가 눌렸는가?', 'isRTouchButtonPressed', '1'],	//function_name : isTouchButtonPressed isRTouchButtonPressed
+	  ['-'],
+	  ['r', '조이스틱 %m.joystick 의 값', 'joystikcRead', 'X'],		//Joystick and potencyometer Sensor is repoter block.
+      ['r', '포텐시오미터 %m.potency 의 값', 'potencyRead', '1']	//function_name : joysticRead  potencyRead 
     ]
   };
 
   var menus = {
     en: {
-		buttons: ['button A', 'button B', 'button C', 'button D'],
+		buttons: ['1', '2', '3', '4', 'J'],
 		btnStates: ['pressed', 'released'],
 		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor'],	// To in Hardware Value
 		RhwIn: ['remote light sensor', 'remote temperature sensor', 'remote humidity sensor'],
@@ -636,10 +644,11 @@
 
 		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
 		Rtouch : ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
+		// Touch sensor and Remoted touch sensor listing
 
-		sw: ['1', '2', '3', '4', 'J'],
 		joystick: ['X', 'Y'],
 		potency: ['1'],
+
 		infrared: ['1','2','3'],
 		acceler: ['X','Y','Z'],
 		pacceler: ['U','V','W'],
@@ -647,7 +656,7 @@
 
     },
     ko: {
-		buttons: ['버튼 A', '버튼 B', '버튼 C', '버튼 D'],
+		buttons: ['1', '2', '3', '4', 'J'],
 		btnStates: ['눌림', '떼짐'],
 
 		hwIn: ['조도 센서', '온도 센서','습도 센서'],
@@ -667,10 +676,12 @@
 
 		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
 		Rtouch : ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
+		// Touch sensor and Remoted touch sensor listing
 
-		sw: ['1', '2', '3', '4', 'J'],
 		joystick: ['X', 'Y'],
 		potency: ['1'],
+
+
 		infrared: ['1','2','3'],
 		acceler: ['X','Y','Z'],
 		pacceler: ['U','V','W'],
