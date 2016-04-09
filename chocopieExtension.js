@@ -222,6 +222,6 @@
         },
         url: 'http://remoted.github.io/scratch-chocopie-extension'
     };
-    ScratchExtensions.register('PicoBoard', descriptor, ext, {type: 'serial'});
+    ScratchExtensions.register('ChocopieBoard', descriptor, ext, {type: 'serial'});
 	//register Extension Administrator.
 })({});
