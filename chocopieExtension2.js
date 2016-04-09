@@ -555,9 +555,9 @@
       //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
       [' ', 'rotate %m.servos to %n degrees', 'rotateServo', '1', 180],
-	  [' ', '%m.servoport Port rotate %m.servos to %n degrees', 'rotateMServo', '1', 180],
+	  [' ', '%m.servoport Port rotate %m.servos to %n degrees', 'rotateMServo', '1', '1', 180],
       [' ', 'rotate remote %m.servos to %n degrees', 'rotateRServo', '1', 180],
-	  [' ', '%m.servoport Port rotate remote %m.servos to %n degrees', 'rotateRMServo', '1', 180],
+	  [' ', '%m.servoport Port rotate remote %m.servos to %n degrees', 'rotateRMServo', '1', '1', 180],
       //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
       ['h', 'when %m.buttons is %m.btnStates', 'whenButton', '1', 'pressed'],	//Patched
@@ -618,9 +618,9 @@
       //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
       ['-'],
       [' ', '서보모터 %m.servos 각도 %n', 'rotateServo', '1', 180],									//ServoMotor is defined
-	  [' ', '%m.servoport 포트 서보모터 %m.servos 각도 %n', 'rotateMServo', '1', 180],			//function_name: rotateServo	rotateMServo
+	  [' ', '%m.servoport 포트 서보모터 %m.servos 각도 %n', 'rotateMServo', '1', '1', 180],			//function_name: rotateServo	rotateMServo
       [' ', '원격 서보모터 %m.servos 각도 %n', 'rotateRServo', '1', 180],							//Remoted ServoMotor is defined
-	  [' ', '%m.servoport 포트 원격 서보모터 %m.servos 각도 %n', 'rotateRMServo', '1', 180],	//function_name : rotateRServo	rotateRMServo
+	  [' ', '%m.servoport 포트 원격 서보모터 %m.servos 각도 %n', 'rotateRMServo', '1', '1', 180],	//function_name : rotateRServo	rotateRMServo
       ['-'],
       ['h', '%m.buttons 의 상태가 %m.btnStates 일 때', 'whenButton', '1', '눌림'],		//Patched
       ['b', '%m.buttons 가 눌려져 있는가?', 'isButtonPressed', '1'],
@@ -782,7 +782,7 @@
 		outputs: ['켜기', '끄기'],
 		ops: ['>', '=', '<'],
 		servos: ['1', '2', '3', '4'],
-		mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
+		//mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 		servoport: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 
 		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
