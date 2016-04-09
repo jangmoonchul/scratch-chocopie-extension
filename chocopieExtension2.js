@@ -554,8 +554,11 @@
       //[' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
       //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', 'rotate %m.servos to %n degrees', 'rotateServo', 'servo A', 180],
-      [' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
+      [' ', 'rotate %m.servos to %n degrees', 'rotateServo', '1', 180],
+	  [' ', '%m.servoport Port rotate %m.servos to %n degrees', 'rotateMServo', '1', 180],
+      [' ', 'rotate remote %m.servos to %n degrees', 'rotateRServo', '1', 180],
+	  [' ', '%m.servoport Port rotate remote %m.servos to %n degrees', 'rotateRMServo', '1', 180],
+      //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
       ['h', 'when %m.buttons is %m.btnStates', 'whenButton', '1', 'pressed'],	//Patched
       ['b', '%m.buttons pressed?', 'isButtonPressed', '1'],
@@ -574,8 +577,8 @@
 	  //['h', 'when remoted analog %m.RanalogSensor %m.ops %n%', 'whenRAnalogRead', 1, '>', 50],
       ['r', 'read remoted analog %m.RanalogSensor', 'RAnalogRead', 0],		//Patched
       ['-'],
-      ['r', 'map %n from %n %n to %n %n', 'mapValues', 50, 0, 100, -240, 240],
-	  ['-'],
+      //['r', 'map %n from %n %n to %n %n', 'mapValues', 50, 0, 100, -240, 240],
+	  //['-'],
 	  ['b', '%m.touch touch sensor pressed?', 'isTouchButtonPressed', '1'],
 	  ['b', '%m.Rtouch remoted touch sensor pressed?', 'isRTouchButtonPressed', '1'],	//Touch Sensor is boolean block
 	  ['-'],
@@ -601,6 +604,9 @@
 	  [' ', 'Stepping Motor %m.steppingMotor Direction %n Accel %n Angle %n', 'passSteppingDAA', '1', 0, 0, 0],
 	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Accel %n', 'passRSteppingDA', '1', 0, 0],
 	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Accel %n Angle %n', 'passRSteppingDAA', '1', 0, 0, 0]
+	  ['-'],
+	  [' ', 'DC Motor %m.dcMotor Direction %n Accel %n', 'passDCDA', '1', 0, 0],
+	  [' ', 'Remote DC Motor %m.dcMotor Direction %n Accel %n', 'passRDCDA', '1', 0, 0]
     ],
     ko: [
       ['h', '초코파이가 연결됐을 때', 'whenConnected'],
@@ -611,8 +617,10 @@
       //[' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
       //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', '%m.servos 를 %n 도로 회전하기', 'rotateServo', '서보모터 A', 180],
-      [' ', '%m.servos 를 %n 도 만큼 회전하기', 'changeServo', '서보모터 A', 20],
+      [' ', '서보모터 %m.servos 각도 %n', 'rotateServo', '1', 180],									//ServoMotor is defined
+	  [' ', '%m.servoport 포트 서보모터 %m.servos 각도 %n', 'rotateMServo', '1', 180],			//function_name: rotateServo	rotateMServo
+      [' ', '원격 서보모터 %m.servos 각도 %n', 'rotateRServo', '1', 180],							//Remoted ServoMotor is defined
+	  [' ', '%m.servoport 포트 원격 서보모터 %m.servos 각도 %n', 'rotateRMServo', '1', 180],	//function_name : rotateRServo	rotateRMServo
       ['-'],
       ['h', '%m.buttons 의 상태가 %m.btnStates 일 때', 'whenButton', '1', '눌림'],		//Patched
       ['b', '%m.buttons 가 눌려져 있는가?', 'isButtonPressed', '1'],
@@ -631,8 +639,8 @@
 	  //['h', '원격 아날로그 %m.RanalogSensor 번의 값이 %m.ops %n% 일 때', 'whenRAnalogRead', 1, '>', 50],
       ['r', '원격 아날로그 %m.RanalogSensor 번의 값', 'RAnalogRead', 0],	//Patched 
       ['-'],
-      ['r', '%n 을(를) %n ~ %n 에서 %n ~ %n 의 범위로 바꾸기', 'mapValues', 50, 0, 100, -240, 240],
-	  ['-'],
+      //['r', '%n 을(를) %n ~ %n 에서 %n ~ %n 의 범위로 바꾸기', 'mapValues', 50, 0, 100, -240, 240],
+	  //['-'],
 	  ['b', '%m.touch 터치 센서가 눌렸는가?', 'isTouchButtonPressed', '1'],			//Touch Sensor is boolean block
 	  ['b', '%m.Rtouch 원격 터치 센서가 눌렸는가?', 'isRTouchButtonPressed', '1'],	//function_name : isTouchButtonPressed isRTouchButtonPressed
 	  ['-'],
@@ -651,13 +659,16 @@
 	  ['h', '원격 포토게이트 %m.photoGate 가 %m.gateState', 'whenRPhoto', '1', '막히면'],	//Remote Photogate and remote gatestate is defined.
 	  ['r', '원격 포토게이트 %m.photoGate 의 값', 'RphotoRead', '1'],						//function_name : whenRPhoto	RphotoRead
 	  ['-'],																	//LED RGB definition
-	  [' ', 'LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0','0', '0', '0'],		//function_name : passLEDrgb
-	  [' ', '원격 LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', '0', '0', '0'],	//function_name : passRLEDrgb
+	  [' ', 'LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0', 0, 0, 0],		//function_name : passLEDrgb
+	  [' ', '원격 LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', 0, 0, 0],	//function_name : passRLEDrgb
 	  ['-'],
 	  [' ', '스테핑 모터 %m.steppingMotor 방향 %n 속도 %n', 'passSteppingDA', '1', 0, 0],					//Stepping Motor is defined
 	  [' ', '스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passSteppingDAA', '1', 0, 0, 0],		//function_name : passSteppingDA passSteppingDAA
 	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n', 'passRSteppingDA', '1', 0, 0],				//Remote Stepping Motor is defined
 	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passRSteppingDAA', '1', 0, 0, 0]	//function_name : passRSteppingDA passRSteppingDAA
+	  ['-'],
+	  [' ', 'DC 모터 %m.dcMotor 방향 %n 속도 %n', 'passDCDA', '1', 0, 0],		//DC motor is defined
+	  [' ', '원격 DC 모터 %m.dcMotor 방향 %n 속도 %n', 'passRDCDA', '1', 0, 0]	//function_name : passDCDA passRDCDA
     ]
   };
 
@@ -668,7 +679,7 @@
 		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor'],						//get from Hardware Value
 		RhwIn: ['remote light sensor', 'remote temperature sensor', 'remote humidity sensor'],	//get from remote hardware value
 
-		hwOut: ['led A', 'led B', 'led C', 'led D', 'button A', 'button B', 'button C', 'button D', 'servo A', 'servo B', 'servo C', 'servo D'], 
+		//hwOut: ['led A', 'led B', 'led C', 'led D', 'button A', 'button B', 'button C', 'button D', 'servo A', 'servo B', 'servo C', 'servo D'], 
 		//To out Hardware Value 
 		leds: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
 			'11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
@@ -698,9 +709,11 @@
 			'251', '252', '253', '254', '255'],
 		outputs: ['on', 'off'],
 		ops: ['>', '=', '<'],
-		servos: ['servo A', 'servo B', 'servo C', 'servo D'],
+		servos: ['1', '2', '3', '4'],
+		servoport: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 
-		booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
+		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
+
 		analogSensor: ['1', '2', '3', '4'],
 		RanalogSensor: ['1', '2', '3', '4'],
 		// Remoted Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
@@ -725,8 +738,11 @@
 		gateState: ['blocked','opened'],
 		//photogate and gate status is defined.
 		
-		steppingMotor: ['1', '2']
+		steppingMotor: ['1', '2'],
 		//steppingMotor is defined.
+
+		dcMotor: ['1','2','3']
+		//dcMotor is defined.
 
     },
     ko: {
@@ -765,9 +781,12 @@
 			'251', '252', '253', '254', '255'],
 		outputs: ['켜기', '끄기'],
 		ops: ['>', '=', '<'],
-		servos: ['서보모터 A', '서보모터 B', '서보모터 C', '서보모터 D'],
+		servos: ['1', '2', '3', '4'],
+		mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
+		servoport: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 
-		booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
+		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
+
         analogSensor: ['1', '2', '3', '4'],
 		RanalogSensor: ['1', '2', '3', '4'],
 		// Remoted Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
@@ -795,6 +814,9 @@
 
 		steppingMotor: ['1', '2']
 		//steppingMotor is defined.
+
+		dcMotor: ['1','2','3']
+		//dcMotor is defined.
     }
   };
 
