@@ -812,7 +812,7 @@
 		gateState: ['막히면','열리면'],
 		//photogate and gate status is defined.
 
-		steppingMotor: ['1', '2']
+		steppingMotor: ['1', '2'],
 		//steppingMotor is defined.
 
 		dcMotor: ['1','2','3']
