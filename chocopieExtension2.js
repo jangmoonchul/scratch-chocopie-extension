@@ -563,18 +563,18 @@
       ['h', 'when %m.hwIn %m.ops %n%', 'whenInput', 'light sensor', '>', 50],
       ['r', 'read %m.hwIn', 'readInput', 'light sensor'],		//Patched
       ['-'],
-      [' ', 'set pin %n %m.outputs', 'digitalWrite', 1, 'on'],
-      [' ', 'set pin %n to %n%', 'analogWrite', 3, 100],
-      ['-'],
-      ['h', 'when pin %n is %m.outputs', 'whenDigitalRead', 1, 'on'],
-      ['b', 'pin %n on?', 'digitalRead', 1],
-      ['-'],
+      //[' ', 'set pin %n %m.outputs', 'digitalWrite', 1, 'on'],
+      /[' ', 'set pin %n to %n%', 'analogWrite', 3, 100],
+      //['-'],
+      //['h', 'when pin %n is %m.outputs', 'whenDigitalRead', 1, 'on'],
+      //['b', 'pin %n on?', 'digitalRead', 1],
+      //['-'],
       //['h', 'when analog %m.analogSensor %m.ops %n%', 'whenAnalogRead', 1, '>', 50],
       ['r', 'read analog %m.analogSensor', 'analogRead', 0],
 	  //['h', 'when remoted analog %m.RanalogSensor %m.ops %n%', 'whenRAnalogRead', 1, '>', 50],
       ['r', 'read remoted analog %m.RanalogSensor', 'RAnalogRead', 0],		//Patched
-      ['-'],
-      ['r', 'map %n from %n %n to %n %n', 'mapValues', 50, 0, 100, -240, 240],
+      //['-'],
+      //['r', 'map %n from %n %n to %n %n', 'mapValues', 50, 0, 100, -240, 240],
 	  ['-'],
 	  ['b', '%m.touch touch sensor pressed?', 'isTouchButtonPressed', '1'],
 	  ['b', '%m.Rtouch remoted touch sensor pressed?', 'isRTouchButtonPressed', '1'],	//Touch Sensor is boolean block
@@ -620,18 +620,18 @@
       ['h', '%m.hwIn 의 값이 %m.ops %n% 일 때', 'whenInput', '조도 센서', '>', 50],	//Patched 
       ['r', '%m.hwIn 의 값', 'readInput', '조도 센서'],
       ['-'],
-      [' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
-      [' ', '%n 번 핀의 값을 %n% 로 설정하기', 'analogWrite', 3, 100],
-      ['-'],
-      ['h', '%n 번 핀의 상태가 %m.outputs 일 때', 'whenDigitalRead', 1, '켜기'],
-      ['b', '%n 번 핀이 켜져있는가?', 'digitalRead', 1],
-      ['-'],
+      //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
+      //[' ', '%n 번 핀의 값을 %n% 로 설정하기', 'analogWrite', 3, 100],
+      //['-'],
+      //['h', '%n 번 핀의 상태가 %m.outputs 일 때', 'whenDigitalRead', 1, '켜기'],
+      //['b', '%n 번 핀이 켜져있는가?', 'digitalRead', 1],
+      //['-'],
       //['h', '아날로그 %m.analogSensor 번의 값이 %m.ops %n% 일 때', 'whenAnalogRead', 1, '>', 50],
       ['r', '아날로그 %m.analogSensor 번의 값', 'analogRead', 0],
 	  //['h', '원격 아날로그 %m.RanalogSensor 번의 값이 %m.ops %n% 일 때', 'whenRAnalogRead', 1, '>', 50],
       ['r', '원격 아날로그 %m.RanalogSensor 번의 값', 'RAnalogRead', 0],	//Patched 
-      ['-'],
-      ['r', '%n 을(를) %n ~ %n 에서 %n ~ %n 의 범위로 바꾸기', 'mapValues', 50, 0, 100, -240, 240],
+      //['-'],
+      //['r', '%n 을(를) %n ~ %n 에서 %n ~ %n 의 범위로 바꾸기', 'mapValues', 50, 0, 100, -240, 240],
 	  ['-'],
 	  ['b', '%m.touch 터치 센서가 눌렸는가?', 'isTouchButtonPressed', '1'],			//Touch Sensor is boolean block
 	  ['b', '%m.Rtouch 원격 터치 센서가 눌렸는가?', 'isRTouchButtonPressed', '1'],	//function_name : isTouchButtonPressed isRTouchButtonPressed
@@ -652,7 +652,7 @@
 	  ['r', '원격 포토게이트 %m.photoGate 의 값', 'RphotoRead', '1'],						//function_name : whenRPhoto	RphotoRead
 	  ['-'],																	//LED RGB definition
 	  [' ', 'LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0', '0', '0'],		//function_name : passLEDrgb
-	  [' ', '원격 LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', '0', '0']	//function_name : passRLEDrgb
+	  [' ', '원격 LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', '0', '0'],	//function_name : passRLEDrgb
 	  ['-'],
 	  [' ', '스테핑 모터 방향 %n 속도 %n', 'passSteppingDA', '0', '0'],						//Stepping Motor definition
 	  [' ', '스테핑 모터 방향 %n 속도 %n 각도 %n', 'passSteppingDAA', '0', '0', '0'],		//function_name : passSteppingDA	passSteppingDAA
