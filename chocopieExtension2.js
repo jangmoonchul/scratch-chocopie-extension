@@ -554,11 +554,8 @@
       //[' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
       //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', 'rotate %m.servos to %n degrees', 'rotateServo', '1', 180],
-	  [' ', '%m.servoport Port rotate %m.servos to %n degrees', 'rotateMServo', '1', '1', 180],
-      [' ', 'rotate remote %m.servos to %n degrees', 'rotateRServo', '1', 180],
-	  [' ', '%m.servoport Port rotate remote %m.servos to %n degrees', 'rotateRMServo', '1', '1', 180],
-      //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
+      [' ', 'rotate %m.servos to %n degrees', 'rotateServo', 'servo A', 180],
+      [' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
       ['h', 'when %m.buttons is %m.btnStates', 'whenButton', '1', 'pressed'],	//Patched
       ['b', '%m.buttons pressed?', 'isButtonPressed', '1'],
@@ -617,10 +614,8 @@
       //[' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
       //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', '서보모터 %m.servos 각도 %n', 'rotateServo', '1', 180],									//ServoMotor is defined
-	  [' ', '%m.servoport 포트 서보모터 %m.servos 각도 %n', 'rotateMServo', '1', '1', 180],			//function_name: rotateServo	rotateMServo
-      [' ', '원격 서보모터 %m.servos 각도 %n', 'rotateRServo', '1', 180],							//Remoted ServoMotor is defined
-	  [' ', '%m.servoport 포트 원격 서보모터 %m.servos 각도 %n', 'rotateRMServo', '1', '1', 180],	//function_name : rotateRServo	rotateRMServo
+      [' ', '%m.servos 를 %n 도로 회전하기', 'rotateServo', '서보모터 A', 180],
+      [' ', '%m.servos 를 %n 도 만큼 회전하기', 'changeServo', '서보모터 A', 20],
       ['-'],
       ['h', '%m.buttons 의 상태가 %m.btnStates 일 때', 'whenButton', '1', '눌림'],		//Patched
       ['b', '%m.buttons 가 눌려져 있는가?', 'isButtonPressed', '1'],
@@ -710,6 +705,7 @@
 		outputs: ['on', 'off'],
 		ops: ['>', '=', '<'],
 		servos: ['1', '2', '3', '4'],
+		//mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 		servoport: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 
 		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
@@ -752,7 +748,7 @@
 		hwIn: ['조도 센서', '온도 센서','습도 센서'],
 		RhwIn: ['원격 조도 센서', '원격 온도 센서','원격 습도 센서'], 
 
-		hwOut: ['led A', 'led B', 'led C', 'led D', '버튼 A', '버튼 B', '버튼 C', '버튼 D', '서보모터 A', '서보모터 B', '서보모터 C', '서보모터 D'],
+		//hwOut: ['led A', 'led B', 'led C', 'led D', '버튼 A', '버튼 B', '버튼 C', '버튼 D', '서보모터 A', '서보모터 B', '서보모터 C', '서보모터 D'],
 		leds: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
 			'11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
 			'21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
