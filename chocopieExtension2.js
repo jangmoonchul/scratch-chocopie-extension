@@ -603,7 +603,7 @@
 	  [' ', 'Stepping Motor %m.steppingMotor Direction %n Accel %n', 'passSteppingDA', '1', 0, 0],
 	  [' ', 'Stepping Motor %m.steppingMotor Direction %n Accel %n Angle %n', 'passSteppingDAA', '1', 0, 0, 0],
 	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Accel %n', 'passRSteppingDA', '1', 0, 0],
-	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Accel %n Angle %n', 'passRSteppingDAA', '1', 0, 0, 0]
+	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Accel %n Angle %n', 'passRSteppingDAA', '1', 0, 0, 0],
 	  ['-'],
 	  [' ', 'DC Motor %m.dcMotor Direction %n Accel %n', 'passDCDA', '1', 0, 0],
 	  [' ', 'Remote DC Motor %m.dcMotor Direction %n Accel %n', 'passRDCDA', '1', 0, 0]
@@ -665,7 +665,7 @@
 	  [' ', '스테핑 모터 %m.steppingMotor 방향 %n 속도 %n', 'passSteppingDA', '1', 0, 0],					//Stepping Motor is defined
 	  [' ', '스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passSteppingDAA', '1', 0, 0, 0],		//function_name : passSteppingDA passSteppingDAA
 	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n', 'passRSteppingDA', '1', 0, 0],				//Remote Stepping Motor is defined
-	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passRSteppingDAA', '1', 0, 0, 0]	//function_name : passRSteppingDA passRSteppingDAA
+	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passRSteppingDAA', '1', 0, 0, 0],	//function_name : passRSteppingDA passRSteppingDAA
 	  ['-'],
 	  [' ', 'DC 모터 %m.dcMotor 방향 %n 속도 %n', 'passDCDA', '1', 0, 0],		//DC motor is defined
 	  [' ', '원격 DC 모터 %m.dcMotor 방향 %n 속도 %n', 'passRDCDA', '1', 0, 0]	//function_name : passDCDA passRDCDA
