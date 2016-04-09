@@ -547,12 +547,12 @@
   var blocks = {
     en: [
       ['h', 'when device is connected', 'whenConnected'],
-      [' ', 'connect %m.hwOut to pin %n', 'connectHW', 'led A', 3],
-      [' ', 'connect %m.hwIn to analog %n', 'connectHW', 'rotation knob', 0],
-      ['-'],
-      [' ', 'set %m.leds %m.outputs', 'digitalLED', 'led A', 'on'],
-      [' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
-      [' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
+      //[' ', 'connect %m.hwOut to pin %n', 'connectHW', 'led A', 3],
+      //[' ', 'connect %m.hwIn to analog %n', 'connectHW', 'rotation knob', 0],
+      //['-'],
+      //[' ', 'set %m.leds %m.outputs', 'digitalLED', 'led A', 'on'],
+      //[' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
+      //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
       [' ', 'rotate %m.servos to %n degrees', 'rotateServo', 'servo A', 180],
       [' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
@@ -594,16 +594,22 @@
 	  ['h', 'When remoted photogate %m.photoGate is %m.gateState', 'whenRPhoto', '1', 'blocked'],
 	  ['r', 'read remoted photogate %m.photoGate value', 'RphotoRead', '1'],
 	  ['-'],
-	  [' ', 'RED %n GREEN %n BLUE %n', 'passLEDrgb', '0', '0', '0']
+	  [' ', 'LED RED %n GREEN %n BLUE %n', 'passLEDrgb', '0', '0', '0'],
+	  [' ', 'Remote LED RED %n GREEN %n BLUE %n', 'passRLEDrgb', '0', '0', '0'],
+	  ['-'],
+	  [' ', 'Stepping Motor Direction %n Acceler %n', 'passSteppingDA', '0', '0'],
+	  [' ', 'Stepping Motor Direction %n Acceler %n Angle %n', 'passSteppingDAA', '0', '0', '0'],
+	  [' ', 'Remote Stepping Motor Direction %n Acceler %n', 'passRSteppingDA', '0', '0'],
+	  [' ', 'Remote Stepping Motor Direction %n Acceler %n Angle %n', 'passRSteppingDAA', '0', '0', '0']
     ],
     ko: [
       ['h', '초코파이가 연결됐을 때', 'whenConnected'],
-      [' ', '%m.hwOut 를 %n 번 핀에 연결하기', 'connectHW', 'led A', 3],
-      [' ', '%m.hwIn 를 아날로그 %n 번 핀에 연결하기', 'connectHW', '회전 손잡이', 0],
-      ['-'],
-      [' ', '%m.leds 를 %m.outputs', 'digitalLED', 'led A', '켜기'],
-      [' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
-      [' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
+      //[' ', '%m.hwOut 를 %n 번 핀에 연결하기', 'connectHW', 'led A', 3],
+      //[' ', '%m.hwIn 를 아날로그 %n 번 핀에 연결하기', 'connectHW', '회전 손잡이', 0],
+      //['-'],
+      //[' ', '%m.leds 를 %m.outputs', 'digitalLED', 'led A', '켜기'],
+      //[' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
+      //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
       ['-'],
       [' ', '%m.servos 를 %n 도로 회전하기', 'rotateServo', '서보모터 A', 180],
       [' ', '%m.servos 를 %n 도 만큼 회전하기', 'changeServo', '서보모터 A', 20],
@@ -644,8 +650,14 @@
 	  ['r', '포토게이트 %m.photoGate 의 값', 'photoRead', '1'],							//function_name : whenPhoto	photoRead
 	  ['h', '원격 포토게이트 %m.photoGate 가 %m.gateState', 'whenRPhoto', '1', '막히면'],	//Remote Photogate and remote gatestate is defined.
 	  ['r', '원격 포토게이트 %m.photoGate 의 값', 'RphotoRead', '1'],						//function_name : whenRPhoto	RphotoRead
-	  ['-'],														//LED RGB definition
-	  [' ', '빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0', '0', '0']	//function_name : passLEDrgb
+	  ['-'],																	//LED RGB definition
+	  [' ', 'LED 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0', '0', '0'],		//function_name : passLEDrgb
+	  [' ', '원격 LED 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', '0', '0']	//function_name : passRLEDrgb
+	  ['-'],
+	  [' ', '스테핑 모터 방향 %n 속도 %n', 'passSteppingDA', '0', '0'],						//Stepping Motor definition
+	  [' ', '스테핑 모터 방향 %n 속도 %n 각도 %n', 'passSteppingDAA', '0', '0', '0'],		//function_name : passSteppingDA	passSteppingDAA
+	  [' ', '원격 스테핑 모터 방향 %n 속도 %n', 'passRSteppingDA', '0', '0'],				//Remote Stepping Motor definition
+	  [' ', '원격 스테핑 모터 방향 %n 속도 %n 각도 %n', 'passRSteppingDAA', '0', '0', '0']	//function_name : passRSteppingDA	passRSteppingDAA
     ]
   };
 
@@ -653,8 +665,8 @@
     en: {
 		buttons: ['1', '2', '3', '4', 'J'],
 		btnStates: ['pressed', 'released'],
-		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor'],	// To in Hardware Value
-		RhwIn: ['remote light sensor', 'remote temperature sensor', 'remote humidity sensor'],
+		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor'],						//get from Hardware Value
+		RhwIn: ['remote light sensor', 'remote temperature sensor', 'remote humidity sensor'],	//get from remote hardware value
 
 		hwOut: ['led A', 'led B', 'led C', 'led D', 'button A', 'button B', 'button C', 'button D', 'servo A', 'servo B', 'servo C', 'servo D'], 
 		//To out Hardware Value 
@@ -710,7 +722,12 @@
 		//infrared sensor and acceler and pacceler sensor listing
 
         photoGate: ['1', '2'],
-		gateState: ['blocked','opened']
+		gateState: ['blocked','opened'],
+		//photogate and gate status is defined.
+		
+		steppingMotor: ['1', '2']
+		//steppingMotor is defined.
+
     },
     ko: {
 		buttons: ['1', '2', '3', '4', 'J'],
@@ -773,7 +790,11 @@
 		//infrared sensor and acceler and pacceler sensor listing
 
         photoGate: ['1', '2'],
-		gateState: ['막히면','열리면']
+		gateState: ['막히면','열리면'],
+		//photogate and gate status is defined.
+
+		steppingMotor: ['1', '2']
+		//steppingMotor is defined.
     }
   };
 
