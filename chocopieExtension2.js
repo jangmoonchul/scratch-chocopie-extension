@@ -579,8 +579,18 @@
 	  ['b', '%m.touch touch sensor pressed?', 'isTouchButtonPressed', '1'],
 	  ['b', '%m.Rtouch remoted touch sensor pressed?', 'isRTouchButtonPressed', '1'],	//Touch Sensor is boolean block
 	  ['-'],
-	  ['r', 'read joystick value is %m.joystick', 'joystikcRead', 'X'],
-	  ['r', 'potencyometer value is %m.potency', 'potencyRead', '1']	//Joystick and potencyometer Sensor is repoter block.
+	  ['r', 'read joystick value is %m.joystick', 'joystickRead', 'X'],
+	  ['r', 'potencyometer value is %m.potency', 'potencyRead', '1'],	//Joystick and potencyometer Sensor is repoter block.
+	  ['-'],
+	  ['r', 'read infrared value is %m.infrared', 'infraredRead', '1'],
+	  ['r', 'read acceler value is %m.acceler', 'accelerRead', 'X'],
+	  ['r', 'read pacceler value is %m.pacceler', 'paccelerRead', 'U'],
+	  ['r', 'read remoted infrared value is %m.Rinfrared', 'RinfraredRead', '1'],
+	  ['r', 'read remoted acceler value is %m.Racceler', 'RaccelerRead', 'X'],
+	  ['r', 'read remoted pacceler value is %m.Rpacceler', 'RpaccelerRead', 'U'],
+	  ['-'],
+	  ['h', 'When %m.photoGate is %m.gateState', 'whenPhoto', '1', 'blocked'],
+	  ['r', 'read %m.photoGate value', 'photoRead', '1']
     ],
     ko: [
       ['h', '초코파이가 연결됐을 때', 'whenConnected'],
@@ -596,8 +606,6 @@
       ['-'],
       ['h', '%m.buttons 의 상태가 %m.btnStates 일 때', 'whenButton', '1', '눌림'],		//Patched
       ['b', '%m.buttons 가 눌려져 있는가?', 'isButtonPressed', '1'],
-
-
       ['-'],
       ['h', '%m.hwIn 의 값이 %m.ops %n% 일 때', 'whenInput', '조도 센서', '>', 50],	//Patched 
       ['r', '%m.hwIn 의 값', 'readInput', '조도 센서'],
@@ -618,8 +626,18 @@
 	  ['b', '%m.touch 터치 센서가 눌렸는가?', 'isTouchButtonPressed', '1'],			//Touch Sensor is boolean block
 	  ['b', '%m.Rtouch 원격 터치 센서가 눌렸는가?', 'isRTouchButtonPressed', '1'],	//function_name : isTouchButtonPressed isRTouchButtonPressed
 	  ['-'],
-	  ['r', '조이스틱 %m.joystick 의 값', 'joystikcRead', 'X'],		//Joystick and potencyometer Sensor is repoter block.
-      ['r', '포텐시오미터 %m.potency 의 값', 'potencyRead', '1']	//function_name : joysticRead  potencyRead 
+	  ['r', '조이스틱 %m.joystick 의 값', 'joystickRead', 'X'],		//Joystick and potencyometer Sensor is repoter block.
+      ['r', '포텐시오미터 %m.potency 의 값', 'potencyRead', '1'],	//function_name : joysticRead  potencyRead 
+	  ['-'],
+	  ['r', '적외선 %m.infrared 의 값', 'infraredRead', '1'],		//Infrared, acceler and personal acceler is repoter block.
+	  ['r', '가속도 %m.acceler 의 값', 'accelerRead', 'X'],			//function_name : infraredRead	accelerRead	paccelerRead
+	  ['r', '각 가속도%m.pacceler 의 값', 'paccelerRead', 'U'],
+	  ['r', '적외선 %m.Rinfrared 의 값', 'RinfraredRead', '1'],		//Infrared, acceler and personal acceler is repoter block.
+	  ['r', '가속도 %m.Racceler 의 값', 'RaccelerRead', 'X'],			//function_name : RinfraredRead	RaccelerRead	RpaccelerRead
+	  ['r', '각 가속도%m.Rpacceler 의 값', 'RpaccelerRead', 'U'],
+	  ['-'],
+	  ['h', '%m.photoGate 가 %m.gateState', 'whenPhoto', '1', '막히면'],	//Photogate and gatestate is defined.
+	  ['r', '%m.photoGate 의 값', 'photoRead', '1']							//function_name : whenPhoto	photoRead
     ]
   };
 
@@ -648,12 +666,18 @@
 
 		joystick: ['X', 'Y'],
 		potency: ['1'],
+		//Joystick sensor and potencyomer sensor listing
 
 		infrared: ['1','2','3'],
 		acceler: ['X','Y','Z'],
 		pacceler: ['U','V','W'],
-        lessMore: ['>', '<']	
+		Rinfrared: ['1','2','3'],	
+		Racceler: ['X','Y','Z'],
+		Rpacceler: ['U','V','W'],
+		//infrared sensor and acceler and pacceler sensor listing
 
+        photoGate: ['1', '2'],
+		gateState: ['blocked','opened']
     },
     ko: {
 		buttons: ['1', '2', '3', '4', 'J'],
@@ -680,12 +704,18 @@
 
 		joystick: ['X', 'Y'],
 		potency: ['1'],
-
+		//Joystick sensor and potencyomer sensor listing
 
 		infrared: ['1','2','3'],
 		acceler: ['X','Y','Z'],
 		pacceler: ['U','V','W'],
-        lessMore: ['>', '<']	
+		Rinfrared: ['1','2','3'],	//Remote menu definition.
+		Racceler: ['X','Y','Z'],
+		Rpacceler: ['U','V','W'],
+		//infrared sensor and acceler and pacceler sensor listing
+
+        photoGate: ['1', '2'],
+		gateState: ['막히면','열리면']
     }
   };
 
