@@ -17,12 +17,38 @@
 
 (function(ext) {
 
+	var SCBD_CHOCOPI = 0x01,
+		SCBD_CHOCOPI_USB = 0xE0,	//Chocopie USB 연결에 대한 값 디테일(상위값 14) 를 지정
+		SCBD_CHOCOPI_BLE = 0xF0,	//Chocopie BLE 연결에 대한 값 디테일(상위값 15) 를 지정	
+		SCBD_SENSOR = 0x08,
+		SCBD_TOUCH = 0x09,
+		SCBD_SWITCH = 0x0A,
+		SCBD_MOTION = 0x0B,
+		SCBD_LED = 0x0C,
+		SCBD_STEPPER = 0x0D, 
+		SCBD_DC_MOTOR = 0x0E,
+		SCBD_SERVO = 0x0F,
+		SCBD_ULTRASONIC = 0x10,
+		SCBD_PIR = 0x11;
+	//Chocopie const definition
+
+	var CPC_VERSION = 8,
+		CPC_START = 9,
+		CPC_STOP = 10,
+		CPC_SET_NAME = 11,
+		CPC_GET_NAME = 12,
+		CPC_GET_BLOCK = 13,
+		CPC_ALL_SAY = 14
+	//Chocopie command definition
+
+  	
+  
   var PIN_MODE = 0xF4,
-    REPORT_DIGITAL = 0xD0,
-    REPORT_ANALOG = 0xC0,
+    REPORT_DIGITAL = 0xD0,		//DIGITAL 신호가 들어왔을때 보고하는 값
+    REPORT_ANALOG = 0xC0,		//아날로그 신호가 들어왔을때 보고하는 값
     DIGITAL_MESSAGE = 0x90,
-    START_SYSEX = 0xF0,
-    END_SYSEX = 0xF7,
+    START_SYSEX = 0xF0,			//메세지의 시작패킷을 알리는 헤더
+    END_SYSEX = 0xF7,			//메세지의 꼬리패킷을 알리는 테일러
     QUERY_FIRMWARE = 0x79,
     REPORT_VERSION = 0xF9,
     ANALOG_MESSAGE = 0xE0,
@@ -115,6 +141,7 @@
     }
 
     queryCapabilities();
+	//쿼리의 상태를 확인하기위해 함수 가동
 
     // TEMPORARY WORKAROUND
     // Since _deviceRemoved is not used with Serial devices
@@ -149,9 +176,32 @@
   }
 
   function queryFirmware() {
-    var output = new Uint8Array([START_SYSEX, QUERY_FIRMWARE, END_SYSEX]);
-    device.send(output.buffer);
+    //var output = new Uint8Array([START_SYSEX, QUERY_FIRMWARE, END_SYSEX]);
+	
+	var check = checkSum(SCBD_CHOCOPI_USB);
+	var usb_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_USB, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
+    device.send(usb_output.buffer);
+	
+	for(var i=0; i < storedInputData.length ; i++){
+		if (storedInputData[i] != 0x00)
+		{
+			check = checkSum(SCBD_CHOCOPI_BLE);
+			var ble_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_BLE, check ,END_SYSEX]);
+			device.send(ble_output.buffer);
+		}
+	}
   }
+
+	function checkSum(buffer){
+		var sum1;
+		for(var i=0; i < buffer.length ; i++ ){
+			sum1 ^= buffer[i];
+		}
+		return sum1;
+	}
+	//Port/detail, data를 checksum 함
+	
+
 
   function queryCapabilities() {
     console.log('Querying ' + device.id + ' capabilities');
@@ -221,6 +271,7 @@
         pinging = false;
         pingCount = 0;
         break;
+		//펌웨어에 대한 연결을 허용시키는 부분
     }
   }
 
@@ -230,8 +281,10 @@
         if (inputData[i] == END_SYSEX) {
           parsingSysex = false;
           processSysexMessage();
+		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 프로세싱 시작
         } else {
           storedInputData[sysexBytesRead++] = inputData[i];
+		  //END 값이 아니면 storedInputData 에 들어온 데이터를 지속적으로 저장.. 이렇게해서 storedInputData 에는 들어온 데이터가 담기게됨
         }
       } else if (waitForData > 0 && inputData[i] < 0x80) {
         storedInputData[--waitForData] = inputData[i];
@@ -252,6 +305,7 @@
         if (inputData[i] < 0xF0) {
           command = inputData[i] & 0xF0;
           multiByteChannel = inputData[i] & 0x0F;
+		  //들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용하고 있었음
         } else {
           command = inputData[i];
         }
@@ -343,6 +397,89 @@
         deg >> 0x07]);
     device.send(msg.buffer);
   }
+	//Function added
+	
+
+
+   ext.rotateMServo = function(servospost,servos,angle){
+   }
+   
+   ext.rotateRMServo = function(servospost,servos,angle){
+   }
+   
+
+
+   ext.RAnalogRead = function(pin){
+   }
+   
+   ext.isTouchButtonPressed = function(touchstate){
+   }
+   
+   ext.isRTouchButtonPressed = function(rtouchstate){
+   }
+   
+   ext.joystickRead = function(joystick){
+   }
+   
+   ext.potencyRead = function(potency){ 
+   }
+   
+
+   ext.infraredRead = function(infrared){
+   }
+   
+   ext.accelerRead = function(acceler){
+   }
+   
+   ext.paccelerRead = function(infrared){
+   }
+   
+   ext.RinfraredRead = function(infrared){
+   }
+   
+   ext.RaccelerRead = function(acceler){
+   }
+   
+   ext.RpaccelerRead = function(acceler){
+   }
+   
+
+   ext.whenPhoto = function(photoGate,gateState){
+   }
+   
+   ext.photoRead = function(photoGate){
+   }
+   
+   ext.whenRPhoto = function(photoGate,gateState){
+   }
+   
+   ext.RphotoRead = function(photoGate){
+   }
+   
+   ext.passLEDrgb = function(led,l,g,b){
+   }
+   
+   ext.passRLEDrgb = function(led,l,g,b){
+   }
+   
+   ext.passSteppingDA = function(motor,direction,speed){
+   }
+   
+   ext.passSteppingDAA = function(motor,direction,speed){
+   }
+   
+   ext.passRSteppingDA = function(motor,direction,speed){
+   }
+   
+   ext.passRSteppingDAA = function(motor,direction,speed){
+   }
+   
+   ext.passDCDA = function(motor,direction,speed){
+      
+   }
+   
+   ext.passRDCDA = function(motor,direction,speed){
+   }
 
   ext.whenConnected = function() {
     if (notifyConnection) return true;
