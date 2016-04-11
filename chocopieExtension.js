@@ -615,7 +615,7 @@
       //[' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
       //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', '%m.networks   %m.servosport   %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
+      [' ', '%m.networks   %m.servoport   %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
       //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
 																							//light, temperature, humidity and analog sensor combined (normal, remote)
@@ -816,7 +816,7 @@
 		ops: ['>', '=', '<'],
 		servos: ['서보모터 1', '서보모터 2', '서보모터 3', '서보모터 4'],
 		//mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
-		servoport: [ '포트 1', '포트 2', '포트 3', '포트 4', '포트 5', '포트 6', '포트 7', '포트 8'],
+		servosport: [ '포트 1', '포트 2', '포트 3', '포트 4', '포트 5', '포트 6', '포트 7', '포트 8'],
 
 		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
 
