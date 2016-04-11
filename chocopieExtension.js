@@ -615,12 +615,11 @@
       //[' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
       //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', '%m.networks   %m.servoport   %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
+      [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
       //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
-																							//light, temperature, humidity and analog sensor combined (normal, remote)
-      ['r', 'read from %m.networks to %m.hwIn', 'readInput', 'normal','light sensor'],		//function_name: readInput
-      ['-'],
+      ['r', 'read from %m.networks to %m.hwIn', 'readInput', 'normal','light sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
+      ['-'],																				//function_name: readInput
       //[' ', 'set pin %n %m.outputs', 'digitalWrite', 1, 'on'],
       //[' ', 'set pin %n to %n%', 'analogWrite', 3, 100],
       //['-'],
@@ -663,7 +662,7 @@
       //[' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
       //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', '%m.networks   %m.servosport   %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
+      [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
       ['-'],																						
       ['r', '%m.networks 센서블록 %m.hwIn의 값', 'readInput', '일반','조도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																			// function_name = readInput
@@ -711,7 +710,7 @@
 		btnStates: ['0', '1'],
 		//0 : pressed  1: released
 
-		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor','Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],						
+		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor', 'Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],						
 		//Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
 
 		//hwOut: ['led A', 'led B', 'led C', 'led D', 'button A', 'button B', 'button C', 'button D', 'servo A', 'servo B', 'servo C', 'servo D'], 
@@ -815,14 +814,10 @@
 		outputs: ['켜기', '끄기'],
 		ops: ['>', '=', '<'],
 		servos: ['서보모터 1', '서보모터 2', '서보모터 3', '서보모터 4'],
-		//mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 		servosport: [ '포트 1', '포트 2', '포트 3', '포트 4', '포트 5', '포트 6', '포트 7', '포트 8'],
 
-		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
-
 		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
-		//Rtouch : ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
-		// Touch sensor and Remoted touch sensor listing
+		// Touch sensor listing
 
 		motionb: ['적외선 감지 1', '적외선 감지  2', '적외선 감지  3', 
 			'가속도 X', '가속도 Y', '가속도 Z', 
