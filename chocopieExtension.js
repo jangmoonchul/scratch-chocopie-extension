@@ -790,6 +790,7 @@
 		btnStates: ['0', '1'],
 		// 0 : 눌림  1 : 떼짐
 
+
 		hwIn: ['조도', '온도', '습도','아날로그 1', '아날로그 2', '아날로그 3', '아날로그 4'],
 		// light, temperature and humidity and Analog Sensor for 1, 2, 3 and 4 is defined.
 		//hwOut: ['led A', 'led B', 'led C', 'led D', '버튼 A', '버튼 B', '버튼 C', '버튼 D', '서보모터 A', '서보모터 B', '서보모터 C', '서보모터 D'],
