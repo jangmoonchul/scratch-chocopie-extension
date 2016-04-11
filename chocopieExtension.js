@@ -615,7 +615,7 @@
       //[' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
       //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal','Servo 1','Port 1', 180],
+      [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
       //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
 																							//light, temperature, humidity and analog sensor combined (normal, remote)
@@ -663,7 +663,7 @@
       //[' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
       //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
       ['-'],
-      [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '서보모터 1', '포트 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
+      [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
       ['-'],																						
       ['r', '%m.networks 센서블록 %m.hwIn의 값', 'readInput', '일반','조도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																			// function_name = readInput
