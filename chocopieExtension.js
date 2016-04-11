@@ -636,7 +636,7 @@
       ['-'],
       //['r', 'map %n from %n %n to %n %n', 'mapValues', 50, 0, 100, -240, 240],
 	  //['-'],
-	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', '1'],		//Touch Sensor is boolean block (normal, remote)
+	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 																								//function_name : isTouchButtonPressed
       ['-'],
       ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', '0'],		//sw block (button 1, .. )
@@ -685,7 +685,7 @@
       //['-'],
       //['r', '%n 을(를) %n ~ %n 에서 %n ~ %n 의 범위로 바꾸기', 'mapValues', 50, 0, 100, -240, 240],
 	  //['-'],
-	  ['b', '%m.networks 터치센서 %m.touch의 값', 'isTouchButtonPressed', '1'],			//Touch Sensor is boolean block	-- normal and remote					
+	  ['b', '%m.networks 터치센서 %m.touch의 값', 'isTouchButtonPressed', '일반','1'],			//Touch Sensor is boolean block	-- normal and remote					
 	  ['-'],																			//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', '0'],				//sw block (button 1, .. )
       ['b', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','버튼 1'],							//buttons ( button 1,.. , Joystick X, ..)				
@@ -697,8 +697,8 @@
 	  [' ', '%m.networks LED블록 위치 %n 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '일반', 0, 0, 0, 0],		//LED block is defined.	function_name : passLEDrgb
 	  [' ', '%m.networks 버저 음높이 %n 연주시간 %n 밀리초', 'passBUZEER', '일반', 0, 1000],			//Buzzer block is defined. function_name : passBUZEER
 	  ['-'],
-	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection', 'passSteppingAD', 'normal', '1', 0, '시계'],
-	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection 회전량 %n', 'passSteppingADA', 'normal', '1', 0, '시계', 0],
+	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection', 'passSteppingAD', '일반', '1', 0, '시계'],
+	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection 회전량 %n', 'passSteppingADA', '일반', '1', 0, '시계', 0],
 		//Stepping Motor is defined.
 		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],																												//DC motor is defined
