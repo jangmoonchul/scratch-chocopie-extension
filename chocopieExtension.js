@@ -17,21 +17,22 @@
 
 (function(ext) {
 
-	var SCBD_CHOCOPI = 0x01,
-		SCBD_CHOCOPI_USB = 0xE0,	//Chocopie USB 연결에 대한 값 디테일(상위값 14) 를 지정
-		SCBD_CHOCOPI_BLE = 0xF0,	//Chocopie BLE 연결에 대한 값 디테일(상위값 15) 를 지정	
-		SCBD_SENSOR = 0x08,
-		SCBD_TOUCH = 0x09,
-		SCBD_SWITCH = 0x0A,
-		SCBD_MOTION = 0x0B,
-		SCBD_LED = 0x0C,
-		SCBD_STEPPER = 0x0D, 
-		SCBD_DC_MOTOR = 0x0E,
-		SCBD_SERVO = 0x0F,
-		SCBD_ULTRASONIC = 0x10,
-		SCBD_PIR = 0x11;
-	//Chocopie const definition
-
+	var SCBD_CHOCOPI = 0x10,
+		SCBD_CHOCOPI_USB = 0xE0,	//Chocopie USB 연결에 대한 값 디테일(상위값 14, 포트0) 을 지정
+		SCBD_CHOCOPI_BLE = 0xF0,	//Chocopie BLE 연결에 대한 값 디테일(상위값 15, 포트0) 를 지정	
+		SCBD_SENSOR = 0x80,
+		SCBD_TOUCH = 0x90,
+		SCBD_SWITCH = 0xA0,
+		SCBD_MOTION = 0xB0,
+		SCBD_LED = 0xC0,
+		SCBD_STEPPER = 0xD0, 
+		SCBD_DC_MOTOR = 0xE0,		//SCBD_CHOCOPI_USB 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
+		SCBD_SERVO = 0xF0;			//SCBD_CHOCOPI_BLE 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
+		//SCBD_ULTRASONIC = 0x10,		
+		//SCBD_PIR = 0x11;
+	/*Chocopie const definition
+	 * SCBD_ULTRASONIC 와 SCBD_PIR 은 아직 존재하지않는 확장영역으로써 설계되어져있음
+	*/
 	var CPC_VERSION = 8,
 		CPC_START = 9,
 		CPC_STOP = 10,
@@ -191,6 +192,7 @@
 		}
 	}
   }
+	//Changed BY Remoted 2016.04.11
 
 	function checkSum(buffer){
 		var sum1;
@@ -397,89 +399,11 @@
         deg >> 0x07]);
     device.send(msg.buffer);
   }
-	//Function added
-	
+	//Function added Line
 
 
-   ext.rotateMServo = function(servospost,servos,angle){
-   }
-   
-   ext.rotateRMServo = function(servospost,servos,angle){
-   }
-   
 
-
-   ext.RAnalogRead = function(pin){
-   }
-   
-   ext.isTouchButtonPressed = function(touchstate){
-   }
-   
-   ext.isRTouchButtonPressed = function(rtouchstate){
-   }
-   
-   ext.joystickRead = function(joystick){
-   }
-   
-   ext.potencyRead = function(potency){ 
-   }
-   
-
-   ext.infraredRead = function(infrared){
-   }
-   
-   ext.accelerRead = function(acceler){
-   }
-   
-   ext.paccelerRead = function(infrared){
-   }
-   
-   ext.RinfraredRead = function(infrared){
-   }
-   
-   ext.RaccelerRead = function(acceler){
-   }
-   
-   ext.RpaccelerRead = function(acceler){
-   }
-   
-
-   ext.whenPhoto = function(photoGate,gateState){
-   }
-   
-   ext.photoRead = function(photoGate){
-   }
-   
-   ext.whenRPhoto = function(photoGate,gateState){
-   }
-   
-   ext.RphotoRead = function(photoGate){
-   }
-   
-   ext.passLEDrgb = function(led,l,g,b){
-   }
-   
-   ext.passRLEDrgb = function(led,l,g,b){
-   }
-   
-   ext.passSteppingDA = function(motor,direction,speed){
-   }
-   
-   ext.passSteppingDAA = function(motor,direction,speed){
-   }
-   
-   ext.passRSteppingDA = function(motor,direction,speed){
-   }
-   
-   ext.passRSteppingDAA = function(motor,direction,speed){
-   }
-   
-   ext.passDCDA = function(motor,direction,speed){
-      
-   }
-   
-   ext.passRDCDA = function(motor,direction,speed){
-   }
+	//Function added Line - end 
 
   ext.whenConnected = function() {
     if (notifyConnection) return true;
@@ -696,11 +620,8 @@
 	  [' ', 'remote %m.servospost port motor %m.servos to %n degrees', 'rotateRMServo', '1', '1', 180],
       //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
-      ['h', 'when %m.buttons is %m.btnStates', 'whenButton', '1', 'pressed'],	//Patched
-      ['b', '%m.buttons pressed?', 'isButtonPressed', '1'],
-      ['-'],
-      ['h', 'when %m.hwIn %m.ops %n%', 'whenInput', 'light sensor', '>', 50],
-      ['r', 'read %m.hwIn', 'readInput', 'light sensor'],		//Patched
+																							//light, temperature, humidity and analog sensor combined (normal, remote)
+      ['r', 'read from %m.networks to %m.hwIn', 'readInput', 'normal','light sensor'],		//function_name: readInput
       ['-'],
       //[' ', 'set pin %n %m.outputs', 'digitalWrite', 1, 'on'],
       //[' ', 'set pin %n to %n%', 'analogWrite', 3, 100],
@@ -709,29 +630,21 @@
       //['b', 'pin %n on?', 'digitalRead', 1],
       //['-'],
       //['h', 'when analog %m.analogSensor %m.ops %n%', 'whenAnalogRead', 1, '>', 50],
-      ['r', 'read analog %m.analogSensor', 'analogRead', 0],
+      //['r', 'read analog %m.analogSensor', 'analogRead', 0],
 	  //['h', 'when remoted analog %m.RanalogSensor %m.ops %n%', 'whenRAnalogRead', 1, '>', 50],
-      ['r', 'read remoted analog %m.RanalogSensor', 'RAnalogRead', 0],		//Patched
+      //['r', 'read remoted analog %m.RanalogSensor', 'RAnalogRead', 0],		//Patched
       ['-'],
       //['r', 'map %n from %n %n to %n %n', 'mapValues', 50, 0, 100, -240, 240],
 	  //['-'],
-	  ['b', '%m.touch touch sensor pressed?', 'isTouchButtonPressed', '1'],
-	  ['b', '%m.Rtouch remoted touch sensor pressed?', 'isRTouchButtonPressed', '1'],	//Touch Sensor is boolean block
-	  ['-'],
-	  ['r', 'read joystick value is %m.joystick', 'joystickRead', 'X'],
-	  ['r', 'potencyometer value is %m.potency', 'potencyRead', '1'],	//Joystick and potencyometer Sensor is repoter block.
-	  ['-'],
-	  ['r', 'read infrared value is %m.infrared', 'infraredRead', '1'],
-	  ['r', 'read acceler value is %m.acceler', 'accelerRead', 'X'],
-	  ['r', 'read pacceler value is %m.pacceler', 'paccelerRead', 'U'],
-	  ['r', 'read remoted infrared value is %m.infrared', 'RinfraredRead', '1'],
-	  ['r', 'read remoted acceler value is %m.acceler', 'RaccelerRead', 'X'],
-	  ['r', 'read remoted pacceler value is %m.pacceler', 'RpaccelerRead', 'U'],
-	  ['-'],
-	  ['h', 'When photogate %m.photoGate is %m.gateState', 'whenPhoto', '1', 'blocked'],
-	  ['r', 'read photogate %m.photoGate value', 'photoRead', '1'],
-	  ['h', 'When remoted photogate %m.photoGate is %m.gateState', 'whenRPhoto', '1', 'blocked'],
-	  ['r', 'read remoted photogate %m.photoGate value', 'RphotoRead', '1'],
+	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', '1'],		//Touch Sensor is boolean block (normal, remote)
+																								//function_name : isTouchButtonPressed
+      ['-'],
+      ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', '0'],		//sw block (button 1, .. )
+      ['b', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Button 1'],				//buttons ( button 1,.. , Joystick X, ..)
+																												//Buttons, Joystick and Potencyometer function is combined.
+	  ['-'],																									//function_name : whenButton	isButtonPressed
+	  ['r', '%m.networks motion-block %m.motionb of value', 'motionbRead', 'normal','infrared 1'],								//Motion block is infrared, acceler and so on
+	  ['h', 'when %m.networks motion-block %m.photoGate is %m.gateState', 'photoGateRead', 'normal', 'photoGate 1', 'blocked'],	//function_name : motionbRead	photoGateRead	
 	  ['-'],
 	  [' ', 'LED %m.leds RED %n GREEN %n BLUE %n', 'passLEDrgb', '0', 0, 0, 0],
 	  [' ', 'Remote LED %m.leds RED %n GREEN %n BLUE %n', 'passRLEDrgb', '0', 0, 0, 0],
@@ -757,11 +670,8 @@
 	  [' ', '%m.servospost 포트 서보모터 %m.servos 각도 %n', 'rotateMServo', '1', '1', 180],			//function_name : rotateServo	rotateMServo	rotateRMServo
 	  [' ', '원격 %m.servospost 포트 서보모터 %m.servos 각도 %n', 'rotateRMServo', '1', '1', 180],
       ['-'],
-      ['h', '%m.buttons 의 상태가 %m.btnStates 일 때', 'whenButton', '1', '눌림'],		//Patched
-      ['b', '%m.buttons 가 눌려져 있는가?', 'isButtonPressed', '1'],
-      ['-'],
-      ['h', '%m.hwIn 의 값이 %m.ops %n% 일 때', 'whenInput', '조도 센서', '>', 50],	//Patched 
-      ['r', '%m.hwIn 의 값', 'readInput', '조도 센서'],
+																						// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
+      ['r', '%m.networks 센서블록 %m.hwIn의 값', 'readInput', '일반','조도'],			// function_name = readInput
       ['-'],
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
       //[' ', '%n 번 핀의 값을 %n% 로 설정하기', 'analogWrite', 3, 100],
@@ -770,29 +680,20 @@
       //['b', '%n 번 핀이 켜져있는가?', 'digitalRead', 1],
       //['-'],
       //['h', '아날로그 %m.analogSensor 번의 값이 %m.ops %n% 일 때', 'whenAnalogRead', 1, '>', 50],
-      ['r', '아날로그 %m.analogSensor 번의 값', 'analogRead', 0],
+      //['r', '아날로그 %m.analogSensor 번의 값', 'analogRead', 0],
 	  //['h', '원격 아날로그 %m.RanalogSensor 번의 값이 %m.ops %n% 일 때', 'whenRAnalogRead', 1, '>', 50],
-      ['r', '원격 아날로그 %m.RanalogSensor 번의 값', 'RAnalogRead', 0],	//Patched 
-      ['-'],
+      //['r', '원격 아날로그 %m.RanalogSensor 번의 값', 'RAnalogRead', 0],	//Patched 
+      //['-'],
       //['r', '%n 을(를) %n ~ %n 에서 %n ~ %n 의 범위로 바꾸기', 'mapValues', 50, 0, 100, -240, 240],
 	  //['-'],
-	  ['b', '%m.touch 터치 센서가 눌렸는가?', 'isTouchButtonPressed', '1'],			//Touch Sensor is boolean block
-	  ['b', '%m.Rtouch 원격 터치 센서가 눌렸는가?', 'isRTouchButtonPressed', '1'],	//function_name : isTouchButtonPressed isRTouchButtonPressed
-	  ['-'],
-	  ['r', '조이스틱 %m.joystick 의 값', 'joystickRead', 'X'],		//Joystick and potencyometer Sensor is repoter block.
-      ['r', '포텐시오미터 %m.potency 의 값', 'potencyRead', '1'],	//function_name : joysticRead  potencyRead 
-	  ['-'],
-	  ['r', '적외선 %m.infrared 의 값', 'infraredRead', '1'],		//Infrared, acceler and personal acceler is repoter block.
-	  ['r', '가속도 %m.acceler 의 값', 'accelerRead', 'X'],			//function_name : infraredRead	accelerRead	paccelerRead
-	  ['r', '각 가속도%m.pacceler 의 값', 'paccelerRead', 'U'],
-	  ['r', '적외선 %m.infrared 의 값', 'RinfraredRead', '1'],		//Infrared, acceler and personal acceler is repoter block.
-	  ['r', '가속도 %m.acceler 의 값', 'RaccelerRead', 'X'],			//function_name : RinfraredRead	RaccelerRead	RpaccelerRead
-	  ['r', '각 가속도%m.pacceler 의 값', 'RpaccelerRead', 'U'],
-	  ['-'],
-	  ['h', '포토게이트 %m.photoGate 가 %m.gateState', 'whenPhoto', '1', '막히면'],	//Photogate and gatestate is defined.
-	  ['r', '포토게이트 %m.photoGate 의 값', 'photoRead', '1'],							//function_name : whenPhoto	photoRead
-	  ['h', '원격 포토게이트 %m.photoGate 가 %m.gateState', 'whenRPhoto', '1', '막히면'],	//Remote Photogate and remote gatestate is defined.
-	  ['r', '원격 포토게이트 %m.photoGate 의 값', 'RphotoRead', '1'],						//function_name : whenRPhoto	RphotoRead
+	  ['b', '%m.networks 터치센서 %m.touch의 값', 'isTouchButtonPressed', '1'],			//Touch Sensor is boolean block	-- normal and remote					
+	  ['-'],																			//function_name : isTouchButtonPressed 
+      ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', '0'],				//sw block (button 1, .. )
+      ['b', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','버튼 1'],							//buttons ( button 1,.. , Joystick X, ..)				
+																													//Buttons, Joystick and Potencyometer function is combined.
+	  ['-'],																										//function_name :  isButtonPressed	whenButton
+	  ['r', '%m.networks 모션블록 %m.motionb 의 값', 'motionbRead', '일반','적외선 감지 1'],								//Motion block is infrared, acceler and so on
+	  ['h', '%m.networks 모션블록 %m.photoGate 가 %m.gateState', 'photoGateRead', '일반', '포토게이트 1', '막힐때'],	//function_name : motionbRead	photoGateRead	
 	  ['-'],																	//LED RGB definition
 	  [' ', 'LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0', 0, 0, 0],		//function_name : passLEDrgb
 	  [' ', '원격 LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', 0, 0, 0],	//function_name : passRLEDrgb
@@ -809,10 +710,22 @@
 
   var menus = {
     en: {
-		buttons: ['1', '2', '3', '4', 'J'],
-		btnStates: ['pressed', 'released'],
-		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor'],						//get from Hardware Value
-		RhwIn: ['remote light sensor', 'remote temperature sensor', 'remote humidity sensor'],	//get from remote hardware value
+		networks: ['normal', 'remote'],
+		buttons: ['Button 1', 'Button 2', 'Button 3', 'Button 4', 'Button J', 'Joystick X', 'Joystick Y', 'Potencyometer'],
+		sw: ['Button 1', 'Button 2', 'Button 3', 'Button 4', 'Button J'],
+		//Buttons, Joystick sensor and potencyomer sensor listing
+
+		btnStates: ['0', '1'],
+		//0 : pressed  1: released
+
+		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor','Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],						
+		//get from Hardware Value
+		RhwIn: ['remote light sensor', 'remote temperature sensor', 'remote humidity sensor','Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],	
+		//get from remote hardware value
+
+		//analogSensor: ['1', '2', '3', '4'],
+		//RanalogSensor: ['1', '2', '3', '4'],
+		// Remoted Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
 
 		//hwOut: ['led A', 'led B', 'led C', 'led D', 'button A', 'button B', 'button C', 'button D', 'servo A', 'servo B', 'servo C', 'servo D'], 
 		//To out Hardware Value 
@@ -850,28 +763,17 @@
 
 		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
 
-		analogSensor: ['1', '2', '3', '4'],
-		RanalogSensor: ['1', '2', '3', '4'],
-		// Remoted Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
-
 		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
-		Rtouch : ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
+		//Rtouch : ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
 		// Touch sensor and Remoted touch sensor listing
-
-		joystick: ['X', 'Y'],
-		potency: ['1'],
-		//Joystick sensor and potencyomer sensor listing
-
-		infrared: ['1','2','3'],
-		acceler: ['X','Y','Z'],
-		pacceler: ['U','V','W'],
-		Rinfrared: ['1','2','3'],	
-		Racceler: ['X','Y','Z'],
-		Rpacceler: ['U','V','W'],
-		//infrared sensor and acceler and pacceler sensor listing
-
-        photoGate: ['1', '2'],
+	
+		motionb: ['infrared 1', 'infrared 2', 'infrared 3', 
+			'acceler X', 'acceler Y', 'acceler Z', 
+			'pacceler U', 'pacceler V', 'pacceler W', 
+			'photoGate 1', 'photoGate 2'],
+		photoGate: ['photoGate 1', 'photoGate 2'],
 		gateState: ['blocked','opened'],
+		//infrared sensor and acceler and pacceler sensor listing
 		//photogate and gate status is defined.
 		
 		steppingMotor: ['1', '2'],
@@ -882,12 +784,16 @@
 
     },
     ko: {
-		buttons: ['1', '2', '3', '4', 'J'],
-		btnStates: ['눌림', '떼짐'],
+		networks: ['일반', '무선'],
+		buttons: ['버튼 1', '버튼 2', '버튼 3', '버튼 4', '버튼 J', '조이스틱 X', '조이스틱 Y', '포텐시오미터'],
+		sw : ['버튼 1', '버튼 2', '버튼 3', '버튼 4', '버튼 J'],
+		//Joystick sensor and potencyomer sensor listing
 
-		hwIn: ['조도 센서', '온도 센서','습도 센서'],
-		RhwIn: ['원격 조도 센서', '원격 온도 센서','원격 습도 센서'], 
+		btnStates: ['0', '1'],
+		// 0 : 눌림  1 : 떼짐
 
+		hwIn: ['조도', '온도', '습도','아날로그 1', '아날로그 2', '아날로그 3', '아날로그 4'],
+		// Remoted Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
 		//hwOut: ['led A', 'led B', 'led C', 'led D', '버튼 A', '버튼 B', '버튼 C', '버튼 D', '서보모터 A', '서보모터 B', '서보모터 C', '서보모터 D'],
 		leds: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
 			'11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
@@ -923,29 +829,17 @@
 
 		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
 
-        analogSensor: ['1', '2', '3', '4'],
-		RanalogSensor: ['1', '2', '3', '4'],
-		// Remoted Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
-
-
 		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
-		Rtouch : ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
+		//Rtouch : ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
 		// Touch sensor and Remoted touch sensor listing
 
-		joystick: ['X', 'Y'],
-		potency: ['1'],
-		//Joystick sensor and potencyomer sensor listing
-
-		infrared: ['1','2','3'],
-		acceler: ['X','Y','Z'],
-		pacceler: ['U','V','W'],
-		Rinfrared: ['1','2','3'],	//Remote menu definition.
-		Racceler: ['X','Y','Z'],
-		Rpacceler: ['U','V','W'],
+		motionb: ['적외선 감지 1', '적외선 감지  2', '적외선 감지  3', 
+			'가속도 X', '가속도 Y', '가속도 Z', 
+			'각가속도 U', '각가속도 V', '각가속도 W', 
+			'포토게이트 1', '포토게이트 2'],
+		photoGate: ['포토게이트 1', '포토게이트 2'],
+		gateState: ['막힐때','열릴때'],
 		//infrared sensor and acceler and pacceler sensor listing
-
-        photoGate: ['1', '2'],
-		gateState: ['막히면','열리면'],
 		//photogate and gate status is defined.
 
 		steppingMotor: ['1', '2'],
