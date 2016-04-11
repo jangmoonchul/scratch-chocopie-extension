@@ -646,16 +646,15 @@
 	  ['r', '%m.networks motion-block %m.motionb of value', 'motionbRead', 'normal','infrared 1'],								//Motion block is infrared, acceler and so on
 	  ['h', 'when %m.networks motion-block %m.photoGate is %m.gateState', 'photoGateRead', 'normal', 'photoGate 1', 'blocked'],	//function_name : motionbRead	photoGateRead	
 	  ['-'],
-	  [' ', 'LED %m.leds RED %n GREEN %n BLUE %n', 'passLEDrgb', '0', 0, 0, 0],
-	  [' ', 'Remote LED %m.leds RED %n GREEN %n BLUE %n', 'passRLEDrgb', '0', 0, 0, 0],
+	  [' ', '%m.networks LED LOCATION %n RED %n GREEN %n BLUE %n', 'passLEDrgb', 'normal', 0, 0, 0, 0],		//LED block is defined.	function_name : passLEDrgb
+	  [' ', '%m.networks BUZZER PITCH %n DURATION %n seconds', 'passBUZEER', 'normal', 0, 1000],			//Buzzer block is defined. function_name : passBUZEER
 	  ['-'],
-	  [' ', 'Stepping Motor %m.steppingMotor Direction %n Accel %n', 'passSteppingDA', '1', 0, 0],
-	  [' ', 'Stepping Motor %m.steppingMotor Direction %n Accel %n Angle %n', 'passSteppingDAA', '1', 0, 0, 0],
-	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Accel %n', 'passRSteppingDA', '1', 0, 0],
-	  [' ', 'Remote Stepping Motor %m.steppingMotor Direction %n Accel %n Angle %n', 'passRSteppingDAA', '1', 0, 0, 0],
+	  [' ', '%m.networks %m.steppingMotor Stepping Motor Accel %n Direction %m.stepDirection', 'passSteppingAD', 'normal', '1', 0, 'clockwise'],
+	  [' ', '%m.networks %m.steppingMotor Stepping Motor Accel %n Direction %m.stepDirection Angle %n', 'passSteppingADA', 'normal', '1', 0, 'clockwise', 0],
+		//Stepping Motor is defined.
+		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],
-	  [' ', 'DC Motor %m.dcMotor Direction %n Accel %n', 'passDCDA', '1', 0, 0],
-	  [' ', 'Remote DC Motor %m.dcMotor Direction %n Accel %n', 'passRDCDA', '1', 0, 0]
+	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', '1', 0, 'clockwise']
     ],
     ko: [
       ['h', '초코파이가 연결됐을 때', 'whenConnected'],
@@ -695,16 +694,15 @@
 	  ['r', '%m.networks 모션블록 %m.motionb 의 값', 'motionbRead', '일반','적외선 감지 1'],								//Motion block is infrared, acceler and so on
 	  ['h', '%m.networks 모션블록 %m.photoGate 가 %m.gateState', 'photoGateRead', '일반', '포토게이트 1', '막힐때'],	//function_name : motionbRead	photoGateRead	
 	  ['-'],																	//LED RGB definition
-	  [' ', 'LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '0', 0, 0, 0],		//function_name : passLEDrgb
-	  [' ', '원격 LED %m.leds 빨강 %n 녹색 %n 파랑 %n', 'passRLEDrgb', '0', 0, 0, 0],	//function_name : passRLEDrgb
+	  [' ', '%m.networks LED블록 위치 %n 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '일반', 0, 0, 0, 0],		//LED block is defined.	function_name : passLEDrgb
+	  [' ', '%m.networks 버저 음높이 %n 연주시간 %n 밀리초', 'passBUZEER', '일반', 0, 1000],			//Buzzer block is defined. function_name : passBUZEER
 	  ['-'],
-	  [' ', '스테핑 모터 %m.steppingMotor 방향 %n 속도 %n', 'passSteppingDA', '1', 0, 0],					//Stepping Motor is defined
-	  [' ', '스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passSteppingDAA', '1', 0, 0, 0],		//function_name : passSteppingDA passSteppingDAA
-	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n', 'passRSteppingDA', '1', 0, 0],				//Remote Stepping Motor is defined
-	  [' ', '원격 스테핑 모터 %m.steppingMotor 방향 %n 속도 %n 각도 %n', 'passRSteppingDAA', '1', 0, 0, 0],	//function_name : passRSteppingDA passRSteppingDAA
-	  ['-'],
-	  [' ', 'DC 모터 %m.dcMotor 방향 %n 속도 %n', 'passDCDA', '1', 0, 0],		//DC motor is defined
-	  [' ', '원격 DC 모터 %m.dcMotor 방향 %n 속도 %n', 'passRDCDA', '1', 0, 0]	//function_name : passDCDA passRDCDA
+	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection', 'passSteppingAD', 'normal', '1', 0, '시계'],
+	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection 회전량 %n', 'passSteppingADA', 'normal', '1', 0, '시계', 0],
+		//Stepping Motor is defined.
+		//function_name : passSteppingAD	passSteppingADA
+	  ['-'],																												//DC motor is defined
+	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', '1', 0, 'clockwise']		//function_name : passDCDA passRDCDA	
     ]
   };
 
@@ -720,8 +718,6 @@
 
 		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor','Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],						
 		//get from Hardware Value
-		RhwIn: ['remote light sensor', 'remote temperature sensor', 'remote humidity sensor','Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],	
-		//get from remote hardware value
 
 		//analogSensor: ['1', '2', '3', '4'],
 		//RanalogSensor: ['1', '2', '3', '4'],
@@ -729,6 +725,7 @@
 
 		//hwOut: ['led A', 'led B', 'led C', 'led D', 'button A', 'button B', 'button C', 'button D', 'servo A', 'servo B', 'servo C', 'servo D'], 
 		//To out Hardware Value 
+		/*
 		leds: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
 			'11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
 			'21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
@@ -754,7 +751,7 @@
 			'221', '222', '223', '224', '225', '226', '227', '228', '229', '230',
 			'231', '232', '233', '234', '235', '236', '237', '238', '239', '240',
 			'241', '242', '243', '244', '245', '246', '247', '248', '249', '250',
-			'251', '252', '253', '254', '255'],
+			'251', '252', '253', '254', '255'],*/
 		outputs: ['on', 'off'],
 		ops: ['>', '=', '<'],
 		servos: ['1', '2', '3', '4'],
@@ -775,11 +772,12 @@
 		gateState: ['blocked','opened'],
 		//infrared sensor and acceler and pacceler sensor listing
 		//photogate and gate status is defined.
-		
+
 		steppingMotor: ['1', '2'],
+		stepDirection:['clockwise','declockwise'],
 		//steppingMotor is defined.
 
-		dcMotor: ['1','2','3']
+		dcMotor: ['1','2','3','4']
 		//dcMotor is defined.
 
     },
@@ -793,9 +791,9 @@
 		// 0 : 눌림  1 : 떼짐
 
 		hwIn: ['조도', '온도', '습도','아날로그 1', '아날로그 2', '아날로그 3', '아날로그 4'],
-		// Remoted Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
+		// light, temperature and humidity and Analog Sensor for 1, 2, 3 and 4 is defined.
 		//hwOut: ['led A', 'led B', 'led C', 'led D', '버튼 A', '버튼 B', '버튼 C', '버튼 D', '서보모터 A', '서보모터 B', '서보모터 C', '서보모터 D'],
-		leds: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+		/*leds: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
 			'11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
 			'21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
 			'31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
@@ -820,7 +818,7 @@
 			'221', '222', '223', '224', '225', '226', '227', '228', '229', '230',
 			'231', '232', '233', '234', '235', '236', '237', '238', '239', '240',
 			'241', '242', '243', '244', '245', '246', '247', '248', '249', '250',
-			'251', '252', '253', '254', '255'],
+			'251', '252', '253', '254', '255'],*/
 		outputs: ['켜기', '끄기'],
 		ops: ['>', '=', '<'],
 		servos: ['1', '2', '3', '4'],
@@ -843,9 +841,10 @@
 		//photogate and gate status is defined.
 
 		steppingMotor: ['1', '2'],
+		stepDirection:['시계','반시계'],
 		//steppingMotor is defined.
 
-		dcMotor: ['1','2','3']
+		dcMotor: ['1','2','3','4']
 		//dcMotor is defined.
     }
   };
