@@ -695,8 +695,8 @@
 	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection 회전량 %n', 'passSteppingADA', '일반', '1', 0, '시계', 0],
 		//Stepping Motor is defined.
 		//function_name : passSteppingAD	passSteppingADA
-	  ['-'],																												//DC motor is defined
-	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', '1', 0, 'clockwise']		//function_name : passDCDA passRDCDA	
+	  ['-'],																											//DC motor is defined
+	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', '1', 0, '시계']		//function_name : passDCDA passRDCDA	
     ]
   };
 
@@ -748,10 +748,7 @@
 		//mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
 		servosport: [ 'Port 1', 'Port 2', 'Port 3', 'Port 4', 'Port 5', 'Port 6', 'Port 7', 'Port 8'],
 
-		//booleanSensor: ['button pressed', 'A connected', 'B connected', 'C connected', 'D connected'],
-
 		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
-		//Rtouch : ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
 		// Touch sensor and Remoted touch sensor listing
 	
 		motionb: ['infrared 1', 'infrared 2', 'infrared 3', 
@@ -811,6 +808,7 @@
 			'231', '232', '233', '234', '235', '236', '237', '238', '239', '240',
 			'241', '242', '243', '244', '245', '246', '247', '248', '249', '250',
 			'251', '252', '253', '254', '255'],*/
+
 		outputs: ['켜기', '끄기'],
 		ops: ['>', '=', '<'],
 		servos: ['서보모터 1', '서보모터 2', '서보모터 3', '서보모터 4'],
