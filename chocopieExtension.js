@@ -33,13 +33,13 @@
 	/*Chocopie const definition
 	 * SCBD_ULTRASONIC 와 SCBD_PIR 은 아직 존재하지않는 확장영역으로써 설계되어져있음
 	*/
-	var CPC_VERSION = 8,
-		CPC_START = 9,
-		CPC_STOP = 10,
-		CPC_SET_NAME = 11,
-		CPC_GET_NAME = 12,
-		CPC_GET_BLOCK = 13,
-		CPC_ALL_SAY = 14
+	var CPC_VERSION = 0x08,
+		CPC_START = 0x09,
+		CPC_STOP = 0x0A,
+		CPC_SET_NAME = 0x0B,
+		CPC_GET_NAME = 0x0C,
+		CPC_GET_BLOCK = 0x0D,
+		CPC_ALL_SAY = 0x0E
 	//Chocopie command definition
 
   	
@@ -48,8 +48,8 @@
     REPORT_DIGITAL = 0xD0,		//DIGITAL 신호가 들어왔을때 보고하는 값
     REPORT_ANALOG = 0xC0,		//아날로그 신호가 들어왔을때 보고하는 값
     DIGITAL_MESSAGE = 0x90,
-    START_SYSEX = 0xF0,			//메세지의 시작패킷을 알리는 헤더
-    END_SYSEX = 0xF7,			//메세지의 꼬리패킷을 알리는 테일러
+    START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
+    END_SYSEX = 0x7E,			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
     QUERY_FIRMWARE = 0x79,
     REPORT_VERSION = 0xF9,
     ANALOG_MESSAGE = 0xE0,
@@ -139,6 +139,7 @@
     for (var i = 0; i < 16; i++) {
       var output = new Uint8Array([REPORT_DIGITAL | i, 0x01]);
       device.send(output.buffer);
+	  //0xD0 ~ 0xDF 까지 OR 연산후에 0x01 값과 함께 배열로써 보냄.. -> 초기화 작업으로 추측 --> 정확했음
     }
 
     queryCapabilities();
@@ -147,7 +148,7 @@
     // TEMPORARY WORKAROUND
     // Since _deviceRemoved is not used with Serial devices
     // ping device regularly to check connection
-    pinger = setInterval(function() {
+    pinger = setInterval(function() {		//setInterval 함수로 0.1초 단위로 6번을 핑을보내어 신호체크
       if (pinging) {
         if (++pingCount > 6) {
           clearInterval(pinger);
@@ -183,13 +184,11 @@
 	var usb_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_USB, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
     device.send(usb_output.buffer);
 	
-	for(var i=0; i < storedInputData.length ; i++){
-		if (storedInputData[i] != 0x00)
-		{
-			check = checkSum(SCBD_CHOCOPI_BLE);
-			var ble_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_BLE, check ,END_SYSEX]);
-			device.send(ble_output.buffer);
-		}
+	if (storedInputData[0] != 0x00)
+	{
+		check = checkSum(SCBD_CHOCOPI_BLE);
+		var ble_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_BLE, check ,END_SYSEX]);
+		device.send(ble_output.buffer);
 	}
   }
 	//Changed BY Remoted 2016.04.11
@@ -209,7 +208,8 @@
     console.log('Querying ' + device.id + ' capabilities');
     var msg = new Uint8Array([
         START_SYSEX, CAPABILITY_QUERY, END_SYSEX]);
-    device.send(msg.buffer);
+	device.send(msg.buffer);
+	//디바이스가 유효한지 확인하기 위해서 Capabilities 함수를 가동하여 패킷을 보냄
   }
 
   function queryAnalogMapping() {
@@ -263,12 +263,12 @@
         break;
       case QUERY_FIRMWARE:
         if (!connected) {
-          clearInterval(poller);
-          poller = null;
+          clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
+          poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
           clearTimeout(watchdog);
           watchdog = null;
           connected = true;
-          setTimeout(init, 200);
+          setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수
         }
         pinging = false;
         pingCount = 0;
@@ -277,10 +277,29 @@
     }
   }
 
+
+	function escapte_control(source){
+		if(source == 0x7E){
+			var msg = new Uint8Array([0x7D, 0x7E ^ 0x20]);
+			return msg;
+		}else if (source == 0x7D){
+			var msg = new Uint8Array([0x7D, 0x7D ^ 0x20]);
+			return msg;
+		}
+		else{
+			return source;
+		}
+	}
+	//이스케이프 컨트롤러 By Remoted 2016.04.13
+	//http://m.blog.daum.net/_blog/_m/articleView.do?blogid=050RH&articleno=12109121 에 기반함
+
+
   function processInput(inputData) {
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
         if (inputData[i] == END_SYSEX) {
+			escapte_control(inputData[i]);
+			//이스케이핑 컨트롤러에 END_SYSEX 를 확인하기위해서 다시 보냄
           parsingSysex = false;
           processSysexMessage();
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 프로세싱 시작
@@ -318,10 +337,16 @@
             waitForData = 2;
             executeMultiByteCommand = command;
             break;
-          case START_SYSEX:
+          case START_SYSEX:		//START_SYSEX 라면 수신데이터에 대해서 파싱을 시작함
             parsingSysex = true;
             sysexBytesRead = 0;
             break;
+			case CPC_START:
+
+			break;
+			case CPC_STOP:
+				_shutdown();
+			break;
         }
       }
     }
@@ -567,7 +592,7 @@
     device = potentialDevices.shift();
     if (!device) return;
 
-    device.open({ stopBits: 0, bitRate: 57600, ctsFlowControl: 0 });
+    device.open({ stopBits: 0, bitRate: 115200, ctsFlowControl: 0 });
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
       var inputData = new Uint8Array(data);
@@ -594,7 +619,91 @@
     if (poller) clearInterval(poller);
     device = null;
   };
+  
+  ext.isTouchButtonPressed = function(networks,touch){
+    var hw = hwList.search(touch);
+    if (!hw) return;
+    return digitalRead(hw.pin);
+  }
 
+  ext.motionbRead = function(networks,motionb){
+    var hw = hwList.search(motionb);
+    if (!hw) return;
+    return digitalRead(hw.pin);
+  }
+
+  ext.photoGateRead = function(networks,photogate,gatestate){
+    var hw = hwList.search(photogate);
+    if (!hw) return;
+    return digitalRead(hw.pin);
+  }
+
+  ext.passLEDrgb = function(networks,led,r,g,b){
+	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
+	  if(!hw) return;
+	  var datas = 0;
+	  datas = led;
+	  datas = datas << 8 | r;
+	  datas = datas << 8 | g;
+	  datas = datas << 8 | b;
+
+	  //디테일 0  
+	  //보드로 전송 데이터 datas
+  }
+
+  ext.passBUZEER = function(networks,pitch,playtime){
+	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
+	  if(!hw) return;
+	  var datas = 0;
+	  datas = pitch;
+	  datas = datas << 32 | playtime;
+	  
+	  //디테일 8  
+	  //보드로 전송 데이터 datas
+  }
+
+  ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
+	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
+	  if(!hw) return;
+	  var datas = 0;
+	  datas = steppingMotor;
+	  datas = datas << 16 | speed;
+	  
+	  //디테일 0
+	  //보드로 전송 데이터 datas
+  }
+
+  ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
+	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
+	  if(!hw) return;
+	  var datas = 0;
+	  datas = steppingMotor;
+	  datas = datas << 16 | speed;
+	  datas = datas << 32 | direction;
+	  
+	  //디테일 1
+	  //보드로 전송 데이터 datas
+  }
+
+  ext.passDCAD = function(networks,dcmotor,speed,direction){
+	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
+	  if(!hw) return;
+	  var datas = 0;
+	  datas = speed;
+	  //수정해야 될것 같음 ppt 그림에서는 시계,반시계로 정의되어있음
+	  if (direction == 0)
+	  {
+		  datas = datas << 16 | 0;
+	  }else{
+		  datas = datas << 16 | 1;	  
+	  }
+
+	  //디테일 값 dcmotor
+	  //보드로 전송 데이터 datas
+
+  }
+
+	
   // Check for GET param 'lang'
   var paramString = window.location.search.replace(/^\?|\/$/g, '');
   var vars = paramString.split("&");
