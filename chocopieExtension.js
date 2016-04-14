@@ -676,7 +676,7 @@
 		return value;
 	 }else{
 	 }
-  }
+  };
 
   ext.motionbRead = function(networks,value){
 	 if(networks == "일반"){
@@ -685,7 +685,7 @@
 		 return value;
 	 }else{
 	 }
-  }
+  };
 
   ext.photoGateRead = function(networks,photogate,gatestate){
 	 if(networks == "일반"){
@@ -694,7 +694,7 @@
 		return gatestate;
 	 }else{
 	 }
-  }
+  };
 
   ext.passLEDrgb = function(networks,ledposition,r,g,b){
 	var hw = hwList.search(led);
@@ -713,7 +713,7 @@
 		 digitalWrite(hw.pin,datas);
 	 }else{
 	 }
-  }
+  };
 
   ext.passBUZEER = function(networks,pitch,playtime){
 	var hw = hwList.search(BUZEER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
@@ -730,7 +730,7 @@
 		 digitalWrite(hw.pin,datas);
 	 }else{
 	 }
-  }
+  };
 
   ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
 	var hw = hwList.search(STEPPER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
@@ -747,7 +747,7 @@
 		 digitalWrite(hw.pin,datas);
 	 }else{
 	 }
-  }
+  };
 
   ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
 	var hw = hwList.search(STEPPER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
@@ -765,7 +765,7 @@
 		 digitalWrite(hw.pin,datas);
 	 }else{
 	 }
-  }
+  };
 
   ext.passDCAD = function(networks,dcmotor,speed,direction){
 	var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 사용
@@ -785,7 +785,7 @@
 	}
 
 	datas = datas << 8 | 0x7E;
-  }
+  };
 
 
 	//Function added Line - end  --------------------------------------------------------------------------------------
