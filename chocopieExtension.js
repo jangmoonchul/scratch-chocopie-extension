@@ -39,7 +39,7 @@
 		CPC_SET_NAME = 0x0B,
 		CPC_GET_NAME = 0x0C,
 		CPC_GET_BLOCK = 0x0D,
-		CPC_ALL_SAY = 0x0E
+		CPC_ALL_SAY = 0x0E;
 	//Chocopie command definition
 
   	
