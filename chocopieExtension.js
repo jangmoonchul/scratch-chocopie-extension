@@ -33,7 +33,7 @@
 	/*Chocopie const definition
 	 * SCBD_ULTRASONIC 와 SCBD_PIR 은 아직 존재하지않는 확장영역으로써 설계되어져있음
 	*/
-	var CPC_VERSION = 0x08,
+	var CPC_VERSION = 0x08,		//REPORT_VERSION = 0xF9 -> CPC_VERSION 으로 PATCH -- Changed By Remoted 2016.04.14
 		CPC_START = 0x09,
 		CPC_STOP = 0x0A,
 		CPC_SET_NAME = 0x0B,
@@ -50,8 +50,7 @@
     DIGITAL_MESSAGE = 0x90,
     START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
     END_SYSEX = 0x7E,			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
-    QUERY_FIRMWARE = 0x79,
-    REPORT_VERSION = 0xF9,
+    QUERY_FIRMWARE = 0xE0,		//0x79 (아두이노) -> 0xE0 (초코파이보드용) QUERY_FIRMWARE 와 SCBD_CHOCOPI_USB 는 같은 값을 유지 (일반)--Changed By Remoted 2016.04.14
     ANALOG_MESSAGE = 0xE0,
     ANALOG_MAPPING_QUERY = 0x69,
     ANALOG_MAPPING_RESPONSE = 0x6A,
@@ -71,7 +70,7 @@
     SERIAL = 0x0A,
     PULLUP = 0x0B,
     IGNORE = 0x7F,
-    TOTAL_PIN_MODES = 13;
+    TOTAL_PIN_MODES = 11;		//총 가능한 PIN MODE 13 (아두이노) -> 11 (초코파이) 용으로 변경
 
   var LOW = 0,
     HIGH = 1;
@@ -135,15 +134,34 @@
   }
 
   function init() {
-
+	
+	/*
     for (var i = 0; i < 16; i++) {
       var output = new Uint8Array([REPORT_DIGITAL | i, 0x01]);
       device.send(output.buffer);
 	  //0xD0 ~ 0xDF 까지 OR 연산후에 0x01 값과 함께 배열로써 보냄.. -> 초기화 작업으로 추측 --> 정확했음
     }
+	*/
 
-    queryCapabilities();
+	/*
+	var check = checkSum(SCBD_CHOCOPI_USB);
+	var usb_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_USB, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
+    device.send(usb_output.buffer);
+	
+	if (storedInputData[0] != 0x00)
+	{
+		check = checkSum(SCBD_CHOCOPI_BLE);
+		var ble_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_BLE, check ,END_SYSEX]);
+		device.send(ble_output.buffer);
+	}*/
+
+    //queryCapabilities();
 	//쿼리의 상태를 확인하기위해 함수 가동
+	/*http://www.firmata.org/wiki/V2.3ProtocolDetails#Query_Firmware_Name_and_Version 에 의하면 GUI 기반에서 현재 보드의 상태등을 알아보기 위하여
+	FIRMATA 와 체크를 하기위해 사용되어지는 부분으로 필요없음*/
+
+	/* 엄연히 말하면 init 은 processSysexMessage 안에서 QUERY_FIRMWARE 일때 실행되어짐 */
+
 
     // TEMPORARY WORKAROUND
     // Since _deviceRemoved is not used with Serial devices
@@ -179,17 +197,16 @@
 
   function queryFirmware() {
     //var output = new Uint8Array([START_SYSEX, QUERY_FIRMWARE, END_SYSEX]);
-	
-	var check = checkSum(SCBD_CHOCOPI_USB);
-	var usb_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_USB, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
-    device.send(usb_output.buffer);
-	
-	if (storedInputData[0] != 0x00)
-	{
-		check = checkSum(SCBD_CHOCOPI_BLE);
-		var ble_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_BLE, check ,END_SYSEX]);
-		device.send(ble_output.buffer);
-	}
+	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
+	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
+
+	var check_usb = checkSum(SCBD_CHOCOPI_USB);
+		check_ble = checkSum(SCBD_CHOCOPI_BLE);
+		usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
+		ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble  ,END_SYSEX]);
+    
+	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
+	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
   }
 	//Changed BY Remoted 2016.04.11
 
@@ -232,7 +249,10 @@
     minorVersion = minor;
   }
 
+	// tryNextDevice -> processInput -> processSysexMessage -> QUERY_FIRMWARE -> init 순으로 진행됨
+
   function processSysexMessage() {
+	  // 시스템 처리 추가메세지 ? 라는 정의인 듯 함. storedInputData[0] 번에 대해서 크게 3가지 처리를 나열함
     switch(storedInputData[0]) {
       case CAPABILITY_RESPONSE:
         for (var i = 1, pin = 0; pin < MAX_PINS; pin++) {
@@ -261,7 +281,7 @@
           notifyConnection = false;
         }, 100);
         break;
-      case QUERY_FIRMWARE:
+      case QUERY_FIRMWARE:				//QUERY_FIRMWARE 가 들어오면 connect 확인이 되는 듯.
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
           poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
@@ -279,33 +299,44 @@
 
 
 	function escapte_control(source){
-		if(source == 0x7E){
-			var msg = new Uint8Array([0x7D, 0x7E ^ 0x20]);
-			return msg;
-		}else if (source == 0x7D){
-			var msg = new Uint8Array([0x7D, 0x7D ^ 0x20]);
-			return msg;
-		}
-		else{
-			return source;
+		for(var i=0; i < source.length; i++){
+			if(source[0] == 0x7E && source[i] == 0x7E){
+				var msg = new Uint8Array([0x7D, 0x7E ^ 0x20]);
+				return msg;
+			}else if (source[0] == 0x7E && source[i] == 0x7D){
+				var msg = new Uint8Array([0x7D, 0x7D ^ 0x20]);
+				return msg;
+			}
+			else{
+				return source;
+			}
 		}
 	}
-	//이스케이프 컨트롤러 By Remoted 2016.04.13
+	//이스케이프 컨트롤러 By Remoted 2016.04.13		-- 2016.04.14 패치완료
 	//http://m.blog.daum.net/_blog/_m/articleView.do?blogid=050RH&articleno=12109121 에 기반함
 
 
   function processInput(inputData) {
+	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
+		if (inputData[0] == )
+		{
+		}
         if (inputData[i] == END_SYSEX) {
-			escapte_control(inputData[i]);
+			inputData[i] = escapte_control(inputData[i]);
 			//이스케이핑 컨트롤러에 END_SYSEX 를 확인하기위해서 다시 보냄
           parsingSysex = false;
           processSysexMessage();
-		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 프로세싱 시작
+		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
+		  //호출하여 처리시작하는 검증과정 도중에서 QUERY_FIRMWARE 확증과정이 이루어짐
+
         } else {
           storedInputData[sysexBytesRead++] = inputData[i];
 		  //END 값이 아니면 storedInputData 에 들어온 데이터를 지속적으로 저장.. 이렇게해서 storedInputData 에는 들어온 데이터가 담기게됨
+		  //데이터를 보내고나서 수신하게 될 값을 예상해서 쓰므로 수신할때는 헤더와 테일러를 쓰고있지 않는 문제가 발생..
+		  //inputData 가 어떤 목적으로 처리되는지를 유추해야함
+
         }
       } else if (waitForData > 0 && inputData[i] < 0x80) {
         storedInputData[--waitForData] = inputData[i];
@@ -317,9 +348,10 @@
             case ANALOG_MESSAGE:
               setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
               break;
-            case REPORT_VERSION:
-              setVersion(storedInputData[1], storedInputData[0]);
-              break;
+            case CPC_VERSION:
+              setVersion(storedInputData[8], storedInputData[9]);		//MAJOR, MINOR VERSION 순이므로 아두이노와는 다르게 setVersion 인자의 위치를 바꿔줌
+              break;													//총 9 byte 가 도착예정이므로, 
+																		//REPORT_VERSION -> CPC_VERSION 으로 패치
           }
         }
       } else {
@@ -333,7 +365,7 @@
         switch(command) {
           case DIGITAL_MESSAGE:
           case ANALOG_MESSAGE:
-          case REPORT_VERSION:
+          case CPC_VERSION:		//REPORT_VERSION -> CPC_VERSION
             waitForData = 2;
             executeMultiByteCommand = command;
             break;
@@ -356,6 +388,7 @@
     var msg = new Uint8Array([PIN_MODE, pin, mode]);
     device.send(msg.buffer);
   }
+	//해당 핀으로 핀의 모드를 알려주고 셋팅함.
 
   function analogRead(pin) {
     if (pin >= 0 && pin < pinModes[ANALOG].length) {
@@ -424,13 +457,9 @@
         deg >> 0x07]);
     device.send(msg.buffer);
   }
-	//Function added Line
 
-
-
-	//Function added Line - end 
-
-  ext.whenConnected = function() {
+	//Original Function Line--------------------------------------------------------------------------
+	  ext.whenConnected = function() {
     if (notifyConnection) return true;
     return false;
   };
@@ -445,6 +474,7 @@
     else if (val == menus[lang]['outputs'][1])
       digitalWrite(pin, LOW);
   };
+	//digitalWrite 에서 High 와 Low 는 상위비트와 하위비트를 나눠서 출력하는 듯 함?
 
   ext.analogRead = function(pin) {
     return analogRead(pin);
@@ -475,6 +505,7 @@
         return digitalRead(pin) === false;
     }
   };
+	// menus[lang]['outputs'][1] outputs 는 켜기와 끄기를 의미하는데, 3차원 배열로 1번에 해당하는 것은 도대체 뭔지 1도 모르겟음!
 
   ext.connectHW = function(hw, pin) {
     hwList.add(hw, pin);
@@ -505,6 +536,7 @@
     analogWrite(hw.pin, val);
     hw.val = val;
   };
+	//led 에 대한 객체값 정의 확인불가..
 
   ext.changeLED = function(led, val) {
     var hw = hwList.search(led);
@@ -515,7 +547,10 @@
     analogWrite(hw.pin, b);
     hw.val = b;
   };
+	//setLED 와 changeLED 는 analogWrite 로 써지고 있는데, 이 부분에서 어떤걸 써야하는지 검증 불가..
 
+	//함수의 인자는 블록에 표시된 갯수대로 가져온다.
+	//Writed By Remoted 2016.04.14
   ext.digitalLED = function(led, val) {
     var hw = hwList.search(led);
     if (!hw) return;
@@ -527,12 +562,21 @@
       hw.val = 0;
     }
   };
+  //HIGH 에 digitalWrite 시에는 LED 가 켜져있을 때 이고, val 은 밝기를 조절하는 듯 함
+	//LOW 에 digitalWrite 시에는 LED가 꺼져있을 때 이고, val 은 밝기를 조절하는데 0으로 맞춤으로써 밝기를 날려버리는듯 함
 
-  ext.readInput = function(name) {
-    var hw = hwList.search(name);
-    if (!hw) return;
-    return analogRead(hw.pin);
+  ext.readInput = function(networks, name) {
+    var hw = hwList.search(SCBD_SENSOR);
+    if (!hw) return;	
+	//if (name == 'Analog 1' || name == 'Analog 2' || name == 'Analog 3' || name == 'Analog 4' || name == '아날로그 1' || name == '아날로그 2' || name == '아날로그 3' || name == '아날로그 4')
+	//{
+		return analogRead(hw.pin);
+	//}else{
+	//	return digitalRead(hw.pin);
+	//}
+    
   };
+	//readInput 에 대하여 검증필요->내용 확인 완료 -- Changed By Remoted 2016.04.14
 
   ext.whenButton = function(btn, state) {
     var hw = hwList.search(btn);
@@ -588,6 +632,7 @@
 
   var poller = null;
   var watchdog = null;
+
   function tryNextDevice() {
     device = potentialDevices.shift();
     if (!device) return;
@@ -619,89 +664,130 @@
     if (poller) clearInterval(poller);
     device = null;
   };
-  
-  ext.isTouchButtonPressed = function(networks,touch){
-    var hw = hwList.search(touch);
-    if (!hw) return;
-    return digitalRead(hw.pin);
+
+
+	
+	//Function added Line -----------------------------------------------------------------------------
+  ext.isTouchButtonPressed = function(networks,value){
+	 if(networks == "일반"){
+		var hw = hwList.search(touch);
+		if (!hw) return;
+		return value;
+	 }else{
+	 }
   }
 
-  ext.motionbRead = function(networks,motionb){
-    var hw = hwList.search(motionb);
-    if (!hw) return;
-    return digitalRead(hw.pin);
+  ext.motionbRead = function(networks,value){
+	 if(networks == "일반"){
+		 var hw = hwList.search(motion);
+		 if (!hw) return;
+		 return value;
+	 }else{
+	 }
   }
 
   ext.photoGateRead = function(networks,photogate,gatestate){
-    var hw = hwList.search(photogate);
-    if (!hw) return;
-    return digitalRead(hw.pin);
+	 if(networks == "일반"){
+	    var hw = hwList.search(photogate);
+		if (!hw) return;
+		return gatestate;
+	 }else{
+	 }
   }
 
-  ext.passLEDrgb = function(networks,led,r,g,b){
-	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
-	  if(!hw) return;
-	  var datas = 0;
-	  datas = led;
-	  datas = datas << 8 | r;
-	  datas = datas << 8 | g;
-	  datas = datas << 8 | b;
-
-	  //디테일 0  
-	  //보드로 전송 데이터 datas
+  ext.passLEDrgb = function(networks,ledposition,r,g,b){
+	var hw = hwList.search(led);
+	if(!hw) return;
+	var datas = 0;
+	datas = 0x7E;
+	datas = datas << 4 | 0;				//디테일
+	datas = datas << 4 | 0;				//포트
+	datas = datas << 8 | ledposition;
+	datas = datas << 8 | r;
+	datas = datas << 8 | g;
+	datas = datas << 8 | b;
+	datas = datas << 8 | 0x7E;
+	
+	 if(networks == "일반"){
+		 digitalWrite(hw.pin,datas);
+	 }else{
+	 }
   }
 
   ext.passBUZEER = function(networks,pitch,playtime){
-	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
-	  if(!hw) return;
-	  var datas = 0;
-	  datas = pitch;
-	  datas = datas << 32 | playtime;
+	var hw = hwList.search(BUZEER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
+	if(!hw) return;
+	var datas = 0;	  
+	datas = 0x7E;
+	datas = datas << 4 | 8;				//디테일
+	datas = datas << 4 | 0;				//포트
+	datas = datas << 8 | pitch;
+    datas = datas << 32 | playtime;
+	datas = datas << 8 | 0x7E;
 	  
-	  //디테일 8  
-	  //보드로 전송 데이터 datas
+	 if(networks == "일반"){
+		 digitalWrite(hw.pin,datas);
+	 }else{
+	 }
   }
 
   ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
-	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
-	  if(!hw) return;
-	  var datas = 0;
-	  datas = steppingMotor;
-	  datas = datas << 16 | speed;
-	  
-	  //디테일 0
-	  //보드로 전송 데이터 datas
+	var hw = hwList.search(STEPPER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
+	if(!hw) return;
+	var datas = 0;
+	datas = 0x7E;
+	datas = datas << 4 | 0;				//디테일
+	datas = datas << 4 | 0;				//포트
+	datas = datas << 8 | steppingMotor;
+    datas = datas << 16 | speed;
+	datas = datas << 8 | 0x7E;
+	
+	 if(networks == "일반"){
+		 digitalWrite(hw.pin,datas);
+	 }else{
+	 }
   }
 
   ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
-	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
-	  if(!hw) return;
-	  var datas = 0;
-	  datas = steppingMotor;
-	  datas = datas << 16 | speed;
-	  datas = datas << 32 | direction;
-	  
-	  //디테일 1
-	  //보드로 전송 데이터 datas
+	var hw = hwList.search(STEPPER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
+	if(!hw) return;
+	var datas = 0;
+	datas = 0x7E;
+	datas = datas << 4 | 1;				//디테일
+	datas = datas << 4 | 0;				//포트
+	datas = datas << 8 | steppingMotor;
+    datas = datas << 16 | speed;
+	datas = datas << 32 | direction;
+	datas = datas << 8 | 0x7E;
+	
+	 if(networks == "일반"){
+		 digitalWrite(hw.pin,datas);
+	 }else{
+	 }
   }
 
   ext.passDCAD = function(networks,dcmotor,speed,direction){
-	  var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 DC사용
-	  if(!hw) return;
-	  var datas = 0;
-	  datas = speed;
-	  //수정해야 될것 같음 ppt 그림에서는 시계,반시계로 정의되어있음
-	  if (direction == 0)
-	  {
-		  datas = datas << 16 | 0;
-	  }else{
-		  datas = datas << 16 | 1;	  
-	  }
+	var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 사용
+	if(!hw) return;
+	var datas = 0;
+	datas = 0x7E;
+	datas = datas << 4 | direction;				//디테일
+	datas = datas << 4 | 0;				//포트
+	datas = datas << 16 | speed;
 
-	  //디테일 값 dcmotor
-	  //보드로 전송 데이터 datas
+	//수정해야 될것 같음 ppt 그림에서는 시계,반시계로 정의되어있음
+	if (direction == 0)
+	{
+		datas = datas << 8 | 0;
+	}else{
+		datas = datas << 8 | 1;	  
+	}
 
+	datas = datas << 8 | 0x7E;
   }
+
+
+	//Function added Line - end  --------------------------------------------------------------------------------------
 
 	
   // Check for GET param 'lang'
