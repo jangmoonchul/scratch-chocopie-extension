@@ -201,10 +201,10 @@
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
 	var check_usb = checkSum(SCBD_CHOCOPI_USB);
-		check_ble = checkSum(SCBD_CHOCOPI_BLE);
+	var check_ble = checkSum(SCBD_CHOCOPI_BLE);
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
-		ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble  ,END_SYSEX]);
+	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
@@ -321,9 +321,6 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
-		//if (inputData[0] == )
-		//{
-		//}
         if (inputData[i] == END_SYSEX) {
 			inputData[i] = escapte_control(inputData[i]);
 			//이스케이핑 컨트롤러에 END_SYSEX 를 확인하기위해서 다시 보냄
@@ -374,12 +371,13 @@
             parsingSysex = true;
             sysexBytesRead = 0;
             break;
+			/*
 			case CPC_START:
-
 			break;
 			case CPC_STOP:
 				_shutdown();
 			break;
+			*/
         }
       }
     }
@@ -783,7 +781,6 @@
 	}else{
 		datas = datas << 8 | 1;	  
 	}
-
 	datas = datas << 8 | 0x7E;
   };
 
