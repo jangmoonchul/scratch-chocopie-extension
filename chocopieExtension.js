@@ -200,23 +200,22 @@
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
-	var check_usb = checkSum(SCBD_CHOCOPI_USB);
-	var check_ble = checkSum(SCBD_CHOCOPI_BLE);
-	
-	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
-	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
+	var check = checkSum(CPC_VERSION);
+	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
+	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
   }
   //Changed BY Remoted 2016.04.11
+  //Patched BY Remoted 2016.04.15
 
 	function checkSum(buffer){
-		var sum1;
+		var sum;
 		for(var i=0; i < buffer.length ; i++ ){
-			sum1 ^= buffer[i];
+			sum ^= buffer[i];
 		}
-		return sum1;
+		return sum;
 	}
 	//Port/detail, data를 checksum 함
 	
@@ -236,6 +235,8 @@
         START_SYSEX, ANALOG_MAPPING_QUERY, END_SYSEX]);
     device.send(msg.buffer);
   }
+  // 아날로그 매핑 쿼리는 핀에 아날로그 검증패킷을 보냄으로써 디지털 쿼리가 아니라 실제적으로 아날로그 처리를 할 수 있는지 검증함
+
 
   function setDigitalInputs(portNum, portData) {
     digitalInputData[portNum] = portData;
@@ -250,7 +251,9 @@
     minorVersion = minor;
   }
 
-	// tryNextDevice -> processInput -> processSysexMessage -> QUERY_FIRMWARE -> init 순으로 진행됨
+	/* tryNextDevice -> processInput (Handler) -> processSysexMessage -> QUERY_FIRMWARE -> init -> QUERY_FIRMWARE 순으로 진행됨
+											   -> QUERY_FIRWWARE 발송 
+		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 무한루프가 형성됨								*/
 
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지 ? 라는 정의인 듯 함. storedInputData[0] 번에 대해서 크게 3가지 처리를 나열함
@@ -282,14 +285,28 @@
           notifyConnection = false;
         }, 100);
         break;
-      case QUERY_FIRMWARE:				//QUERY_FIRMWARE 가 들어오면 connect 확인이 되는 듯.
+      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
+	  case SCBD_CHOCOPI_BLE:
+		var check_start = checkSum(CPC_START);
+			check_get_block = checkSum(CPC_GET_BLOCK);
+
+		var output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]);		
+			
+
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
           poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
           clearTimeout(watchdog);
-          watchdog = null;
+          watchdog = null;				//감시견을 옆집 개나줘버림
           connected = true;
-          setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수
+          setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
+		  
+		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */
+    
+			device.send(output.buffer);		
+			output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+			device.send(output.buffer);
+			
         }
         pinging = false;
         pingCount = 0;
@@ -321,18 +338,21 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
-        if (inputData[i] == END_SYSEX) {
-			inputData[i] = escapte_control(inputData[i]);
+        if (inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) {
+			
+			//inputData[i] = escapte_control(inputData[i]);
 			//이스케이핑 컨트롤러에 END_SYSEX 를 확인하기위해서 다시 보냄
+			//inputData[i] 번에 대해서 0xE0 값인지 검증에 들어감
+
           parsingSysex = false;
           processSysexMessage();
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
-		  //호출하여 처리시작하는 검증과정 도중에서 QUERY_FIRMWARE 확증과정이 이루어짐
+		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
 
         } else {
           storedInputData[sysexBytesRead++] = inputData[i];
 		  //END 값이 아니면 storedInputData 에 들어온 데이터를 지속적으로 저장.. 이렇게해서 storedInputData 에는 들어온 데이터가 담기게됨
-		  //데이터를 보내고나서 수신하게 될 값을 예상해서 쓰므로 수신할때는 헤더와 테일러를 쓰고있지 않는 문제가 발생..
+		  //데이터를 보내고나서 수신하게 될 값을 예상해서 쓰므로 수신할때는 헤더와 테일러를 쓰고있지 않는 문제가 발생..	-> Patch By Remoted 2016.04.15
 		  //inputData 가 어떤 목적으로 처리되는지를 유추해야함
 
         }
@@ -353,12 +373,12 @@
           }
         }
       } else {
-        if (inputData[i] < 0xF0) {
-          command = inputData[i] & 0xF0;
-          multiByteChannel = inputData[i] & 0x0F;
+        if (inputData[0] < 0xF0) {
+          command = inputData[0] & 0xF0;
+          multiByteChannel = inputData[0] & 0x0F;
 		  //들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용하고 있었음
         } else {
-          command = inputData[i];
+          command = inputData[0];
         }
         switch(command) {
           case DIGITAL_MESSAGE:
@@ -367,7 +387,11 @@
             waitForData = 2;
             executeMultiByteCommand = command;
             break;
-          case START_SYSEX:		//START_SYSEX 라면 수신데이터에 대해서 파싱을 시작함
+
+			//이 곳에서 들어오는 command 에 대해서 추가하는 switch 들을 이루어내야함
+			//다만 parsingSysex 가 필요없는 것에 대해 패치가 필요. -> parsingSysex 을 플래그로 사용하기로 함.
+
+		  default:					//default 로써 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
             parsingSysex = true;
             sysexBytesRead = 0;
             break;
@@ -642,10 +666,12 @@
       var inputData = new Uint8Array(data);
       processInput(inputData);
     });
+	//첫째로 processInput 핸들러를 가동시키고 나서
 
     poller = setInterval(function() {
       queryFirmware();
     }, 1000);
+	//queryFirmware 를 가동시킴으로써 시스템 쿼리펌웨어에 대하여 메세지 확정처리르 거침
 
     watchdog = setTimeout(function() {
       clearInterval(poller);
@@ -655,6 +681,7 @@
       device = null;
       tryNextDevice();
     }, 5000);
+	// 5초마다 지속적으로 tryNextDevice 를 실행해줌으로써, 연결될때까지 무한루프를 가동하게됨
   }
 
   ext._shutdown = function() {
