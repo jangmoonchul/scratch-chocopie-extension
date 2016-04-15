@@ -356,10 +356,10 @@
 		  //inputData 가 어떤 목적으로 처리되는지를 유추해야함
 
         }
-      } else if (waitForData > 0 && inputData[i] < 0x80) {
+      } else if (waitForData > 0 && inputData[i] < 0x80) {					//이 부분에서 inputData 에 대한 초코파이 메인보드 처리와 모든것을 이뤄야함
         storedInputData[--waitForData] = inputData[i];
         if (executeMultiByteCommand !== 0 && waitForData === 0) {
-          switch(executeMultiByteCommand) {
+          switch(executeMultiByteCommand) {		//executeMultiByteCommand == detail
             case DIGITAL_MESSAGE:
               setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
               break;
@@ -370,26 +370,35 @@
               setVersion(storedInputData[8], storedInputData[9]);		//MAJOR, MINOR VERSION 순이므로 아두이노와는 다르게 setVersion 인자의 위치를 바꿔줌
               break;													//총 9 byte 가 도착예정이므로, 
 																		//REPORT_VERSION -> CPC_VERSION 으로 패치
+			case CPC_GET_BLOCK:
+				for(var i=1; i < inputData.length; i++){
+					//connectHW( hw, pin );
+					if ( inputData[i] > 0 )
+					{
+						connectHW( inputData[i], i-1 );
+					}
+				}
+				
+			break;
+			//이 곳에서 들어오는 command 에 대해서 추가하는 switch 들을 이루어내야함
+			//다만 parsingSysex 가 필요없는 것에 대해 패치가 필요. -> parsingSysex 을 플래그로 사용하기로 함.
           }
         }
       } else {
         if (inputData[0] < 0xF0) {
-          command = inputData[0] & 0xF0;
-          multiByteChannel = inputData[0] & 0x0F;
+          detail = inputData[0] & 0xF0;			//command -> detail
+          multiByteChannel = inputData[0] & 0x0F;		//multiByteChannel -> port
 		  //들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용하고 있었음
         } else {
           command = inputData[0];
         }
-        switch(command) {
+        switch(detail) {
           case DIGITAL_MESSAGE:
           case ANALOG_MESSAGE:
           case CPC_VERSION:		//REPORT_VERSION -> CPC_VERSION
             waitForData = 2;
-            executeMultiByteCommand = command;
+            executeMultiByteCommand = detail;
             break;
-
-			//이 곳에서 들어오는 command 에 대해서 추가하는 switch 들을 이루어내야함
-			//다만 parsingSysex 가 필요없는 것에 대해 패치가 필요. -> parsingSysex 을 플래그로 사용하기로 함.
 
 		  default:					//default 로써 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
             parsingSysex = true;
@@ -406,6 +415,10 @@
       }
     }
   }
+
+	function connectHW (hw, pin) {
+		hwList.add(hw, pin);
+	}
 
   function pinMode(pin, mode) {
     var msg = new Uint8Array([PIN_MODE, pin, mode]);
@@ -530,9 +543,6 @@
   };
 	// menus[lang]['outputs'][1] outputs 는 켜기와 끄기를 의미하는데, 3차원 배열로 1번에 해당하는 것은 도대체 뭔지 1도 모르겟음!
 
-  ext.connectHW = function(hw, pin) {
-    hwList.add(hw, pin);
-  };
 
   ext.rotateServo = function(servo, deg) {
     var hw = hwList.search(servo);
