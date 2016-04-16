@@ -41,16 +41,14 @@
 		CPC_GET_BLOCK = 0x0D,
 		CPC_ALL_SAY = 0x0E;
 	//Chocopie command definition
-
-  	
-  
+	
   var PIN_MODE = 0xF4,
     REPORT_DIGITAL = 0xD0,		//DIGITAL 신호가 들어왔을때 보고하는 값
     REPORT_ANALOG = 0xC0,		//아날로그 신호가 들어왔을때 보고하는 값
     DIGITAL_MESSAGE = 0x90,
     START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
     END_SYSEX = 0x7E,			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
-    QUERY_FIRMWARE = 0xE0,		//0x79 (아두이노) -> 0xE0 (초코파이보드용) QUERY_FIRMWARE 와 SCBD_CHOCOPI_USB 는 같은 값을 유지 (일반)--Changed By Remoted 2016.04.14
+    //QUERY_FIRMWARE = 0xE0,		//0x79 (아두이노) -> 0xE0 (초코파이보드용) QUERY_FIRMWARE 와 SCBD_CHOCOPI_USB 는 같은 값을 유지 (일반)--Changed By Remoted 2016.04.14
     ANALOG_MESSAGE = 0xE0,
     ANALOG_MAPPING_QUERY = 0x69,
     ANALOG_MAPPING_RESPONSE = 0x6A,
@@ -387,11 +385,27 @@
 				break;
 			  }
 			}
+        }else if (waitForData > 0 && inputData[0] >= 0xE1 )	//GET_BLOCK 이 끝난 이후에, 블록의 제거와 연결을 확인하기위해 정의
+        {
+			storedInputData[--waitForData] = inputData[i];					
+			if (executeMultiByteCommand !== 0 && waitForData === 0) {		
+			  switch(executeMultiByteCommand) {
+				case SCBD_CHOCOPI_USB | 0x01:												//USB 연결 포트에 블록 연결시 가동됨
+					//for(var i=1 ; i < storedInputData.length; i++ ){						//PORT, BLOCK_TYPE -> SCBD_SENSOR..		(inputData)
+					//	if (storedInputData[i] != 0){										//BLOCK_TYPE -> SCBD_SENSOR.. ,PORT		(storedInputData)
+					//		connectHW (storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
+							//connectHW (hw, pin)
+					//	}
+					//}
+				break;
+			  }
+			}
         }
       } else {
         if (inputData[0] == 0xE0 && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
 			detail = inputData[1];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 		  //들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용하고 있었음
+		  //일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
         } else {
 		  detail = inputData[0] & 0xF0;					//command -> detail
           multiByteChannel = inputData[0] & 0x0F;		//multiByteChannel -> port
@@ -410,6 +424,10 @@
             waitForData = 9;							
             executeMultiByteCommand = detail;
             break;
+		  case SCBD_CHOCOPI_USB | 0x01:
+			waitForData = 1;							//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 오기 때문에, waitForData 를 1로 설정
+			executeMultiByteCommand = detail;
+		    break;
 		  /*case CPC_STOP:								//CPC_STOP 의 경우는 waitForData 가 0이며 위에서 따로 처리 분기를 작성시켜줘야함
 			waitForData = 0;
 			_shutdown();
