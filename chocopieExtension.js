@@ -366,51 +366,58 @@
             case ANALOG_MESSAGE:
               setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
               break;
-            case CPC_VERSION:
-              setVersion(storedInputData[8], storedInputData[9]);		//MAJOR, MINOR VERSION 순이므로 아두이노와는 다르게 setVersion 인자의 위치를 바꿔줌
-              break;													//총 9 byte 가 도착예정이므로, 
-																		//REPORT_VERSION -> CPC_VERSION 으로 패치
-			case CPC_GET_BLOCK:
-				for(var i=1; i < inputData.length; i++){
-					//connectHW( hw, pin );
-					if ( inputData[i] > 0 )
-					{
-						connectHW( inputData[i], i-1 );
-					}
-				}
-				
-			break;
+
 			//이 곳에서 들어오는 command 에 대해서 추가하는 switch 들을 이루어내야함
 			//다만 parsingSysex 가 필요없는 것에 대해 패치가 필요. -> parsingSysex 을 플래그로 사용하기로 함.
           }
+        }else if (waitForData > 0 && inputData[0] == 0xE0){					// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
+	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
+			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻하는 것임.
+			  switch(executeMultiByteCommand) {								//executeMultiByteCommand == detail
+				case CPC_VERSION:											//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 엔디안 역전현상이 발생함
+				  setVersion(storedInputData[1], storedInputData[0]);		
+				  break;																	
+				case CPC_GET_BLOCK:															//				0 1 2  3 4 5 6 7		(포트)
+					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
+						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8,CPC_GET_BLOCK	(storedInputData)
+							connectHW (storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
+							//connectHW (hw, pin)
+						}
+					}
+				break;
+			}
         }
       } else {
-        if (inputData[0] < 0xF0) {
-          detail = inputData[0] & 0xF0;			//command -> detail
-          multiByteChannel = inputData[0] & 0x0F;		//multiByteChannel -> port
+        if (inputData[0] == 0xE0 && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
+			detail = inputData[1];
 		  //들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용하고 있었음
         } else {
-          command = inputData[0];
+		  detail = inputData[0] & 0xF0;					//command -> detail
+          multiByteChannel = inputData[0] & 0x0F;		//multiByteChannel -> port
         }
-        switch(detail) {
+        switch(detail) {								/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
           case DIGITAL_MESSAGE:
-          case ANALOG_MESSAGE:
-          case CPC_VERSION:		//REPORT_VERSION -> CPC_VERSION
-            waitForData = 2;
+          case ANALOG_MESSAGE:								
+			waitForData = 2;
             executeMultiByteCommand = detail;
             break;
-
+          case CPC_VERSION:								//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
+            waitForData = 10;							
+            executeMultiByteCommand = detail;
+            break;
+		  case CPC_GET_BLOCK:						
+            waitForData = 9;							
+            executeMultiByteCommand = detail;
+            break;
+		  /*case CPC_STOP:								//CPC_STOP 의 경우는 waitForData 가 0이며 위에서 따로 처리 분기를 작성시켜줘야함
+			waitForData = 0;
+			_shutdown();
+			break;*/
 		  default:					//default 로써 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
             parsingSysex = true;
             sysexBytesRead = 0;
             break;
-			/*
-			case CPC_START:
-			break;
-			case CPC_STOP:
-				_shutdown();
-			break;
-			*/
+
         }
       }
     }
