@@ -399,17 +399,25 @@
 				break;
 			  }
 			}
-        }else if (waitForData > 0 && (inputData[0] >= 0xE1 && inputData[0] <= 0xE2))	//GET_BLOCK 이 끝난 이후에, 블록의 제거와 연결을 확인하기위해 정의
+        }else if (waitForData > 0 && (inputData[0] >= 0xE1 && inputData[0] <= 0xF2))	//GET_BLOCK 이 끝난 이후에, 블록의 제거와 연결을 확인하기위해 정의
         {
 			storedInputData[--waitForData] = inputData[i];					
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		
 			  switch(executeMultiByteCommand) {								//inputData[0] 번이 0xE1 인 경우, 차례적으로 포트(1Byte), 블록타입(1Byte) 가 전송됨
-				case SCBD_CHOCOPI_USB | 0x01:								//USB 연결 포트에 블록 연결시 가동됨
+				case SCBD_CHOCOPI_USB | 0x01:
+				case SCBD_CHOCOPI_BLE | 0x01:								//USB 연결 포트에 블록 연결시 가동됨
 					connectHW(storedInputData[0], storedInputData[1]);		//0xE1, PORT, BLOCK_TYPE -> SCBD_SENSOR..		(inputData)
 					break;													//BLOCK_TYPE -> SCBD_SENSOR, PORT, 0xE1			(storedInputData)
-				case SCBD_CHOCOPI_USB | 0x02:								//inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+				case SCBD_CHOCOPI_USB | 0x02:								
+				case SCBD_CHOCOPI_BLE | 0x02:								//inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 					removeHW(storedInputData[0]);							//0xE2, PORT	(inputData)
 					break;													//PORT, OxE2	(storedInputData)
+				case SCBD_CHOCOPI_BLE | 0x03:
+					if (storedInputData[0] == 0) 							//연결해제됨
+						ext._shutdown();
+					else if (storedInputData[0] == 1)
+						ext._deviceConnected();
+					break;
 			  }
 			}
         }
@@ -418,7 +426,7 @@
 			detail = inputData[1];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
-        } else if (inputData[0] == 0xE1 || inputData[0] == 0xE2) {
+        } else if (inputData[0] == 0xE1 || inputData[0] == 0xE2 || inputData[0] == 0xF1 || inputData[0] == 0xF2 || inputData[0] == 0xF3) {
 			detail = inputData[0];
         }else {
 		  detail = inputData[0] & 0xF0;					//command -> detail
@@ -439,9 +447,13 @@
             executeMultiByteCommand = detail;
             break;
 		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴
+		  case SCBD_CHOCOPI_BLE | 0x01:
 			waitForData = 2;
 		    executeMultiByteCommand = detail;
+			break;
 		  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 오기 때문에, waitForData 를 1로 설정
+		  case SCBD_CHOCOPI_BLE | 0x02:
+		  case SCBD_CHOCOPI_BLE | 0x03:					//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
 			waitForData = 1;
 		    executeMultiByteCommand = detail;
 		    break;
