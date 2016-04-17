@@ -121,14 +121,28 @@
         device.val = 0;
       }
     };
+	/* search 에서 device 가 존재하지 않는다면,  name, pin, val 을 배열로 묶어서 한번에 잘 추가시킴 
+		 -> CPC_GET_BLOCK 을 처리하는 과정에서 0이 아닌경우에만 추가하므로 문제가 되지않음
+		device 가 존재한다면, pin, val 만 추가시킴 -> name 의 값은 null 로 배정될 듯
+	*/
 
     this.search = function(dev) {
       for (var i=0; i<this.devices.length; i++) {
         if (this.devices[i].name === dev)
-          return this.devices[i];
+          return this.devices[i];			
       }
       return null;
     };
+
+	//Writed By Remoted 2016.04.17
+	this.remove = function(pin) {					//pin 을 받아서, pin 을 가지고있는 배열정보를 밀어버림.
+      for (var i=0; i<this.devices.length; i++) {
+        if (this.devices[i].pin === pin)
+          	devices.splice(i,1);
+      }
+      return null;
+	};
+	//Wirted By Remoted 2016.04.17
   }
 
   function init() {
@@ -198,7 +212,8 @@
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
-	var check = checkSum(CPC_VERSION);
+	var check = checkSum( SCBD_CHOCOPI_USB << 8 | CPC_VERSION);
+	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
 	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
     
@@ -285,11 +300,11 @@
         break;
       case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
 	  case SCBD_CHOCOPI_BLE:
-		var check_start = checkSum(CPC_START);
-			check_get_block = checkSum(CPC_GET_BLOCK);
+		var check_start = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_START);
+			check_get_block = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_GET_BLOCK);
 
-		var output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]);		
-			
+		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]);		
+			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
@@ -301,9 +316,8 @@
 		  
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */
     
-			device.send(output.buffer);		
-			output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-			device.send(output.buffer);
+			device.send(output_start.buffer);		
+			device.send(output_block.buffer);
 			
         }
         pinging = false;
@@ -378,35 +392,35 @@
 				case CPC_GET_BLOCK:															//				0 1 2  3 4 5 6 7		(포트)
 					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
 						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8,CPC_GET_BLOCK	(storedInputData)
-							connectHW (storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
+							connectHW(storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
 							//connectHW (hw, pin)
 						}
 					}
 				break;
 			  }
 			}
-        }else if (waitForData > 0 && inputData[0] >= 0xE1 )	//GET_BLOCK 이 끝난 이후에, 블록의 제거와 연결을 확인하기위해 정의
+        }else if (waitForData > 0 && (inputData[0] >= 0xE1 && inputData[0] <= 0xE2))	//GET_BLOCK 이 끝난 이후에, 블록의 제거와 연결을 확인하기위해 정의
         {
 			storedInputData[--waitForData] = inputData[i];					
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		
-			  switch(executeMultiByteCommand) {
-				case SCBD_CHOCOPI_USB | 0x01:												//USB 연결 포트에 블록 연결시 가동됨
-					//for(var i=1 ; i < storedInputData.length; i++ ){						//PORT, BLOCK_TYPE -> SCBD_SENSOR..		(inputData)
-					//	if (storedInputData[i] != 0){										//BLOCK_TYPE -> SCBD_SENSOR.. ,PORT		(storedInputData)
-					//		connectHW (storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
-							//connectHW (hw, pin)
-					//	}
-					//}
-				break;
+			  switch(executeMultiByteCommand) {								//inputData[0] 번이 0xE1 인 경우, 차례적으로 포트(1Byte), 블록타입(1Byte) 가 전송됨
+				case SCBD_CHOCOPI_USB | 0x01:								//USB 연결 포트에 블록 연결시 가동됨
+					connectHW(storedInputData[0], storedInputData[1]);		//0xE1, PORT, BLOCK_TYPE -> SCBD_SENSOR..		(inputData)
+					break;													//BLOCK_TYPE -> SCBD_SENSOR, PORT, 0xE1			(storedInputData)
+				case SCBD_CHOCOPI_USB | 0x02:								//inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+					removeHW(storedInputData[0]);							//0xE2, PORT	(inputData)
+					break;													//PORT, OxE2	(storedInputData)
 			  }
 			}
         }
       } else {
         if (inputData[0] == 0xE0 && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
 			detail = inputData[1];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
-		  //들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용하고 있었음
-		  //일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
-        } else {
+									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
+									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
+        } else if (inputData[0] == 0xE1 || inputData[0] == 0xE2) {
+			detail = inputData[0];
+        }else {
 		  detail = inputData[0] & 0xF0;					//command -> detail
           multiByteChannel = inputData[0] & 0x0F;		//multiByteChannel -> port
         }
@@ -424,10 +438,14 @@
             waitForData = 9;							
             executeMultiByteCommand = detail;
             break;
-		  case SCBD_CHOCOPI_USB | 0x01:
-			waitForData = 1;							//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 오기 때문에, waitForData 를 1로 설정
-			executeMultiByteCommand = detail;
+		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴
+			waitForData = 2;
+		    executeMultiByteCommand = detail;
+		  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 오기 때문에, waitForData 를 1로 설정
+			waitForData = 1;
+		    executeMultiByteCommand = detail;
 		    break;
+		
 		  /*case CPC_STOP:								//CPC_STOP 의 경우는 waitForData 가 0이며 위에서 따로 처리 분기를 작성시켜줘야함
 			waitForData = 0;
 			_shutdown();
@@ -445,7 +463,12 @@
 	function connectHW (hw, pin) {
 		hwList.add(hw, pin);
 	}
+	//hwList.add 함수에 의거하여, hw 에 새로운 pin 이 지정되도록 이미 코딩되어 있음. (패치 미필요)
 
+	function removeHW(pin){
+		hwList.remove(pin);
+	}
+	
   function pinMode(pin, mode) {
     var msg = new Uint8Array([PIN_MODE, pin, mode]);
     device.send(msg.buffer);
