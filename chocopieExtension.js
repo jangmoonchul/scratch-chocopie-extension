@@ -33,6 +33,7 @@
 	/*Chocopie const definition
 	 * SCBD_ULTRASONIC 와 SCBD_PIR 은 아직 존재하지않는 확장영역으로써 설계되어져있음
 	*/
+
 	var CPC_VERSION = 0x08,		//REPORT_VERSION = 0xF9 -> CPC_VERSION 으로 PATCH -- Changed By Remoted 2016.04.14
 		CPC_START = 0x09,
 		CPC_STOP = 0x0A,
@@ -299,7 +300,6 @@
         }, 100);
         break;
       case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
-	  case SCBD_CHOCOPI_BLE:
 		var check_start = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_START);
 			check_get_block = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_GET_BLOCK);
 
@@ -312,17 +312,38 @@
           clearTimeout(watchdog);
           watchdog = null;				//감시견을 옆집 개나줘버림
           connected = true;
+		  
+		  device.send(output_start.buffer);		
+		  device.send(output_block.buffer);
           setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
 		  
-		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */
-    
-			device.send(output_start.buffer);		
-			device.send(output_block.buffer);
-			
+		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
         }
         pinging = false;
         pingCount = 0;
         break;
+	  case SCBD_CHOCOPI_BLE:
+		var check_start = checkSum(SCBD_CHOCOPI_BLE << 8 | CPC_START);
+			check_get_block = checkSum(SCBD_CHOCOPI_BLE << 8 | CPC_GET_BLOCK);
+
+		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]);		
+			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+
+        if (!connected) {
+          clearInterval(poller);		
+          poller = null;				
+          clearTimeout(watchdog);
+          watchdog = null;				
+          connected = true;
+		  
+		  device.send(output_start.buffer);		
+		  device.send(output_block.buffer);
+          setTimeout(init, 200);			
+        }
+
+		pinging = false;
+        pingCount = 0;
+		break;
 		//펌웨어에 대한 연결을 허용시키는 부분
     }
   }
@@ -330,10 +351,10 @@
 
 	function escapte_control(source){
 		for(var i=0; i < source.length; i++){
-			if(source[0] == 0x7E && source[i] == 0x7E){
+			if(source[i] == 0x7E){
 				var msg = new Uint8Array([0x7D, 0x7E ^ 0x20]);
 				return msg;
-			}else if (source[0] == 0x7E && source[i] == 0x7D){
+			}else if (source[i] == 0x7D){
 				var msg = new Uint8Array([0x7D, 0x7D ^ 0x20]);
 				return msg;
 			}
@@ -350,30 +371,77 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
-        if (inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) {
+			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
+			if (inputData[i] == END_SYSEX) {
+			  parsingSysex = false;
+			  processSysexMessage();
+			} else {
+			  storedInputData[sysexBytesRead++] = inputData[i];
+			  //기존의 아두이노의 방식에서는 이 과정을 통해서 AnalogMapping 등의 과정을 확보했음.
+			}
+			*/
 			
-			//inputData[i] = escapte_control(inputData[i]);
-			//이스케이핑 컨트롤러에 END_SYSEX 를 확인하기위해서 다시 보냄
-			//inputData[i] 번에 대해서 0xE0 값인지 검증에 들어감
-
+        if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && inputData[inputData.length] != 0) {
+		  storedInputData[sysexBytesRead++] = inputData[i];		//예상값) storedInputData[0] = 0xE0 혹은 0xF0
           parsingSysex = false;
           processSysexMessage();
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
 		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
-
-        } else {
-          storedInputData[sysexBytesRead++] = inputData[i];
-		  //END 값이 아니면 storedInputData 에 들어온 데이터를 지속적으로 저장.. 이렇게해서 storedInputData 에는 들어온 데이터가 담기게됨
-		  //데이터를 보내고나서 수신하게 될 값을 예상해서 쓰므로 수신할때는 헤더와 테일러를 쓰고있지 않는 문제가 발생..	-> Patch By Remoted 2016.04.15
-		  //inputData 가 어떤 목적으로 처리되는지를 유추해야함
-
         }
-      } else if (waitForData > 0 && inputData[i] < 0x80) {					//이 부분에서 inputData 에 대한 초코파이 메인보드 처리와 모든것을 이뤄야함
+      } else if (waitForData > 0 && ((inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF2)) && inputData[1] <= 0x0F){					
+																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
+	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
+			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
+			  switch(executeMultiByteCommand) {								//executeMultiByteCommand == detail
+				case CPC_VERSION:											//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 역전현상이 발생함
+					setVersion(storedInputData[1], storedInputData[0]);		
+					break;																	
+				case CPC_GET_BLOCK:															//				0 1 2  3 4 5 6 7		(포트)
+					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
+						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8,CPC_GET_BLOCK	(storedInputData)
+							connectHW(storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
+							//connectHW (hw, pin)
+						}
+					}
+					break;
+				case SCBD_CHOCOPI_USB | 0x01:								//inputData[0] 번이 0xE1 인 경우, 차례적으로 포트(1Byte), 블록타입(1Byte) 가 전송됨
+				case SCBD_CHOCOPI_BLE | 0x01:								//USB 연결 포트에 블록 연결시 가동됨
+					connectHW(storedInputData[0], storedInputData[1]);		//0xE1, PORT, BLOCK_TYPE -> SCBD_SENSOR..		(inputData)
+					break;													//BLOCK_TYPE -> SCBD_SENSOR, PORT, 0xE1			(storedInputData)
+				case SCBD_CHOCOPI_USB | 0x02:								
+				case SCBD_CHOCOPI_BLE | 0x02:								//inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+					removeHW(storedInputData[0]);							//0xE2, PORT	(inputData)
+					break;													//PORT, OxE2	(storedInputData)
+			  }
+			}
+      } else if (waitForData > 0 && (inputData[0] == SCBD_CHOCOPI_USB | 0x0F)){
+	        storedInputData[--waitForData] = inputData[i];					
+			if (executeMultiByteCommand !== 0 && waitForData === 0) {		
+			  switch(executeMultiByteCommand) {								
+				case SCBD_CHOCOPI_USB | 0x0F:								
+					console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);							
+					//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
+					break;
+			  }
+			}
+      } else if (waitForData > 0 && inputData[0] == 0xF3 && inputData[1] <= 1) {
+	        storedInputData[--waitForData] = inputData[i];
+			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
+			  switch(executeMultiByteCommand) {
+				case SCBD_CHOCOPI_BLE | 0x03:
+					if (storedInputData[0] == 0) 							//연결해제됨
+						ext._shutdown();									//0xF3, STATUS
+					else if (storedInputData[0] == 1)						//STATUS, 0xF3
+						ext._deviceConnected();
+					break;
+			  }
+			}
+	  } else if (waitForData > 0 && inputData[i] < 0xFF) {	//0x80-> 0xFF
         storedInputData[--waitForData] = inputData[i];
-        if (executeMultiByteCommand !== 0 && waitForData === 0) {
-          switch(executeMultiByteCommand) {		//executeMultiByteCommand == detail
+        if (executeMultiByteCommand !== 0 && waitForData === 0) {			//0xE0 이상에 대한 값이 겹칠지라도, 초반 GET_BLOCK 확보 이후이므로 문제가 없음
+          switch(executeMultiByteCommand) {									//겹치게 될 경우, inputData[1] 번에 오는 데이터로 판별해야함.
             case DIGITAL_MESSAGE:
-              setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
+              setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		
               break;
             case ANALOG_MESSAGE:
               setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
@@ -382,51 +450,12 @@
 			//이 곳에서 들어오는 command 에 대해서 추가하는 switch 들을 이루어내야함
 			//다만 parsingSysex 가 필요없는 것에 대해 패치가 필요. -> parsingSysex 을 플래그로 사용하기로 함.
           }
-        }else if (waitForData > 0 && inputData[0] == 0xE0){					// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
-	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
-			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻하는 것임.
-			  switch(executeMultiByteCommand) {								//executeMultiByteCommand == detail
-				case CPC_VERSION:											//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 엔디안 역전현상이 발생함
-				  setVersion(storedInputData[1], storedInputData[0]);		
-				  break;																	
-				case CPC_GET_BLOCK:															//				0 1 2  3 4 5 6 7		(포트)
-					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
-						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8,CPC_GET_BLOCK	(storedInputData)
-							connectHW(storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
-							//connectHW (hw, pin)
-						}
-					}
-				break;
-			  }
-			}
-        }else if (waitForData > 0 && (inputData[0] >= 0xE1 && inputData[0] <= 0xF2))	//GET_BLOCK 이 끝난 이후에, 블록의 제거와 연결을 확인하기위해 정의
-        {
-			storedInputData[--waitForData] = inputData[i];					
-			if (executeMultiByteCommand !== 0 && waitForData === 0) {		
-			  switch(executeMultiByteCommand) {								//inputData[0] 번이 0xE1 인 경우, 차례적으로 포트(1Byte), 블록타입(1Byte) 가 전송됨
-				case SCBD_CHOCOPI_USB | 0x01:
-				case SCBD_CHOCOPI_BLE | 0x01:								//USB 연결 포트에 블록 연결시 가동됨
-					connectHW(storedInputData[0], storedInputData[1]);		//0xE1, PORT, BLOCK_TYPE -> SCBD_SENSOR..		(inputData)
-					break;													//BLOCK_TYPE -> SCBD_SENSOR, PORT, 0xE1			(storedInputData)
-				case SCBD_CHOCOPI_USB | 0x02:								
-				case SCBD_CHOCOPI_BLE | 0x02:								//inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
-					removeHW(storedInputData[0]);							//0xE2, PORT	(inputData)
-					break;													//PORT, OxE2	(storedInputData)
-				case SCBD_CHOCOPI_BLE | 0x03:
-					if (storedInputData[0] == 0) 							//연결해제됨
-						ext._shutdown();
-					else if (storedInputData[0] == 1)
-						ext._deviceConnected();
-					break;
-			  }
-			}
-        }
       } else {
         if (inputData[0] == 0xE0 && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
 			detail = inputData[1];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
-        } else if (inputData[0] == 0xE1 || inputData[0] == 0xE2 || inputData[0] == 0xF1 || inputData[0] == 0xF2 || inputData[0] == 0xF3) {
+		} else if (inputData[0] == 0xE1 || inputData[0] == 0xE2 || inputData[0] == 0xF1 || inputData[0] == 0xF2 || inputData[0] == 0xF3 || inputData[0] == 0xEF) {
 			detail = inputData[0];
         }else {
 		  detail = inputData[0] & 0xF0;					//command -> detail
@@ -439,12 +468,18 @@
             executeMultiByteCommand = detail;
             break;
           case CPC_VERSION:								//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
+		  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
             waitForData = 10;							
             executeMultiByteCommand = detail;
             break;
 		  case CPC_GET_BLOCK:						
             waitForData = 9;							
             executeMultiByteCommand = detail;
+            break;
+		  case SCBD_CHOCOPI_USB:					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
+		  case SCBD_CHOCOPI_BLE:
+            parsingSysex = true;
+            sysexBytesRead = 0;
             break;
 		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴
 		  case SCBD_CHOCOPI_BLE | 0x01:
@@ -457,16 +492,10 @@
 			waitForData = 1;
 		    executeMultiByteCommand = detail;
 		    break;
-		
 		  /*case CPC_STOP:								//CPC_STOP 의 경우는 waitForData 가 0이며 위에서 따로 처리 분기를 작성시켜줘야함
 			waitForData = 0;
 			_shutdown();
 			break;*/
-		  default:					//default 로써 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
-            parsingSysex = true;
-            sysexBytesRead = 0;
-            break;
-
         }
       }
     }
