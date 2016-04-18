@@ -419,7 +419,7 @@
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		
 			  switch(executeMultiByteCommand) {								
 				case SCBD_CHOCOPI_USB | 0x0F:								
-					console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);							
+					//console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);
 					//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
 					break;
 			  }
@@ -457,7 +457,7 @@
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
 		} else if (inputData[0] == 0xE1 || inputData[0] == 0xE2 || inputData[0] == 0xF1 || inputData[0] == 0xF2 || inputData[0] == 0xF3 || inputData[0] == 0xEF) {
 			detail = inputData[0];
-        }else {
+        } else {
 		  detail = inputData[0] & 0xF0;					//command -> detail
           multiByteChannel = inputData[0] & 0x0F;		//multiByteChannel -> port
         }
