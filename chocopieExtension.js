@@ -300,10 +300,10 @@
         }, 100);
         break;
       case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
-		var check_start = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_START);
+		var check_start = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_START),
 			check_get_block = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_GET_BLOCK);
 
-		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]);		
+		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
 			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 
         if (!connected) {
@@ -323,10 +323,10 @@
         pingCount = 0;
         break;
 	  case SCBD_CHOCOPI_BLE:
-		var check_start = checkSum(SCBD_CHOCOPI_BLE << 8 | CPC_START);
+		var check_start = checkSum(SCBD_CHOCOPI_BLE << 8 | CPC_START),
 			check_get_block = checkSum(SCBD_CHOCOPI_BLE << 8 | CPC_GET_BLOCK);
 
-		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]);		
+		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]),	
 			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 
         if (!connected) {
@@ -388,7 +388,7 @@
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
 		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
         }
-      } else if (waitForData > 0 && ((inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF2)) && inputData[1] <= 0x0F){					
+      } else if (waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
@@ -420,8 +420,9 @@
 			  switch(executeMultiByteCommand) {								
 				case SCBD_CHOCOPI_USB | 0x0F:								
 					console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);
-					//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
+					
 					break;
+					//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
 			  }
 			}
       } else if (waitForData > 0 && inputData[0] == 0xF3 && inputData[1] <= 1) {
@@ -429,11 +430,11 @@
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
 			  switch(executeMultiByteCommand) {
 				case SCBD_CHOCOPI_BLE | 0x03:
-					/*if (storedInputData[0] == 0) 							//연결해제됨
+					if (storedInputData[0] == 0) 							//연결해제됨
 						ext._shutdown();									//0xF3, STATUS
 					else if (storedInputData[0] == 1)						//STATUS, 0xF3
 						ext._deviceConnected();
-					*/
+					
 					break;
 			  }
 			}
