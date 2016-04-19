@@ -88,6 +88,7 @@
     digitalInputData = new Uint8Array(16),
     analogInputData = new Uint16Array(16);
 
+
   var analogChannel = new Uint8Array(MAX_PINS);
   var pinModes = [];
   for (var i = 0; i < TOTAL_PIN_MODES; i++) pinModes[i] = [];
@@ -156,18 +157,6 @@
     }
 	*/
 
-	/*
-	var check = checkSum(SCBD_CHOCOPI_USB);
-	var usb_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_USB, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
-    device.send(usb_output.buffer);
-	
-	if (storedInputData[0] != 0x00)
-	{
-		check = checkSum(SCBD_CHOCOPI_BLE);
-		var ble_output = new Uint8Array([START_SYSEX, CPC_VERSION, SCBD_CHOCOPI_BLE, check ,END_SYSEX]);
-		device.send(ble_output.buffer);
-	}*/
-
     //queryCapabilities();
 	//쿼리의 상태를 확인하기위해 함수 가동
 	/*http://www.firmata.org/wiki/V2.3ProtocolDetails#Query_Firmware_Name_and_Version 에 의하면 GUI 기반에서 현재 보드의 상태등을 알아보기 위하여
@@ -201,19 +190,22 @@
     }, 100);
   }
 
+/*
   function hasCapability(pin, mode) {
     if (pinModes[mode].indexOf(pin) > -1)
       return true;
     else
       return false;
   }
+  */
+  // Capability 함수는 아두이노에서 핀에 대한 셋팅이 적절히 이루어졌는지를 검증하는 것임.	-> 초코파이에서 필요한지 유무 판별중
 
   function queryFirmware() {
     //var output = new Uint8Array([START_SYSEX, QUERY_FIRMWARE, END_SYSEX]);
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
-	var check = checkSum( SCBD_CHOCOPI_USB << 8 | CPC_VERSION);
+	var check = checkSum( SCBD_CHOCOPI_USB << 8 ^ CPC_VERSION);
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
 	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
@@ -234,7 +226,7 @@
 	//Port/detail, data를 checksum 함
 	
 
-
+/*
   function queryCapabilities() {
     console.log('Querying ' + device.id + ' capabilities');
     var msg = new Uint8Array([
@@ -242,7 +234,7 @@
 	device.send(msg.buffer);
 	//디바이스가 유효한지 확인하기 위해서 Capabilities 함수를 가동하여 패킷을 보냄
   }
-
+*/
   function queryAnalogMapping() {
     console.log('Querying ' + device.id + ' analog mapping');
     var msg = new Uint8Array([
@@ -272,6 +264,7 @@
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지 ? 라는 정의인 듯 함. storedInputData[0] 번에 대해서 크게 3가지 처리를 나열함
     switch(storedInputData[0]) {
+		/*
       case CAPABILITY_RESPONSE:
         for (var i = 1, pin = 0; pin < MAX_PINS; pin++) {
           while (storedInputData[i++] != 0x7F) {
@@ -282,6 +275,7 @@
         }
         queryAnalogMapping();
         break;
+		*/
       case ANALOG_MAPPING_RESPONSE:
         for (var pin = 0; pin < analogChannel.length; pin++)
           analogChannel[pin] = 127;
@@ -300,8 +294,8 @@
         }, 100);
         break;
       case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
-		var check_start = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_START),
-			check_get_block = checkSum(SCBD_CHOCOPI_USB << 8 | CPC_GET_BLOCK);
+		var check_start = checkSum(SCBD_CHOCOPI_USB << 8 ^ CPC_START),
+			check_get_block = checkSum(SCBD_CHOCOPI_USB << 8 ^ CPC_GET_BLOCK);
 
 		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
 			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
@@ -323,8 +317,8 @@
         pingCount = 0;
         break;
 	  case SCBD_CHOCOPI_BLE:
-		var check_start = checkSum(SCBD_CHOCOPI_BLE << 8 | CPC_START),
-			check_get_block = checkSum(SCBD_CHOCOPI_BLE << 8 | CPC_GET_BLOCK);
+		var check_start = checkSum(SCBD_CHOCOPI_BLE << 8 ^ CPC_START),
+			check_get_block = checkSum(SCBD_CHOCOPI_BLE << 8 ^ CPC_GET_BLOCK);
 
 		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]),	
 			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
@@ -589,7 +583,7 @@
   }
 
 	//Original Function Line--------------------------------------------------------------------------
-	  ext.whenConnected = function() {
+  ext.whenConnected = function() {
     if (notifyConnection) return true;
     return false;
   };
@@ -695,15 +689,10 @@
   ext.readInput = function(networks, name) {
     var hw = hwList.search(SCBD_SENSOR);
     if (!hw) return;	
-	//if (name == 'Analog 1' || name == 'Analog 2' || name == 'Analog 3' || name == 'Analog 4' || name == '아날로그 1' || name == '아날로그 2' || name == '아날로그 3' || name == '아날로그 4')
-	//{
-		return analogRead(hw.pin);
-	//}else{
-	//	return digitalRead(hw.pin);
-	//}
-    
+	
+	return analogRead(hw.pin);
   };
-	//readInput 에 대하여 검증필요->내용 확인 완료 -- Changed By Remoted 2016.04.14
+	//readInput 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
 
   ext.whenButton = function(btn, state) {
     var hw = hwList.search(btn);
@@ -712,12 +701,6 @@
       return digitalRead(hw.pin);
     else if (state === 'released')
       return !digitalRead(hw.pin);
-  };
-
-  ext.isButtonPressed = function(btn) {
-    var hw = hwList.search(btn);
-    if (!hw) return;
-    return digitalRead(hw.pin);
   };
 
   ext.whenInput = function(name, op, val) {
@@ -797,13 +780,12 @@
 
 
 	
-	//Function added Line -----------------------------------------------------------------------------
+	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임
   ext.isTouchButtonPressed = function(networks,value){
 	 if(networks == "일반"){
 		var hw = hwList.search(touch);
 		if (!hw) return;
 		return value;
-	 }else{
 	 }
   };
 
@@ -812,7 +794,6 @@
 		 var hw = hwList.search(motion);
 		 if (!hw) return;
 		 return value;
-	 }else{
 	 }
   };
 
@@ -821,7 +802,6 @@
 	    var hw = hwList.search(photogate);
 		if (!hw) return;
 		return gatestate;
-	 }else{
 	 }
   };
 
@@ -857,7 +837,6 @@
 	  
 	 if(networks == "일반"){
 		 digitalWrite(hw.pin,datas);
-	 }else{
 	 }
   };
 
@@ -874,7 +853,6 @@
 	
 	 if(networks == "일반"){
 		 digitalWrite(hw.pin,datas);
-	 }else{
 	 }
   };
 
@@ -892,7 +870,6 @@
 	
 	 if(networks == "일반"){
 		 digitalWrite(hw.pin,datas);
-	 }else{
 	 }
   };
 
@@ -932,31 +909,11 @@
   var blocks = {
     en: [
       ['h', 'when device is connected', 'whenConnected'],
-      //[' ', 'connect %m.hwOut to pin %n', 'connectHW', 'led A', 3],
-      //[' ', 'connect %m.hwIn to analog %n', 'connectHW', 'rotation knob', 0],
-      //['-'],
-      //[' ', 'set %m.leds %m.outputs', 'digitalLED', 'led A', 'on'],
-      //[' ', 'set %m.leds brightness to %n%', 'setLED', 'led A', 100],
-      //[' ', 'change %m.leds brightness by %n%', 'changeLED', 'led A', 20],
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
-      //[' ', 'rotate %m.servos by %n degrees', 'changeServo', 'servo A', 20],
       ['-'],
       ['r', 'read from %m.networks to %m.hwIn', 'readInput', 'normal','light sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
       ['-'],																				//function_name: readInput
-      //[' ', 'set pin %n %m.outputs', 'digitalWrite', 1, 'on'],
-      //[' ', 'set pin %n to %n%', 'analogWrite', 3, 100],
-      //['-'],
-      //['h', 'when pin %n is %m.outputs', 'whenDigitalRead', 1, 'on'],
-      //['b', 'pin %n on?', 'digitalRead', 1],
-      //['-'],
-      //['h', 'when analog %m.analogSensor %m.ops %n%', 'whenAnalogRead', 1, '>', 50],
-      //['r', 'read analog %m.analogSensor', 'analogRead', 0],
-	  //['h', 'when remoted analog %m.RanalogSensor %m.ops %n%', 'whenRAnalogRead', 1, '>', 50],
-      //['r', 'read remoted analog %m.RanalogSensor', 'RAnalogRead', 0],		//Patched
-      ['-'],
-      //['r', 'map %n from %n %n to %n %n', 'mapValues', 50, 0, 100, -240, 240],
-	  //['-'],
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 																								//function_name : isTouchButtonPressed
       ['-'],
