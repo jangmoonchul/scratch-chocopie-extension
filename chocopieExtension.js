@@ -179,10 +179,11 @@
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
-	var check = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION);
+	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION);
+		check_ble = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION);
 	
-	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
-	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
+	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
+	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
@@ -587,14 +588,6 @@
   //HIGH 에 digitalWrite 시에는 LED 가 켜져있을 때 이고, val 은 밝기를 조절하는 듯 함
 	//LOW 에 digitalWrite 시에는 LED가 꺼져있을 때 이고, val 은 밝기를 조절하는데 0으로 맞춤으로써 밝기를 날려버리는듯 함
 
-  ext.readInput = function(networks, name) {
-    var hw = hwList.search(SCBD_SENSOR);
-    if (!hw) return;	
-	
-	return analogRead(hw.pin);
-  };
-	//readInput 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
-
   ext.whenButton = function(btn, state) {
     var hw = hwList.search(btn);
     if (!hw) return;
@@ -665,6 +658,34 @@
 
 	
 	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임
+	
+  ext.readInput = function(networks, name) {
+    var hw = hwList.search(SCBD_SENSOR);
+	var check = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION);
+
+    if (!hw) return;	
+	else {
+		if (val == menus[lang]['networks'][0])	//일반
+		{
+			//| hw.pin
+			var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
+			
+			if (val == menus[lang]['hwIn'][0])		//온도, 습도, 조도, 아날로그 1, 2, 3, 4 순서
+			{
+				device.send(usb_output.buffer);	
+			}
+		}else{
+			check = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION);
+			var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
+
+			device.send(ble_output.buffer);
+		}
+
+	}
+
+  };
+  //readInput 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
+
   ext.isTouchButtonPressed = function(networks,value){
   };
 
@@ -709,7 +730,7 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
       ['-'],
-      ['r', 'read from %m.networks to %m.hwIn', 'readInput', 'normal','light sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
+      ['r', 'read from %m.networks to %m.hwIn', 'readInput', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
       ['-'],																				//function_name: readInput
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 																								//function_name : isTouchButtonPressed
@@ -737,7 +758,7 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
       ['-'],																						
-      ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readInput', '일반','조도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
+      ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readInput', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																			// function_name = readInput
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
       //[' ', '%n 번 핀의 값을 %n% 로 설정하기', 'analogWrite', 3, 100],
@@ -779,7 +800,7 @@
 		btnStates: ['0', '1'],
 		//0 : pressed  1: released
 
-		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor', 'Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],						
+		hwIn: [ 'temperature sensor', 'humidity sensor', 'light sensor', 'Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],						
 		//Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
 
 		outputs: ['on', 'off'],
@@ -817,7 +838,7 @@
 		btnStates: ['0', '1'],
 		// 0 : 눌림  1 : 떼짐
 
-		hwIn: ['조도', '온도', '습도','아날로그 1', '아날로그 2', '아날로그 3', '아날로그 4'],
+		hwIn: ['온도', '습도','조도','아날로그 1', '아날로그 2', '아날로그 3', '아날로그 4'],
 		// light, temperature and humidity and Analog Sensor for 1, 2, 3 and 4 is defined.
 
 		outputs: ['켜기', '끄기'],
