@@ -371,6 +371,13 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && inputData[inputData.length] != 0) {
+		  storedInputData[sysexBytesRead++] = inputData[i];		//예상값) storedInputData[0] = 0xE0 혹은 0xF0
+          parsingSysex = false;
+          processSysexMessage();
+		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
+		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
+        }
 			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
 			if (inputData[i] == END_SYSEX) {
 			  parsingSysex = false;
@@ -381,14 +388,8 @@
 			}
 			*/
 			
-        if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && inputData[inputData.length] != 0) {
-		  storedInputData[sysexBytesRead++] = inputData[i];		//예상값) storedInputData[0] = 0xE0 혹은 0xF0
-          parsingSysex = false;
-          processSysexMessage();
-		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
-		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
-        }
-      } else if (waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F){					
+
+      } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
@@ -415,29 +416,29 @@
 			  }
 			}
       } else if (waitForData > 0 && (inputData[0] == SCBD_CHOCOPI_USB | 0x0F) ){
-	        storedInputData[--waitForData] = inputData[i];					
-			if (executeMultiByteCommand !== 0 && waitForData === 0) {		
-			  switch(executeMultiByteCommand) {								
+		storedInputData[--waitForData] = inputData[i];					
+		if (executeMultiByteCommand !== 0 && waitForData === 0) {		
+			switch(executeMultiByteCommand) {								
 				case SCBD_CHOCOPI_USB | 0x0F:								
-					console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);
+				console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);
 					
-					break;
-					//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
-			  }
+				break;
+				//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
 			}
+		}
       } else if (waitForData > 0 && inputData[0] == 0xF3 && inputData[1] <= 1) {
-	        storedInputData[--waitForData] = inputData[i];
-			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
-			  switch(executeMultiByteCommand) {
-				case SCBD_CHOCOPI_BLE | 0x03:
-					if (storedInputData[0] == 0) 							//연결해제됨
-						ext._shutdown();									//0xF3, STATUS
-					else if (storedInputData[0] == 1)						//STATUS, 0xF3
-						ext._deviceConnected();
-					
-					break;
-			  }
-			}
+	    storedInputData[--waitForData] = inputData[i];
+		if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
+		  switch(executeMultiByteCommand) {
+			case SCBD_CHOCOPI_BLE | 0x03:
+				if (storedInputData[0] == 0) 							//연결해제됨
+					ext._shutdown();									//0xF3, STATUS
+				else if (storedInputData[0] == 1)						//STATUS, 0xF3
+					ext._deviceConnected();
+				
+				break;
+		  }
+		}
 	  } else if (waitForData > 0 && inputData[i] < 0xFF) {	//0x80-> 0xFF
         storedInputData[--waitForData] = inputData[i];
         if (executeMultiByteCommand !== 0 && waitForData === 0) {			//0xE0 이상에 대한 값이 겹칠지라도, 초반 GET_BLOCK 확보 이후이므로 문제가 없음
@@ -464,42 +465,42 @@
 		  detail = inputData[0] & 0xF0;					//command -> detail
           multiByteChannel = inputData[0] & 0x0F;		//multiByteChannel -> port
         }
-        switch(detail) {								/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
-          case DIGITAL_MESSAGE:
-          case ANALOG_MESSAGE:								
+		switch(detail) {								/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
+		  case DIGITAL_MESSAGE:
+		  case ANALOG_MESSAGE:								
 			waitForData = 2;
-            executeMultiByteCommand = detail;
-            break;
-          case CPC_VERSION:								//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
+			executeMultiByteCommand = detail;
+			break;
+		  case CPC_VERSION:								//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
 		  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
-            waitForData = 10;							
-            executeMultiByteCommand = detail;
-            break;
+			waitForData = 10;							
+			executeMultiByteCommand = detail;
+			break;
 		  case CPC_GET_BLOCK:						
-            waitForData = 9;							
-            executeMultiByteCommand = detail;
-            break;
+			waitForData = 9;							
+			executeMultiByteCommand = detail;
+			break;
 		  case SCBD_CHOCOPI_USB:					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
 		  case SCBD_CHOCOPI_BLE:
-            parsingSysex = true;
-            sysexBytesRead = 0;
-            break;
+			parsingSysex = true;
+			sysexBytesRead = 0;
+			break;
 		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴
 		  case SCBD_CHOCOPI_BLE | 0x01:
 			waitForData = 2;
-		    executeMultiByteCommand = detail;
+			executeMultiByteCommand = detail;
 			break;
 		  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 오기 때문에, waitForData 를 1로 설정
 		  case SCBD_CHOCOPI_BLE | 0x02:
 		  case SCBD_CHOCOPI_BLE | 0x03:					//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
 			waitForData = 1;
-		    executeMultiByteCommand = detail;
-		    break;
+			executeMultiByteCommand = detail;
+			break;
 		  /*case CPC_STOP:								//CPC_STOP 의 경우는 waitForData 가 0이며 위에서 따로 처리 분기를 작성시켜줘야함
 			waitForData = 0;
 			_shutdown();
 			break;*/
-        }
+		}
       }
     }
   }
