@@ -43,9 +43,33 @@
 		CPC_ALL_SAY = 0x0E;
 	//Chocopie command definition
 	
-  var START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
-	  END_SYSEX = 0x7E;			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
+  var PIN_MODE = 0xF4,
+    REPORT_DIGITAL = 0xD0,		//DIGITAL 신호가 들어왔을때 보고하는 값
+    REPORT_ANALOG = 0xC0,		//아날로그 신호가 들어왔을때 보고하는 값
+    DIGITAL_MESSAGE = 0x90,
+    START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
+    END_SYSEX = 0x7E,			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
     //QUERY_FIRMWARE = 0xE0,		//0x79 (아두이노) -> 0xE0 (초코파이보드용) QUERY_FIRMWARE 와 SCBD_CHOCOPI_USB 는 같은 값을 유지 (일반)--Changed By Remoted 2016.04.14
+    ANALOG_MESSAGE = 0xE0,
+    ANALOG_MAPPING_QUERY = 0x69,
+    ANALOG_MAPPING_RESPONSE = 0x6A,
+    CAPABILITY_QUERY = 0x6B,
+    CAPABILITY_RESPONSE = 0x6C;
+
+  var INPUT = 0x00,
+    OUTPUT = 0x01,
+    ANALOG = 0x02,
+    PWM = 0x03,
+    SERVO = 0x04,
+    SHIFT = 0x05,
+    I2C = 0x06,
+    ONEWIRE = 0x07,
+    STEPPER = 0x08,
+    ENCODER = 0x09,
+    SERIAL = 0x0A,
+    PULLUP = 0x0B,
+    IGNORE = 0x7F,
+    TOTAL_PIN_MODES = 11;		//총 가능한 PIN MODE 13 (아두이노) -> 11 (초코파이) 용으로 변경
 
   var LOW = 0,
     HIGH = 1;
@@ -196,9 +220,9 @@
 		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 무한루프가 형성됨								*/
 
   function processSysexMessage() {
-	  // 시스템 처리 추가메세지 정의
+	  // 시스템 처리 추가메세지
     switch(storedInputData[0]) {
-      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 가 들어오면 connect 확인이 완료
+      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
 		var check_start = checkSum(SCBD_CHOCOPI_USB, CPC_START),
 			check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 
@@ -469,6 +493,18 @@
     device.send(msg.buffer);
   }
 
+  function rotateServo(pin, deg) {
+    if (!hasCapability(pin, SERVO)) {
+      console.log('ERROR: valid servo pins are ' + pinModes[SERVO].join(', '));
+      return;
+    }
+    pinMode(pin, SERVO);
+    var msg = new Uint8Array([
+        ANALOG_MESSAGE | (pin & 0x0F),
+        deg & 0x7F,
+        deg >> 0x07]);
+    device.send(msg.buffer);
+  }
 
 	//Original Function Line--------------------------------------------------------------------------
   ext.whenConnected = function() {
@@ -496,7 +532,6 @@
     return digitalRead(pin);
   };
 
-
   ext.whenDigitalRead = function(pin, val) {
     if (hasCapability(pin, INPUT)) {
       if (val == menus[lang]['outputs'][0])
@@ -506,7 +541,7 @@
     }
   };
 	// menus[lang]['outputs'][1] outputs 는 켜기와 끄기를 의미하는데, 3차원 배열로 1번에 해당하는 것은 도대체 뭔지 1도 모르겟음!
-	// -> 0번째 메뉴와 1번째 메뉴를 의미하는 듯 함
+
 
   ext.rotateServo = function(servo, deg) {
     var hw = hwList.search(servo);
@@ -534,16 +569,6 @@
     hw.val = val;
   };
 	//led 에 대한 객체값 정의 확인불가..
-
-  ext.changeLED = function(led, val) {
-    var hw = hwList.search(led);
-    if (!hw) return;
-    var b = hw.val + val;
-    if (b < 0) b = 0;
-    else if (b > 100) b = 100;
-    analogWrite(hw.pin, b);
-    hw.val = b;
-  };
 	//setLED 와 changeLED 는 analogWrite 로 써지고 있는데, 이 부분에서 어떤걸 써야하는지 검증 불가..
 
 	//함수의 인자는 블록에 표시된 갯수대로 가져온다.
@@ -578,6 +603,7 @@
     else if (state === 'released')
       return !digitalRead(hw.pin);
   };
+
 
   ext._getStatus = function() {
     if (!connected)
@@ -708,8 +734,6 @@
     ko: [
       ['h', '초코파이가 연결됐을 때', 'whenConnected'],
       //[' ', '%m.leds 를 %m.outputs', 'digitalLED', 'led A', '켜기'],
-      //[' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
-      //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
       ['-'],																						
@@ -723,7 +747,7 @@
       //['-'],
       //['h', '아날로그 %m.analogSensor 번의 값이 %m.ops %n% 일 때', 'whenAnalogRead', 1, '>', 50],
       //['r', '아날로그 %m.analogSensor 번의 값', 'analogRead', 0],
-
+	  //['-'],
 	  ['b', '%m.networks 터치센서 %m.touch 의 값', 'isTouchButtonPressed', '일반','1'],			//Touch Sensor is boolean block	-- normal and remote					
 	  ['-'],																					//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', '0'],				//sw block (button 1, .. )
