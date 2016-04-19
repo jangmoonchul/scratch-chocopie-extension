@@ -149,22 +149,6 @@
 
   function init() {
 	
-	/*
-    for (var i = 0; i < 16; i++) {
-      var output = new Uint8Array([REPORT_DIGITAL | i, 0x01]);
-      device.send(output.buffer);
-	  //0xD0 ~ 0xDF 까지 OR 연산후에 0x01 값과 함께 배열로써 보냄.. -> 초기화 작업으로 추측 --> 정확했음
-    }
-	*/
-
-    //queryCapabilities();
-	//쿼리의 상태를 확인하기위해 함수 가동
-	/*http://www.firmata.org/wiki/V2.3ProtocolDetails#Query_Firmware_Name_and_Version 에 의하면 GUI 기반에서 현재 보드의 상태등을 알아보기 위하여
-	FIRMATA 와 체크를 하기위해 사용되어지는 부분으로 필요없음*/
-
-	/* 엄연히 말하면 init 은 processSysexMessage 안에서 QUERY_FIRMWARE 일때 실행되어짐 */
-
-
     // TEMPORARY WORKAROUND
     // Since _deviceRemoved is not used with Serial devices
     // ping device regularly to check connection
@@ -190,22 +174,12 @@
     }, 100);
   }
 
-/*
-  function hasCapability(pin, mode) {
-    if (pinModes[mode].indexOf(pin) > -1)
-      return true;
-    else
-      return false;
-  }
-  */
-  // Capability 함수는 아두이노에서 핀에 대한 셋팅이 적절히 이루어졌는지를 검증하는 것임.	-> 초코파이에서 필요한지 유무 판별중
-
   function queryFirmware() {
     //var output = new Uint8Array([START_SYSEX, QUERY_FIRMWARE, END_SYSEX]);
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
-	var check = checkSum( SCBD_CHOCOPI_USB << 4 ^ CPC_VERSION);
+	var check = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION);
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
 	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
@@ -216,33 +190,17 @@
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
 
-	function checkSum(buffer){
-		var sum;
-		for(var i=0; i < buffer.length ; i++ ){
-			sum ^= buffer[i];
+	function checkSum(detail, data){
+		var sum = 0,
+			total_info = detail << 4 ^ data;
+
+		for(var i=0; i < total_info.length ; i++ ){
+			sum ^= total_info[i];
 		}
 		return sum;
 	}
-	//Port/detail, data를 checksum 함
+	//Port/detail, data를 XOR 시킨 후, checksum 함
 	
-
-/*
-  function queryCapabilities() {
-    console.log('Querying ' + device.id + ' capabilities');
-    var msg = new Uint8Array([
-        START_SYSEX, CAPABILITY_QUERY, END_SYSEX]);
-	device.send(msg.buffer);
-	//디바이스가 유효한지 확인하기 위해서 Capabilities 함수를 가동하여 패킷을 보냄
-  }
-*/
-  function queryAnalogMapping() {
-    console.log('Querying ' + device.id + ' analog mapping');
-    var msg = new Uint8Array([
-        START_SYSEX, ANALOG_MAPPING_QUERY, END_SYSEX]);
-    device.send(msg.buffer);
-  }
-  // 아날로그 매핑 쿼리는 핀에 아날로그 검증패킷을 보냄으로써 디지털 쿼리가 아니라 실제적으로 아날로그 처리를 할 수 있는지 검증함
-
 
   function setDigitalInputs(portNum, portData) {
     digitalInputData[portNum] = portData;
@@ -264,38 +222,9 @@
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지 ? 라는 정의인 듯 함. storedInputData[0] 번에 대해서 크게 3가지 처리를 나열함
     switch(storedInputData[0]) {
-		/*
-      case CAPABILITY_RESPONSE:
-        for (var i = 1, pin = 0; pin < MAX_PINS; pin++) {
-          while (storedInputData[i++] != 0x7F) {
-            pinModes[storedInputData[i-1]].push(pin);
-            i++; //Skip mode resolution
-          }
-          if (i == sysexBytesRead) break;
-        }
-        queryAnalogMapping();
-        break;
-		*/
-      case ANALOG_MAPPING_RESPONSE:
-        for (var pin = 0; pin < analogChannel.length; pin++)
-          analogChannel[pin] = 127;
-        for (var i = 1; i < sysexBytesRead; i++)
-          analogChannel[i-1] = storedInputData[i];
-        for (var pin = 0; pin < analogChannel.length; pin++) {
-          if (analogChannel[pin] != 127) {
-            var out = new Uint8Array([
-                REPORT_ANALOG | analogChannel[pin], 0x01]);
-            device.send(out.buffer);
-          }
-        }
-        notifyConnection = true;
-        setTimeout(function() {
-          notifyConnection = false;
-        }, 100);
-        break;
       case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
-		var check_start = checkSum(SCBD_CHOCOPI_USB << 4 ^ CPC_START),
-			check_get_block = checkSum(SCBD_CHOCOPI_USB << 4 ^ CPC_GET_BLOCK);
+		var check_start = checkSum(SCBD_CHOCOPI_USB, CPC_START),
+			check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 
 		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
 			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
@@ -317,8 +246,8 @@
         pingCount = 0;
         break;
 	  case SCBD_CHOCOPI_BLE:
-		var check_start = checkSum(SCBD_CHOCOPI_BLE << 4 ^ CPC_START),
-			check_get_block = checkSum(SCBD_CHOCOPI_BLE << 4 ^ CPC_GET_BLOCK);
+		var check_start = checkSum(SCBD_CHOCOPI_BLE, CPC_START),
+			check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
 
 		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]),	
 			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
@@ -508,11 +437,6 @@
 		hwList.remove(pin);
 	}
 	
-  function pinMode(pin, mode) {
-    var msg = new Uint8Array([PIN_MODE, pin, mode]);
-    device.send(msg.buffer);
-  }
-	//해당 핀으로 핀의 모드를 알려주고 셋팅함.
 
   function analogRead(pin) {
     if (pin >= 0 && pin < pinModes[ANALOG].length) {
@@ -936,9 +860,6 @@
     ],
     ko: [
       ['h', '초코파이가 연결됐을 때', 'whenConnected'],
-      //[' ', '%m.hwOut 를 %n 번 핀에 연결하기', 'connectHW', 'led A', 3],
-      //[' ', '%m.hwIn 를 아날로그 %n 번 핀에 연결하기', 'connectHW', '회전 손잡이', 0],
-      //['-'],
       //[' ', '%m.leds 를 %m.outputs', 'digitalLED', 'led A', '켜기'],
       //[' ', '%m.leds 의 밝기를 %n% 로 설정하기', 'setLED', 'led A', 100],
       //[' ', '%m.leds 의 밝기를 %n% 만큼 바꾸기', 'changeLED', 'led A', 20],
@@ -994,35 +915,6 @@
 		hwIn: ['light sensor', 'temperature sensor', 'humidity sensor', 'Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],						
 		//Analog Sensor and Analog Sensor for 1, 2, 3 and 4 added
 
-		//hwOut: ['led A', 'led B', 'led C', 'led D', 'button A', 'button B', 'button C', 'button D', 'servo A', 'servo B', 'servo C', 'servo D'], 
-		//To out Hardware Value 
-		/*
-		leds: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
-			'11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-			'21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-			'31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
-			'41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
-			'51', '52', '53', '54', '55', '56', '57', '58', '59', '60',
-			'61', '62', '63', '64', '65', '66', '67', '68', '69', '70',
-			'71', '72', '73', '74', '75', '76', '77', '78', '79', '80',
-			'81', '82', '83', '84', '85', '86', '87', '88', '89', '90',
-			'91', '92', '93', '94', '95', '96', '97', '98', '99', '100',
-			'101', '102', '103', '104', '105', '106', '107', '108', '109', '110',
-			'111', '112', '113', '114', '115', '116', '117', '118', '119', '120',
-			'121', '122', '123', '124', '125', '126', '127', '128', '129', '130',
-			'131', '132', '133', '134', '135', '136', '137', '138', '139', '140',
-			'141', '142', '143', '144', '145', '146', '147', '148', '149', '150',
-			'151', '152', '153', '154', '155', '156', '157', '158', '159', '160',
-			'161', '162', '163', '164', '165', '166', '167', '168', '169', '170',
-			'171', '172', '173', '174', '175', '176', '177', '178', '179', '180',
-			'181', '182', '183', '184', '185', '186', '187', '188', '189', '190',
-			'191', '192', '193', '194', '195', '196', '197', '198', '199', '200',
-			'201', '202', '203', '204', '205', '206', '207', '208', '209', '210',
-			'211', '212', '213', '214', '215', '216', '217', '218', '219', '220',
-			'221', '222', '223', '224', '225', '226', '227', '228', '229', '230',
-			'231', '232', '233', '234', '235', '236', '237', '238', '239', '240',
-			'241', '242', '243', '244', '245', '246', '247', '248', '249', '250',
-			'251', '252', '253', '254', '255'],*/
 		outputs: ['on', 'off'],
 		ops: ['>', '=', '<'],
 		servos: ['Servo 1', 'Servo 2', 'Servo 3', 'Servo 4'],
@@ -1058,37 +950,8 @@
 		btnStates: ['0', '1'],
 		// 0 : 눌림  1 : 떼짐
 
-
 		hwIn: ['조도', '온도', '습도','아날로그 1', '아날로그 2', '아날로그 3', '아날로그 4'],
 		// light, temperature and humidity and Analog Sensor for 1, 2, 3 and 4 is defined.
-
-		//hwOut: ['led A', 'led B', 'led C', 'led D', '버튼 A', '버튼 B', '버튼 C', '버튼 D', '서보모터 A', '서보모터 B', '서보모터 C', '서보모터 D'],
-		/*leds: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
-			'11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-			'21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-			'31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
-			'41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
-			'51', '52', '53', '54', '55', '56', '57', '58', '59', '60',
-			'61', '62', '63', '64', '65', '66', '67', '68', '69', '70',
-			'71', '72', '73', '74', '75', '76', '77', '78', '79', '80',
-			'81', '82', '83', '84', '85', '86', '87', '88', '89', '90',
-			'91', '92', '93', '94', '95', '96', '97', '98', '99', '100',
-			'101', '102', '103', '104', '105', '106', '107', '108', '109', '110',
-			'111', '112', '113', '114', '115', '116', '117', '118', '119', '120',
-			'121', '122', '123', '124', '125', '126', '127', '128', '129', '130',
-			'131', '132', '133', '134', '135', '136', '137', '138', '139', '140',
-			'141', '142', '143', '144', '145', '146', '147', '148', '149', '150',
-			'151', '152', '153', '154', '155', '156', '157', '158', '159', '160',
-			'161', '162', '163', '164', '165', '166', '167', '168', '169', '170',
-			'171', '172', '173', '174', '175', '176', '177', '178', '179', '180',
-			'181', '182', '183', '184', '185', '186', '187', '188', '189', '190',
-			'191', '192', '193', '194', '195', '196', '197', '198', '199', '200',
-			'201', '202', '203', '204', '205', '206', '207', '208', '209', '210',
-			'211', '212', '213', '214', '215', '216', '217', '218', '219', '220',
-			'221', '222', '223', '224', '225', '226', '227', '228', '229', '230',
-			'231', '232', '233', '234', '235', '236', '237', '238', '239', '240',
-			'241', '242', '243', '244', '245', '246', '247', '248', '249', '250',
-			'251', '252', '253', '254', '255'],*/
 
 		outputs: ['켜기', '끄기'],
 		ops: ['>', '=', '<'],
