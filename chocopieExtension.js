@@ -205,7 +205,7 @@
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
-	var check = checkSum( SCBD_CHOCOPI_USB << 8 ^ CPC_VERSION);
+	var check = checkSum( SCBD_CHOCOPI_USB << 4 ^ CPC_VERSION);
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
 	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
@@ -294,8 +294,8 @@
         }, 100);
         break;
       case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
-		var check_start = checkSum(SCBD_CHOCOPI_USB << 8 ^ CPC_START),
-			check_get_block = checkSum(SCBD_CHOCOPI_USB << 8 ^ CPC_GET_BLOCK);
+		var check_start = checkSum(SCBD_CHOCOPI_USB << 4 ^ CPC_START),
+			check_get_block = checkSum(SCBD_CHOCOPI_USB << 4 ^ CPC_GET_BLOCK);
 
 		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
 			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
@@ -317,8 +317,8 @@
         pingCount = 0;
         break;
 	  case SCBD_CHOCOPI_BLE:
-		var check_start = checkSum(SCBD_CHOCOPI_BLE << 8 ^ CPC_START),
-			check_get_block = checkSum(SCBD_CHOCOPI_BLE << 8 ^ CPC_GET_BLOCK);
+		var check_start = checkSum(SCBD_CHOCOPI_BLE << 4 ^ CPC_START),
+			check_get_block = checkSum(SCBD_CHOCOPI_BLE << 4 ^ CPC_GET_BLOCK);
 
 		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]),	
 			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
