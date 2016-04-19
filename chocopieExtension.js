@@ -43,33 +43,9 @@
 		CPC_ALL_SAY = 0x0E;
 	//Chocopie command definition
 	
-  var PIN_MODE = 0xF4,
-    REPORT_DIGITAL = 0xD0,		//DIGITAL 신호가 들어왔을때 보고하는 값
-    REPORT_ANALOG = 0xC0,		//아날로그 신호가 들어왔을때 보고하는 값
-    DIGITAL_MESSAGE = 0x90,
-    START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
-    END_SYSEX = 0x7E,			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
+  var START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
+	  END_SYSEX = 0x7E;			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
     //QUERY_FIRMWARE = 0xE0,		//0x79 (아두이노) -> 0xE0 (초코파이보드용) QUERY_FIRMWARE 와 SCBD_CHOCOPI_USB 는 같은 값을 유지 (일반)--Changed By Remoted 2016.04.14
-    ANALOG_MESSAGE = 0xE0,
-    ANALOG_MAPPING_QUERY = 0x69,
-    ANALOG_MAPPING_RESPONSE = 0x6A,
-    CAPABILITY_QUERY = 0x6B,
-    CAPABILITY_RESPONSE = 0x6C;
-
-  var INPUT = 0x00,
-    OUTPUT = 0x01,
-    ANALOG = 0x02,
-    PWM = 0x03,
-    SERVO = 0x04,
-    SHIFT = 0x05,
-    I2C = 0x06,
-    ONEWIRE = 0x07,
-    STEPPER = 0x08,
-    ENCODER = 0x09,
-    SERIAL = 0x0A,
-    PULLUP = 0x0B,
-    IGNORE = 0x7F,
-    TOTAL_PIN_MODES = 11;		//총 가능한 PIN MODE 13 (아두이노) -> 11 (초코파이) 용으로 변경
 
   var LOW = 0,
     HIGH = 1;
@@ -220,9 +196,9 @@
 		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 무한루프가 형성됨								*/
 
   function processSysexMessage() {
-	  // 시스템 처리 추가메세지 ? 라는 정의인 듯 함. storedInputData[0] 번에 대해서 크게 3가지 처리를 나열함
+	  // 시스템 처리 추가메세지 정의
     switch(storedInputData[0]) {
-      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
+      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 가 들어오면 connect 확인이 완료
 		var check_start = checkSum(SCBD_CHOCOPI_USB, CPC_START),
 			check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 
@@ -493,18 +469,6 @@
     device.send(msg.buffer);
   }
 
-  function rotateServo(pin, deg) {
-    if (!hasCapability(pin, SERVO)) {
-      console.log('ERROR: valid servo pins are ' + pinModes[SERVO].join(', '));
-      return;
-    }
-    pinMode(pin, SERVO);
-    var msg = new Uint8Array([
-        ANALOG_MESSAGE | (pin & 0x0F),
-        deg & 0x7F,
-        deg >> 0x07]);
-    device.send(msg.buffer);
-  }
 
 	//Original Function Line--------------------------------------------------------------------------
   ext.whenConnected = function() {
@@ -532,18 +496,6 @@
     return digitalRead(pin);
   };
 
-  ext.whenAnalogRead = function(pin, op, val) {
-    if (pin >= 0 && pin < pinModes[ANALOG].length) {
-      if (op == '>')
-        return analogRead(pin) > val;
-      else if (op == '<')
-        return analogRead(pin) < val;
-      else if (op == '=')
-        return analogRead(pin) == val;
-      else
-        return false;
-    }
-  };
 
   ext.whenDigitalRead = function(pin, val) {
     if (hasCapability(pin, INPUT)) {
@@ -554,7 +506,7 @@
     }
   };
 	// menus[lang]['outputs'][1] outputs 는 켜기와 끄기를 의미하는데, 3차원 배열로 1번에 해당하는 것은 도대체 뭔지 1도 모르겟음!
-
+	// -> 0번째 메뉴와 1번째 메뉴를 의미하는 듯 함
 
   ext.rotateServo = function(servo, deg) {
     var hw = hwList.search(servo);
@@ -627,24 +579,6 @@
       return !digitalRead(hw.pin);
   };
 
-  ext.whenInput = function(name, op, val) {
-    var hw = hwList.search(name);
-    if (!hw) return;
-    if (op == '>')
-      return analogRead(hw.pin) > val;
-    else if (op == '<')
-      return analogRead(hw.pin) < val;
-    else if (op == '=')
-      return analogRead(hw.pin) == val;
-    else
-      return false;
-  };
-
-  ext.mapValues = function(val, aMin, aMax, bMin, bMax) {
-    var output = (((bMax - bMin) * (val - aMin)) / (aMax - aMin)) + bMin;
-    return Math.round(output);
-  };
-
   ext._getStatus = function() {
     if (!connected)
       return { status:1, msg:'Disconnected' };
@@ -706,114 +640,27 @@
 	
 	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임
   ext.isTouchButtonPressed = function(networks,value){
-	 if(networks == "일반"){
-		var hw = hwList.search(touch);
-		if (!hw) return;
-		return value;
-	 }
   };
 
   ext.motionbRead = function(networks,value){
-	 if(networks == "일반"){
-		 var hw = hwList.search(motion);
-		 if (!hw) return;
-		 return value;
-	 }
   };
 
   ext.photoGateRead = function(networks,photogate,gatestate){
-	 if(networks == "일반"){
-	    var hw = hwList.search(photogate);
-		if (!hw) return;
-		return gatestate;
-	 }
   };
 
   ext.passLEDrgb = function(networks,ledposition,r,g,b){
-	var hw = hwList.search(led);
-	if(!hw) return;
-	var datas = 0;
-	datas = 0x7E;
-	datas = datas << 4 | 0;				//디테일
-	datas = datas << 4 | 0;				//포트
-	datas = datas << 8 | ledposition;
-	datas = datas << 8 | r;
-	datas = datas << 8 | g;
-	datas = datas << 8 | b;
-	datas = datas << 8 | 0x7E;
-	
-	 if(networks == "일반"){
-		 digitalWrite(hw.pin,datas);
-	 }else{
-	 }
   };
 
   ext.passBUZEER = function(networks,pitch,playtime){
-	var hw = hwList.search(BUZEER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
-	if(!hw) return;
-	var datas = 0;	  
-	datas = 0x7E;
-	datas = datas << 4 | 8;				//디테일
-	datas = datas << 4 | 0;				//포트
-	datas = datas << 8 | pitch;
-    datas = datas << 32 | playtime;
-	datas = datas << 8 | 0x7E;
-	  
-	 if(networks == "일반"){
-		 digitalWrite(hw.pin,datas);
-	 }
   };
 
   ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
-	var hw = hwList.search(STEPPER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
-	if(!hw) return;
-	var datas = 0;
-	datas = 0x7E;
-	datas = datas << 4 | 0;				//디테일
-	datas = datas << 4 | 0;				//포트
-	datas = datas << 8 | steppingMotor;
-    datas = datas << 16 | speed;
-	datas = datas << 8 | 0x7E;
-	
-	 if(networks == "일반"){
-		 digitalWrite(hw.pin,datas);
-	 }
   };
 
   ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
-	var hw = hwList.search(STEPPER);//아직 연결 하는 객체를 찾지못해서 임시로 사용
-	if(!hw) return;
-	var datas = 0;
-	datas = 0x7E;
-	datas = datas << 4 | 1;				//디테일
-	datas = datas << 4 | 0;				//포트
-	datas = datas << 8 | steppingMotor;
-    datas = datas << 16 | speed;
-	datas = datas << 32 | direction;
-	datas = datas << 8 | 0x7E;
-	
-	 if(networks == "일반"){
-		 digitalWrite(hw.pin,datas);
-	 }
   };
 
   ext.passDCAD = function(networks,dcmotor,speed,direction){
-	var hw = hwList.search(DC);//아직 연결 하는 객체를 찾지못해서 임시로 사용
-	if(!hw) return;
-	var datas = 0;
-	datas = 0x7E;
-	datas = datas << 4 | direction;				//디테일
-	datas = datas << 4 | 0;				//포트
-	datas = datas << 16 | speed;
-
-	//수정해야 될것 같음 ppt 그림에서는 시계,반시계로 정의되어있음
-	if (direction == 0)
-	{
-		datas = datas << 8 | 0;
-	}else{
-		datas = datas << 8 | 1;	  
-	}
-	datas = datas << 8 | 0x7E;
   };
 
 
@@ -876,11 +723,7 @@
       //['-'],
       //['h', '아날로그 %m.analogSensor 번의 값이 %m.ops %n% 일 때', 'whenAnalogRead', 1, '>', 50],
       //['r', '아날로그 %m.analogSensor 번의 값', 'analogRead', 0],
-	  //['h', '원격 아날로그 %m.RanalogSensor 번의 값이 %m.ops %n% 일 때', 'whenRAnalogRead', 1, '>', 50],
-      //['r', '원격 아날로그 %m.RanalogSensor 번의 값', 'RAnalogRead', 0],	//Patched 
-      //['-'],
-      //['r', '%n 을(를) %n ~ %n 에서 %n ~ %n 의 범위로 바꾸기', 'mapValues', 50, 0, 100, -240, 240],
-	  //['-'],
+
 	  ['b', '%m.networks 터치센서 %m.touch 의 값', 'isTouchButtonPressed', '일반','1'],			//Touch Sensor is boolean block	-- normal and remote					
 	  ['-'],																					//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', '0'],				//sw block (button 1, .. )
