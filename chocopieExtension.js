@@ -71,9 +71,11 @@
     IGNORE = 0x7F,
     TOTAL_PIN_MODES = 11;		//총 가능한 PIN MODE 13 (아두이노) -> 11 (초코파이) 용으로 변경
 
-  var LOW = 0,
-    HIGH = 1;
+  var SAMPLING_RATE = 0x0080;
 
+  var LOW = 0x00FF,
+    HIGH = 0xFF00;
+	//LOW, HIGH 를 연산하기 위해서 패치함 -- 2016.04.20 
   var MAX_DATA_BYTES = 4096;
   var MAX_PINS = 128;
 
@@ -179,8 +181,8 @@
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
-	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION);
-		check_ble = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION);
+	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION );
+		check_ble = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION );
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
 	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
@@ -290,6 +292,19 @@
 	//이스케이프 컨트롤러 By Remoted 2016.04.13		-- 2016.04.14 패치완료
 	//http://m.blog.daum.net/_blog/_m/articleView.do?blogid=050RH&articleno=12109121 에 기반함
 
+	function dec2hex(number){
+		hexString = number.toString(16);
+		return hexString;
+	}
+
+	function hex2dec(hexString){
+		yourNumber = parseInt(hexString, 16);
+		return yourNumber;
+	}
+	/*2 Byte -> 1 Byte 간으로 축약 및 재확장에 따라서 데이터 손실을 해결하기 위해서 함수제작 
+	http://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript 
+
+	*/
 
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
@@ -324,7 +339,7 @@
 				case CPC_GET_BLOCK:															//				0 1 2  3 4 5 6 7		(포트)
 					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
 						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8,CPC_GET_BLOCK	(storedInputData)
-							connectHW(storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
+							connectHW(dec2hex(storedInputData[storedInputData.length - i]), i-1);	//storedInputData.length 부터 순차적으로 감소 
 							//connectHW (hw, pin)
 						}
 					}
@@ -395,13 +410,28 @@
 			waitForData = 2;
 			executeMultiByteCommand = detail;
 			break;
+		  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
+		  	waitForData = 3;
+			executeMultiByteCommand = detail;
+			break;
+		  case SCBD_TOUCH:
+		  case SCBD_SWITCH:
+		  case SCBD_MOTION:
+		  case SCBD_LED:
+		  case SCBD_STEPPER:
+		  case SCBD_STEPPER:
+		  case SCBD_DC_MOTOR:	
+		  case SCBD_SERVO:
+		  case SCBD_ULTRASONIC:
+		  case SCBD_PIR: 
+			break;
 		  case CPC_VERSION:								//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
 		  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
-			waitForData = 10;							
+			waitForData = 11;							
 			executeMultiByteCommand = detail;
 			break;
 		  case CPC_GET_BLOCK:						
-			waitForData = 9;							
+			waitForData = 10;							
 			executeMultiByteCommand = detail;
 			break;
 		  case SCBD_CHOCOPI_USB:					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
@@ -409,15 +439,15 @@
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			break;
-		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴
-		  case SCBD_CHOCOPI_BLE | 0x01:
-			waitForData = 2;
+		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
+		  case SCBD_CHOCOPI_BLE | 0x01:					
+			waitForData = 3;
 			executeMultiByteCommand = detail;
 			break;
-		  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 오기 때문에, waitForData 를 1로 설정
-		  case SCBD_CHOCOPI_BLE | 0x02:
+		  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte
+		  case SCBD_CHOCOPI_BLE | 0x02:					
 		  case SCBD_CHOCOPI_BLE | 0x03:					//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
-			waitForData = 1;
+			waitForData = 2;
 			executeMultiByteCommand = detail;
 			break;
 		  /*case CPC_STOP:								//CPC_STOP 의 경우는 waitForData 가 0이며 위에서 따로 처리 분기를 작성시켜줘야함
@@ -661,20 +691,48 @@
 	
   ext.readInput = function(networks, name) {
     var hw = hwList.search(SCBD_SENSOR);
-	var check = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION);
+		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]);
+
+	var	check_low = 0,
+		check_high = 0;
 
     if (!hw) return;	
 	else {
-		if (val == menus[lang]['networks'][0])	//일반
+		if (networks === menus[lang]['networks'][0])	//일반
 		{
-			//| hw.pin
-			var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
-			
-			if (val == menus[lang]['hwIn'][0])		//온도, 습도, 조도, 아날로그 1, 2, 3, 4 순서
+			var low_data = SAMPLING_RATE & LOW, 
+				high_data = SAMPLING_RATE & HIGH;
+
+			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin, sensor_detail[7]| hw.pin]);	//detail and port
+			//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서
+			switch (name)
 			{
-				device.send(usb_output.buffer);	
+				case menus[lang]['hwIn'][0]:
+					check_low = checkSum( dnp[0], low_data );
+					check_high = checkSum( dnp[0], high_data );
+
+				var sensor_usb_output_low = new Uint8Array([START_SYSEX, dnp[0], low_data, check_low ,END_SYSEX]),
+					sensor_usb_output_high = new Uint8Array([START_SYSEX, dnp[0], high_data, check_high ,END_SYSEX]);
+
+				device.send(sensor_usb_output_low.buffer);
+				device.send(sensor_usb_output_high.buffer);
+			
+					break;
+				
+				case menus[lang]['hwIn'][1]:
+					check_low = checkSum( dnp[1], low_data );	
+					check_high = checkSum( dnp[1], high_data );
+
+				var sensor_usb_output_low = new Uint8Array([START_SYSEX, dnp[0], low_data, check_low ,END_SYSEX]),
+					sensor_usb_output_high = new Uint8Array([START_SYSEX, dnp[0], high_data, check_high ,END_SYSEX]);
+
+				device.send(sensor_usb_output_low.buffer);
+				device.send(sensor_usb_output_high.buffer);
+					break;
 			}
-		}else{
+			
+
+		}else{	//무선
 			check = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION);
 			var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
 
