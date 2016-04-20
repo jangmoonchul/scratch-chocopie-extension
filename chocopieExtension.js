@@ -404,7 +404,7 @@
           }	
 		}	
       } else {
-        if (inputData[0] == 0xE0 && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
+        if ((inputData[0] == 0xE0 || inputData[0] == 0xF0)  && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
 			detail = inputData[1];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
@@ -485,11 +485,11 @@
 	
 
   function analogRead(pin) {
-    if (pin >= 0 && pin < pinModes[ANALOG].length) {
+    if (pin >= 0 && 15 <= pin) {
       return Math.round((analogInputData[pin] * 100) / 1023);
     } else {
       var valid = [];
-      for (var i = 0; i < pinModes[ANALOG].length; i++)
+      for (var i = 0; i < 15; i++)
         valid.push(i);
       console.log('ERROR: valid analog pins are ' + valid.join(', '));
       return;
@@ -704,7 +704,7 @@
 	
 	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임
 	
-  ext.readInput = function(networks, name) {
+  ext.readSENSOR = function(networks, name) {
     var hw = hwList.search(SCBD_SENSOR),
 		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
 		low_data = SAMPLING_RATE & LOW,
@@ -738,8 +738,9 @@
 			}
 		}
 	}
+	return analogRead(hw.pin);
   };
-  //readInput 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
+  //readSENSOR 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
 
   ext.isTouchButtonPressed = function(networks,value){
   };
@@ -785,8 +786,8 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
       ['-'],
-      ['r', 'read from %m.networks to %m.hwIn', 'readInput', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
-      ['-'],																				//function_name: readInput
+      ['r', 'read from %m.networks to %m.hwIn', 'readSENSOR', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
+      ['-'],																				//function_name: readSENSOR
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 																								//function_name : isTouchButtonPressed
       ['-'],
@@ -813,8 +814,8 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
       ['-'],																						
-      ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readInput', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
-      ['-'],																			// function_name = readInput
+      ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readSENSOR', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
+      ['-'],																			// function_name = readSENSOR
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
       //[' ', '%n 번 핀의 값을 %n% 로 설정하기', 'analogWrite', 3, 100],
       //['-'],
