@@ -84,6 +84,7 @@
     executeMultiByteCommand = 0,
     multiByteChannel = 0,
     sysexBytesRead = 0,
+	port = 0,
     storedInputData = new Uint8Array(MAX_DATA_BYTES);
 
   var digitalOutputData = new Uint8Array(16),
@@ -138,7 +139,16 @@
       return null;
     };
 
-	//Writed By Remoted 2016.04.17
+	
+    this.search_bypin = function(pin) {
+      for (var i=0; i<this.devices.length; i++) {
+        if (this.devices[i].pin === pin)
+          return this.devices[i];			
+      }
+      return null;
+    };
+	//Writed By Remoted 2016.04.20
+	
 	this.remove = function(pin) {					//pin 을 받아서, pin 을 가지고있는 배열정보를 밀어버림.
       for (var i=0; i<this.devices.length; i++) {
         if (this.devices[i].pin === pin)
@@ -202,7 +212,7 @@
 		}
 		return sum;
 	}
-	//Port/detail, data를 XOR 시킨 후, checksum 함
+	//Port/detail, data를 XOR 시킨 후, checksum 하여 return 시킴
 	
 
   function setDigitalInputs(portNum, portData) {
@@ -328,7 +338,7 @@
 			*/
 			
 
-      } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
+      } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
@@ -339,7 +349,7 @@
 				case CPC_GET_BLOCK:															//				0 1 2  3 4 5 6 7		(포트)
 					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
 						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8,CPC_GET_BLOCK	(storedInputData)
-							connectHW(dec2hex(storedInputData[storedInputData.length - i]), i-1);	//storedInputData.length 부터 순차적으로 감소 
+							connectHW(storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
 							//connectHW (hw, pin)
 						}
 					}
@@ -378,15 +388,15 @@
 				break;
 		  }
 		}
-	  } else if (waitForData > 0 && inputData[i] < 0xFF) {	//0x80-> 0xFF
+	  } else if (waitForData > 0 && inputData[0] <= 0xBF) {	//0x80-> 0xBF
         storedInputData[--waitForData] = inputData[i];
         if (executeMultiByteCommand !== 0 && waitForData === 0) {			//0xE0 이상에 대한 값이 겹칠지라도, 초반 GET_BLOCK 확보 이후이므로 문제가 없음
           switch(executeMultiByteCommand) {									//겹치게 될 경우, inputData[1] 번에 오는 데이터로 판별해야함.
             case DIGITAL_MESSAGE:
               setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		
               break;
-            case ANALOG_MESSAGE:
-              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
+            case SCBD_SENSOR:																		// multiByteChannel, LOW, HIGH (inputData)
+              setAnalogInput(multiByteChannel, (storedInputData[0] << 8) | storedInputData[1]);		// HIGH, LOW, multiByteChannel (storedInputData)
               break;
 
 			//이 곳에서 들어오는 command 에 대해서 추가하는 switch 들을 이루어내야함
@@ -398,21 +408,18 @@
 			detail = inputData[1];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
-		} else if (inputData[0] == 0xE1 || inputData[0] == 0xE2 || inputData[0] == 0xF1 || inputData[0] == 0xF2 || inputData[0] == 0xF3 || inputData[0] == 0xEF) {
+		} else if ((inputData[0] >= 0xE1 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF3) || inputData[0] == 0xEF) {
 			detail = inputData[0];
-        } else {
-		  detail = inputData[0] & 0xF0;					//command -> detail
-          multiByteChannel = inputData[0] & 0x0F;		//multiByteChannel -> port
+        } else {														// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
+		  detail = inputData[0] & 0xF0;									// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
+          multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
+		  port = hwList.search_bypin(inputData[0] & 0x0F);
         }
-		switch(detail) {								/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
-		  case DIGITAL_MESSAGE:
-		  case ANALOG_MESSAGE:								
-			waitForData = 2;
-			executeMultiByteCommand = detail;
-			break;
+		switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
+		{
 		  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
-		  	waitForData = 3;
-			executeMultiByteCommand = detail;
+		  	waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
+			executeMultiByteCommand = port.name;
 			break;
 		  case SCBD_TOUCH:
 		  case SCBD_SWITCH:
@@ -424,6 +431,14 @@
 		  case SCBD_SERVO:
 		  case SCBD_ULTRASONIC:
 		  case SCBD_PIR: 
+			break;
+		}
+
+		switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
+		  case DIGITAL_MESSAGE:
+		  case ANALOG_MESSAGE:								
+			waitForData = 2;
+			executeMultiByteCommand = detail;
 			break;
 		  case CPC_VERSION:								//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
 		  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
@@ -698,49 +713,31 @@
 	var	check_low = 0,
 		check_high = 0;
 
+	var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
+	//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
+
+
     if (!hw) return;	
 	else {
-		if (networks === menus[lang]['networks'][0])	//일반
+		if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		//일반과 무선 둘다 처리가능
 		{
-			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin, sensor_detail[7]| hw.pin]);	//detail and port
-			//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서
-			switch (name)
+			for (var i=0;i < dnp.length ; i++)
 			{
-				case menus[lang]['hwIn'][0]:
-					check_low = checkSum( dnp[0], low_data );
-					check_high = checkSum( dnp[0], high_data );
+				if (name === menus[lang]['hwIn'][i])
+				{
+					check_low = checkSum( dnp[i], low_data );
+					check_high = checkSum( dnp[i], high_data );
 
-				var sensor_usb_output_low = new Uint8Array([START_SYSEX, dnp[0], low_data, check_low ,END_SYSEX]),
-					sensor_usb_output_high = new Uint8Array([START_SYSEX, dnp[0], high_data, check_high ,END_SYSEX]);
+				var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low ,END_SYSEX]),
+					sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high ,END_SYSEX]);
 
-				device.send(sensor_usb_output_low.buffer);
-				device.send(sensor_usb_output_high.buffer);
+				device.send(sensor_output_low.buffer);
+				device.send(sensor_output_high.buffer);
 			
-					break;
-				
-				case menus[lang]['hwIn'][1]:
-					check_low = checkSum( dnp[1], low_data );	
-					check_high = checkSum( dnp[1], high_data );
-
-				var sensor_usb_output_low = new Uint8Array([START_SYSEX, dnp[0], low_data, check_low ,END_SYSEX]),
-					sensor_usb_output_high = new Uint8Array([START_SYSEX, dnp[0], high_data, check_high ,END_SYSEX]);
-
-				device.send(sensor_usb_output_low.buffer);
-				device.send(sensor_usb_output_high.buffer);
-					break;
-
+				}
 			}
-			
-
-		}else{	//무선
-			check = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION);
-			var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check ,END_SYSEX]);
-
-			device.send(ble_output.buffer);
 		}
-
 	}
-
   };
   //readInput 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
 
