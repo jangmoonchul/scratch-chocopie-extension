@@ -690,8 +690,10 @@
 	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임
 	
   ext.readInput = function(networks, name) {
-    var hw = hwList.search(SCBD_SENSOR);
-		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]);
+    var hw = hwList.search(SCBD_SENSOR),
+		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
+		low_data = SAMPLING_RATE & LOW,
+		high_data = SAMPLING_RATE & HIGH;
 
 	var	check_low = 0,
 		check_high = 0;
@@ -700,9 +702,6 @@
 	else {
 		if (networks === menus[lang]['networks'][0])	//일반
 		{
-			var low_data = SAMPLING_RATE & LOW, 
-				high_data = SAMPLING_RATE & HIGH;
-
 			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin, sensor_detail[7]| hw.pin]);	//detail and port
 			//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서
 			switch (name)
@@ -729,6 +728,7 @@
 				device.send(sensor_usb_output_low.buffer);
 				device.send(sensor_usb_output_high.buffer);
 					break;
+
 			}
 			
 
