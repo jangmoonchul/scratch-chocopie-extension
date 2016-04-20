@@ -413,7 +413,7 @@
         } else {														// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
 		  detail = inputData[0] & 0xF0;									// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
-		  port = hwList.search_bypin(inputData[0] & 0x0F);
+		  port = hwList.search_bypin(multiByteChannel);
         }
 		switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
 		{
@@ -505,21 +505,24 @@
     return (digitalInputData[pin >> 3] >> (pin & 0x07)) & 0x01;
   }
 
+/*
   function analogWrite(pin, val) {
-    if (!hasCapability(pin, PWM)) {
-      console.log('ERROR: valid PWM pins are ' + pinModes[PWM].join(', '));
+	var hw = hwList.search_bypin(pin);
+    if (!hw) {
+      console.log('ERROR: valid analog sensor not found.');
       return;
     }
     if (val < 0) val = 0;
     else if (val > 100) val = 100;
     val = Math.round((val / 100) * 255);
-    pinMode(pin, PWM);
+
     var msg = new Uint8Array([
         ANALOG_MESSAGE | (pin & 0x0F),
         val & 0x7F,
         val >> 7]);
     device.send(msg.buffer);
   }
+ */
 
   function digitalWrite(pin, val) {
     if (!hasCapability(pin, OUTPUT)) {
@@ -569,10 +572,6 @@
       digitalWrite(pin, LOW);
   };
 	//digitalWrite 에서 High 와 Low 는 상위비트와 하위비트를 나눠서 출력하는 듯 함?
-
-  ext.analogRead = function(pin) {
-    return analogRead(pin);
-  };
 
   ext.digitalRead = function(pin) {
     return digitalRead(pin);
@@ -822,9 +821,6 @@
       //['h', '%n 번 핀의 상태가 %m.outputs 일 때', 'whenDigitalRead', 1, '켜기'],
       //['b', '%n 번 핀이 켜져있는가?', 'digitalRead', 1],
       //['-'],
-      //['h', '아날로그 %m.analogSensor 번의 값이 %m.ops %n% 일 때', 'whenAnalogRead', 1, '>', 50],
-      //['r', '아날로그 %m.analogSensor 번의 값', 'analogRead', 0],
-	  //['-'],
 	  ['b', '%m.networks 터치센서 %m.touch 의 값', 'isTouchButtonPressed', '일반','1'],			//Touch Sensor is boolean block	-- normal and remote					
 	  ['-'],																					//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', '0'],				//sw block (button 1, .. )
