@@ -397,7 +397,7 @@
         //if ((inputData[0] == 0xE0 || inputData[0] == 0xF0)  && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
 		var detail = 0x00;
 		if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && !connected) {
-			detail *= inputData[i];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
+			detail = inputData[i];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
 		console.log('It is first if ');
