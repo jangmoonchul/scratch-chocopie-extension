@@ -441,46 +441,49 @@
 			}
 		}
 		console.log('SCBD_CHOCOPI_USB' + SCBD_CHOCOPI_USB);
+		if (detail != null)
+		{
+			  switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
+			  case DIGITAL_MESSAGE:
+			  case ANALOG_MESSAGE:								
+				waitForData = 2;
+				executeMultiByteCommand = detail;
+				break;
+			  case CPC_VERSION:										
+			  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
+				waitForData = 11;							
+				executeMultiByteCommand = detail;
+				break;
 
-		switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
-		  case DIGITAL_MESSAGE:
-		  case ANALOG_MESSAGE:								
-			waitForData = 2;
-			executeMultiByteCommand = detail;
-			break;
-		  case CPC_VERSION:										
-		  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
-			waitForData = 11;							
-			executeMultiByteCommand = detail;
-			break;
-
-		  case CPC_GET_BLOCK:						
-			waitForData = 10;							
-			executeMultiByteCommand = detail;
-			break;
-		  case SCBD_CHOCOPI_USB:					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
-		  case SCBD_CHOCOPI_BLE:
-			parsingSysex = true;
-			sysexBytesRead = 0;
-			console.log('sysexBytesRead Setting OK');
-			break;
-		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
-		  case SCBD_CHOCOPI_BLE | 0x01:					
-			waitForData = 3;
-			executeMultiByteCommand = detail;
-			break;
-		  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte
-		  case SCBD_CHOCOPI_BLE | 0x02:					
-		  case SCBD_CHOCOPI_BLE | 0x03:					//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
-			waitForData = 2;
-			executeMultiByteCommand = detail;
-			break;
-		  /*case CPC_STOP:								//CPC_STOP 의 경우는 waitForData 가 0이며 위에서 따로 처리 분기를 작성시켜줘야함
-			waitForData = 0;
-			_shutdown();
-			break;*/
-			
+			  case CPC_GET_BLOCK:						
+				waitForData = 10;							
+				executeMultiByteCommand = detail;
+				break;
+			  case SCBD_CHOCOPI_USB:					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
+			  case SCBD_CHOCOPI_BLE:
+				parsingSysex = true;
+				sysexBytesRead = 0;
+				console.log('sysexBytesRead Setting OK');
+				break;
+			  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
+			  case SCBD_CHOCOPI_BLE | 0x01:					
+				waitForData = 3;
+				executeMultiByteCommand = detail;
+				break;
+			  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte
+			  case SCBD_CHOCOPI_BLE | 0x02:					
+			  case SCBD_CHOCOPI_BLE | 0x03:					//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
+				waitForData = 2;
+				executeMultiByteCommand = detail;
+				break;
+			  /*case CPC_STOP:								//CPC_STOP 의 경우는 waitForData 가 0이며 위에서 따로 처리 분기를 작성시켜줘야함
+				waitForData = 0;
+				_shutdown();
+				break;*/
+				
+			}
 		}
+
       }
     }
   }
