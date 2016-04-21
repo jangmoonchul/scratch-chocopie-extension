@@ -307,7 +307,6 @@
 
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
-	  console.log('storedInputData ' + inputData[i]);
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
 		if (inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
@@ -319,7 +318,7 @@
 		  storedInputData[sysexBytesRead++] = inputData[i];
 		}
 			console.log('sysexBytesRead ' + sysexBytesRead);
-			
+			console.log('storedInputData ' + inputData[i]);
 			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
 			if (inputData[i] == END_SYSEX) {
 			  parsingSysex = false;
@@ -438,8 +437,7 @@
 		}
 
 
-		switch(detail) {	
-			console.log('sysexBytesRead Setting OK'); /* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
+		switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
 		  case DIGITAL_MESSAGE:
 		  case ANALOG_MESSAGE:								
 			waitForData = 2;
@@ -459,7 +457,7 @@
 		  case SCBD_CHOCOPI_BLE:
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			
+			console.log('sysexBytesRead Setting OK');
 			break;
 		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
 		  case SCBD_CHOCOPI_BLE | 0x01:					
