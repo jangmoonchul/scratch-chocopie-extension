@@ -308,7 +308,9 @@
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
+		console.log('storedInputData ' + inputData[i]);
       if (parsingSysex) {
+		  console.log('I am comming parsingSysex');
 		if (inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
 		  parsingSysex = false;
           processSysexMessage(); 
@@ -318,7 +320,7 @@
 		  storedInputData[sysexBytesRead++] = inputData[i];
 		}
 			console.log('sysexBytesRead ' + sysexBytesRead);
-			console.log('storedInputData ' + inputData[i]);
+			
 			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
 			if (inputData[i] == END_SYSEX) {
 			  parsingSysex = false;
