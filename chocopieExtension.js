@@ -315,7 +315,7 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead == 12) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead == 11) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
           parsingSysex = false;
           processSysexMessage();
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
@@ -323,6 +323,7 @@
         }else{
 			storedInputData[sysexBytesRead++] = inputData[i];
 			console.log(inputData[i]);
+			return;
 		}
 			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
 			if (inputData[i] == END_SYSEX) {
@@ -367,7 +368,7 @@
 			switch(executeMultiByteCommand) {								
 				case SCBD_CHOCOPI_USB | 0x0F:								
 				console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);
-					
+				return;	
 				break;
 				//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
 			}
