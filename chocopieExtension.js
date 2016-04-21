@@ -320,6 +320,7 @@
 		  storedInputData[sysexBytesRead++] = inputData[i];
           parsingSysex = false;
           processSysexMessage();
+		  console.log(inputData[i]);
 		}
 
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
