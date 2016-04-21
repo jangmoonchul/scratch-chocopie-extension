@@ -419,6 +419,26 @@
 		  console.log('It is first else ');
         }
 		console.log('detail is ' + detail);
+		switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
+		{
+		  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
+			waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
+			executeMultiByteCommand = port.name;
+			break;
+		  case SCBD_TOUCH:
+		  case SCBD_SWITCH:
+		  case SCBD_MOTION:
+		  case SCBD_LED:
+		  case SCBD_STEPPER:
+		  case SCBD_STEPPER:
+		  case SCBD_DC_MOTOR:	
+		  case SCBD_SERVO:
+			break;
+		  default:
+			  break;
+		}
+		
+		console.log('SCBD_CHOCOPI_USB' + SCBD_CHOCOPI_USB);
 
 		switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
 		  case DIGITAL_MESSAGE:
