@@ -34,7 +34,7 @@
 	 * SCBD_ULTRASONIC 와 SCBD_PIR 은 아직 존재하지않는 확장영역으로써 설계되어져있음
 	*/
 
-	var CPC_VERSION = 0x08,		//REPORT_VERSION = 0xF9 -> CPC_VERSION 으로 PATCH -- Changed By Remoted 2016.04.14
+	var CPC_VERSION = 8,		//REPORT_VERSION = 0xF9 -> CPC_VERSION 으로 PATCH -- Changed By Remoted 2016.04.14
 		CPC_START = 0x09,
 		CPC_STOP = 0x0A,
 		CPC_SET_NAME = 0x0B,
