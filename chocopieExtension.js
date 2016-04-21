@@ -200,8 +200,8 @@
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
 
-	function checkSum(detail, data){
-		var sum = detail;
+	function checkSum(detailnport, data){
+		var sum = detailnport;
 
 		for(var i=0; i < data.length ; i++ ){
 			sum ^= data[i];
@@ -232,11 +232,11 @@
 	  // 시스템 처리 추가메세지
     switch(storedInputData[0]) {
       case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
-		var check_start = checkSum(SCBD_CHOCOPI_USB, CPC_START),
-			check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
+		//var check_start = checkSum(SCBD_CHOCOPI_USB, CPC_START);
+		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 
-		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
-			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+		//var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
+		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
@@ -245,21 +245,20 @@
           watchdog = null;				//감시견을 옆집 개나줘버림
           connected = true;
 		  
-		  device.send(output_start.buffer);		
-		  device.send(output_block.buffer);
+		  //device.send(output_start.buffer);		
           setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
-		  
+		  device.send(output_block.buffer);
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
         }
         pinging = false;
         pingCount = 0;
         break;
 	  case SCBD_CHOCOPI_BLE:
-		var check_start = checkSum(SCBD_CHOCOPI_BLE, CPC_START),
-			check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
+		//var check_start = checkSum(SCBD_CHOCOPI_BLE, CPC_START),
+		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
 
-		var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]),	
-			output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+		//var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]),	
+		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 
         if (!connected) {
           clearInterval(poller);		
@@ -268,9 +267,9 @@
           watchdog = null;				
           connected = true;
 		  
-		  device.send(output_start.buffer);		
-		  device.send(output_block.buffer);
+		  //device.send(output_start.buffer);		
           setTimeout(init, 200);			
+		  device.send(output_block.buffer);
         }
 
 		pinging = false;
@@ -315,13 +314,14 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && inputData[inputData.length] != 0) {
-		  storedInputData[sysexBytesRead++] = inputData[i];		//예상값) storedInputData[0] = 0xE0 혹은 0xF0
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead == 11) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
           parsingSysex = false;
           processSysexMessage();
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
 		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
-        }
+        }else{
+			storedInputData[sysexBytesRead++] = inputData[i];
+		}
 			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
 			if (inputData[i] == END_SYSEX) {
 			  parsingSysex = false;
@@ -440,11 +440,15 @@
 			waitForData = 2;
 			executeMultiByteCommand = detail;
 			break;
-		  case CPC_VERSION:								//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
+
+		  case CPC_VERSION:										
+		  	parsingSysex = true;						//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
+			sysexBytesRead = 0;
 		  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
 			waitForData = 11;							
 			executeMultiByteCommand = detail;
 			break;
+
 		  case CPC_GET_BLOCK:						
 			waitForData = 10;							
 			executeMultiByteCommand = detail;
