@@ -396,7 +396,7 @@
 		}	
       } else {
         //if ((inputData[0] == 0xE0 || inputData[0] == 0xF0)  && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
-		var detail = 0x00;
+
 		if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && !connected) {
 			detail = inputData[i];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
@@ -412,7 +412,7 @@
 		  console.log('It is first else ');
         }
 		console.log('detail is ' + detail);
-		/*
+
 		switch (detail)
 		{
 		  case DIGITAL_MESSAGE:
@@ -447,7 +447,7 @@
 			console.log('Switch sysexBytesRead Setting OK');
 			break;
 		}
-		*/
+	
 		if (detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE)
 		{
 			parsingSysex = true;
