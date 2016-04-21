@@ -310,16 +310,17 @@
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 		console.log('storedInputData['+ i + ']' + inputData[i]);
       if (parsingSysex) {
-		  console.log('I am comming parsingSysex');
 		if (inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
 		  parsingSysex = false;
           processSysexMessage(); 
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
 		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
+		  console.log('I am comming parsingSysex if');
         }else{
 		  storedInputData[sysexBytesRead++] = inputData[i];
+		  console.log('I am comming parsingSysex else');
 		}
-			console.log('sysexBytesRead ' + sysexBytesRead);
+			console.log('sysexBytesRead ' + sysexBytesRead);	
 			
 			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
 			if (inputData[i] == END_SYSEX) {
