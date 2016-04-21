@@ -230,11 +230,12 @@
 
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
+
     switch(storedInputData[0]) {
       case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-
+		console.log('I am comming processSysexMessage');
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
           poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
