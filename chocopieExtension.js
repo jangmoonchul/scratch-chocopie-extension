@@ -193,8 +193,8 @@
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]),		//이 형태로 보내게되면 배열로 생성되어 한번에 감
 		ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
-    console.log('usb_output is' + usb_output );
-	console.log('ble_output is' + ble_output );
+    console.log('check_usb is' + check_usb );
+	console.log('check_ble is' + check_ble );
 
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
@@ -319,7 +319,9 @@
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
 		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE)) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
-
+		  storedInputData[sysexBytesRead++] = inputData[i];
+	      console.log('sysexBytesRead ' + sysexBytesRead);
+		  console.log('inputData ' + inputData[i]);
           parsingSysex = false;
           processSysexMessage();
 		
@@ -327,9 +329,7 @@
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
 		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
         }else{
-			storedInputData[sysexBytesRead++] = inputData[i];
-			console.log('sysexBytesRead ' + sysexBytesRead);
-			console.log('inputData ' + inputData[i]);
+
 		}
 
 			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
