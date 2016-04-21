@@ -51,9 +51,6 @@
     END_SYSEX = 0x7E,			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
     //QUERY_FIRMWARE = 0xE0,		//0x79 (아두이노) -> 0xE0 (초코파이보드용) QUERY_FIRMWARE 와 SCBD_CHOCOPI_USB 는 같은 값을 유지 (일반)--Changed By Remoted 2016.04.14
     ANALOG_MESSAGE = 0xE0,
-    ANALOG_MAPPING_QUERY = 0x69,
-    ANALOG_MAPPING_RESPONSE = 0x6A,
-    CAPABILITY_QUERY = 0x6B,
     CAPABILITY_RESPONSE = 0x6C;
 
   var INPUT = 0x00,
@@ -285,22 +282,21 @@
   }
 
 
-	function escapte_control(source){
-		for(var i=0; i < source.length; i++){
-			if(source[i] == 0x7E){
-				var msg = new Uint8Array([0x7D, 0x7E ^ 0x20]);
-				return msg;
-			}else if (source[i] == 0x7D){
-				var msg = new Uint8Array([0x7D, 0x7D ^ 0x20]);
-				return msg;
-			}
-			else{
-				return source;
-			}
+	function escape_control(source){
+		if(source == 0x7E){
+			var msg = new Uint8Array([0x7D, 0x7E ^ 0x20]);
+			return msg;
+		}else if (source == 0x7D){
+			var msg = new Uint8Array([0x7D, 0x7D ^ 0x20]);
+			return msg;
+		}else{
+			return source;
 		}
 	}
-	//이스케이프 컨트롤러 By Remoted 2016.04.13		-- 2016.04.14 패치완료
-	//http://m.blog.daum.net/_blog/_m/articleView.do?blogid=050RH&articleno=12109121 에 기반함
+	/*
+	이스케이프 컨트롤러 By Remoted 2016.04.13		-- 2016.04.14 패치완료	--> Detail 과 Port, 앞의 헤더와 테일러가 아닌이상 Data 들에 대해서는 반드시
+	이스케이핑 컨트롤러를 거쳐서 데이터가 나가야만한다.
+	http://m.blog.daum.net/_blog/_m/articleView.do?blogid=050RH&articleno=12109121 에 기반함 */
 
 	function dec2hex(number){
 		hexString = number.toString(16);
@@ -393,15 +389,20 @@
         if (executeMultiByteCommand !== 0 && waitForData === 0) {			//0xE0 이상에 대한 값이 겹칠지라도, 초반 GET_BLOCK 확보 이후이므로 문제가 없음
           switch(executeMultiByteCommand) {									//겹치게 될 경우, inputData[1] 번에 오는 데이터로 판별해야함.
             case DIGITAL_MESSAGE:
-              setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		
+              setDigitalInputs(multiByteChannel, (storedInputData[0] << 8) + storedInputData[1]);		
               break;
             case SCBD_SENSOR:																		// multiByteChannel, LOW, HIGH (inputData)
               setAnalogInput(multiByteChannel, (storedInputData[0] << 8) | storedInputData[1]);		// HIGH, LOW, multiByteChannel (storedInputData)
               break;
+			case SCBD_TOUCH:																		// 들어오는 데이터가 1 Byte 인 경우
+				if( i == 2 ){																		// multiByteChannel, Flag (on, off)	(inputData)
+				}else if ( i == 1 ){																// Flag (on, off), multiByteChannel	(storedInputData)
+				}
+			  break;
 
 			//이 곳에서 들어오는 command 에 대해서 추가하는 switch 들을 이루어내야함
 			//다만 parsingSysex 가 필요없는 것에 대해 패치가 필요. -> parsingSysex 을 플래그로 사용하기로 함.
-          }	
+          }
 		}	
       } else {
         if ((inputData[0] == 0xE0 || inputData[0] == 0xF0)  && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
@@ -497,12 +498,13 @@
   }
 
   function digitalRead(pin) {
-    if (!hasCapability(pin, INPUT)) {
-      console.log('ERROR: valid input pins are ' + pinModes[INPUT].join(', '));
+	var hw = hwList.search_bypin(pin);
+
+    if (!hw) {
+      console.log('ERROR: valid input pins are not found');
       return;
     }
-    pinMode(pin, INPUT);
-    return (digitalInputData[pin >> 3] >> (pin & 0x07)) & 0x01;
+    return digitalInputData[pin];
   }
 
 /*
@@ -525,8 +527,9 @@
  */
 
   function digitalWrite(pin, val) {
-    if (!hasCapability(pin, OUTPUT)) {
-      console.log('ERROR: valid output pins are ' + pinModes[OUTPUT].join(', '));
+	var hw = hwList.search_bypin(pin);
+    if (!hw) {
+      console.log('ERROR: valid output pins are not found');
       return;
     }
     var portNum = (pin >> 3) & 0x0F;
@@ -706,8 +709,8 @@
   ext.readSENSOR = function(networks, name) {
     var hw = hwList.search(SCBD_SENSOR),
 		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
-		low_data = SAMPLING_RATE & LOW,
-		high_data = SAMPLING_RATE & HIGH;
+		low_data = escape_control(SAMPLING_RATE & LOW),
+		high_data = escape_control(SAMPLING_RATE & HIGH);
 
 	var	check_low = 0,
 		check_high = 0;
@@ -741,7 +744,18 @@
   };
   //readSENSOR 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
 
-  ext.isTouchButtonPressed = function(networks,value){
+  ext.isTouchButtonPressed = function(networks, button){
+	  var hw = hwList.search(SCBD_TOUCH),
+		  sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
+
+	  if(!hw) return;
+	  else{
+		  if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
+		  {
+			digitalRead(hw.pin);
+		  }
+	  }
+
   };
 
   ext.motionbRead = function(networks,value){
@@ -816,7 +830,6 @@
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readSENSOR', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																			// function_name = readSENSOR
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
-      //[' ', '%n 번 핀의 값을 %n% 로 설정하기', 'analogWrite', 3, 100],
       //['-'],
       //['h', '%n 번 핀의 상태가 %m.outputs 일 때', 'whenDigitalRead', 1, '켜기'],
       //['b', '%n 번 핀이 켜져있는가?', 'digitalRead', 1],
