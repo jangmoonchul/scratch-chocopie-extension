@@ -453,7 +453,7 @@
 			waitForData = 10;							
 			executeMultiByteCommand = detail;
 			break;
-		  case SCBD_CHOCOPI_USB:					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
+		  case hex2dec(SCBD_CHOCOPI_USB):					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
 		  case SCBD_CHOCOPI_BLE:
 			parsingSysex = true;
 			sysexBytesRead = 0;
