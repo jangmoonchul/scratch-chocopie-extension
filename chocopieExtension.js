@@ -201,11 +201,10 @@
   //Patched BY Remoted 2016.04.15
 
 	function checkSum(detail, data){
-		var sum = 0,
-			total_info = detail << 4 ^ data;
+		var sum = detail;
 
-		for(var i=0; i < total_info.length ; i++ ){
-			sum ^= total_info[i];
+		for(var i=0; i < data.length ; i++ ){
+			sum ^= data[i];
 		}
 		return sum;
 	}
@@ -671,7 +670,7 @@
     device = potentialDevices.shift();
     if (!device) return;
 
-    device.open({ stopBits: 0, bitRate: 115200, ctsFlowControl: 0 });
+    device.open({ stopBits: 0, bitRate: 9600, ctsFlowControl: 0 });
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
       var inputData = new Uint8Array(data);
