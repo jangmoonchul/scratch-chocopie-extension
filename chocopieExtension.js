@@ -311,8 +311,8 @@
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 		console.log('storedInputData['+ i + ']' + inputData[i]);
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) &&  i == 11) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
-		  parsingSysex = false;
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) &&  i == 11) { 
+		  parsingSysex = false;	//예상값) storedInputData[0] = 0xE0 혹은 0xF0
           processSysexMessage(); 
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
 		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
@@ -323,17 +323,6 @@
 		}
 			console.log('sysexBytesRead ' + sysexBytesRead);	
 			
-			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
-			if (inputData[i] == END_SYSEX) {
-			  parsingSysex = false;
-			  processSysexMessage();
-			} else {
-			  storedInputData[sysexBytesRead++] = inputData[i];
-			  //기존의 아두이노의 방식에서는 이 과정을 통해서 AnalogMapping 등의 과정을 확보했음.
-			}
-			*/
-			
-
       } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
@@ -421,31 +410,8 @@
 		  console.log('It is first else ');
         }
 		console.log('detail is ' + detail);
-		switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
+		switch (detail)
 		{
-		  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
-			waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
-			executeMultiByteCommand = port.name;
-			break;
-		  case SCBD_TOUCH:
-		  case SCBD_SWITCH:
-		  case SCBD_MOTION:
-		  case SCBD_LED:
-		  case SCBD_STEPPER:
-		  case SCBD_STEPPER:
-		  case SCBD_DC_MOTOR:	
-		  case SCBD_SERVO:
-			break;
-		  default:
-			  break;
-		}
-		if (detail == SCBD_CHOCOPI_USB || detail == SCBD_CHOCOPI_BLE)
-		{
-			parsingSysex = true;
-			sysexBytesRead = 0;
-			console.log('sysexBytesRead Setting OK');
-		}
-		switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
 		  case DIGITAL_MESSAGE:
 		  case ANALOG_MESSAGE:								
 			waitForData = 2;
@@ -478,6 +444,33 @@
 			console.log('sysexBytesRead Setting OK');
 			break;
 		}
+
+		if (detail == SCBD_CHOCOPI_USB || detail == SCBD_CHOCOPI_BLE)
+		{
+			parsingSysex = true;
+			sysexBytesRead = 0;
+			console.log('sysexBytesRead Setting OK');
+		}
+
+		switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
+		{
+		  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
+			waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
+			executeMultiByteCommand = port.name;
+			break;
+		  case SCBD_TOUCH:
+		  case SCBD_SWITCH:
+		  case SCBD_MOTION:
+		  case SCBD_LED:
+		  case SCBD_STEPPER:
+		  case SCBD_STEPPER:
+		  case SCBD_DC_MOTOR:	
+		  case SCBD_SERVO:
+			break;
+		  default:
+			  break;
+		}
+
       }
     }
   }
