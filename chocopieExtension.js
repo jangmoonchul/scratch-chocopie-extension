@@ -630,6 +630,7 @@
       return { status:1, msg:'Disconnected' };
     else
       return { status:2, msg:'Connected' };
+	if(watchdog) return {status: 1, msg: 'Probing for ChocopieBoard'};
   };
 
   ext._deviceRemoved = function(dev) {
