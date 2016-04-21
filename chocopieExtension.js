@@ -440,7 +440,7 @@
 				  break;
 			}
 		}
-
+		console.log('SCBD_CHOCOPI_USB' + SCBD_CHOCOPI_USB);
 
 		switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
 		  case DIGITAL_MESSAGE:
