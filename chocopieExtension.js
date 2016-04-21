@@ -448,7 +448,7 @@
 			break;
 		}
 		*/
-		if (detail == SCBD_CHOCOPI_USB || detail == SCBD_CHOCOPI_BLE)
+		if (detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE)
 		{
 			parsingSysex = true;
 			sysexBytesRead = 0;
