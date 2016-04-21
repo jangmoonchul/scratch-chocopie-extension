@@ -27,9 +27,9 @@
 		SCBD_LED = 0xC0,
 		SCBD_STEPPER = 0xD0, 
 		SCBD_DC_MOTOR = 0xE0,		//SCBD_CHOCOPI_USB 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
-		SCBD_SERVO = 0xF0;			//SCBD_CHOCOPI_BLE 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
-		//SCBD_ULTRASONIC = 0x10,		
-		//SCBD_PIR = 0x11;
+		SCBD_SERVO = 0xF0,			//SCBD_CHOCOPI_BLE 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
+		SCBD_ULTRASONIC = 0x10,		
+		SCBD_PIR = 0x11;
 	/*Chocopie const definition
 	 * SCBD_ULTRASONIC 와 SCBD_PIR 은 아직 존재하지않는 확장영역으로써 설계되어져있음
 	*/
@@ -433,6 +433,8 @@
 		  case SCBD_STEPPER:
 		  case SCBD_DC_MOTOR:	
 		  case SCBD_SERVO:
+		  case SCBD_ULTRASONIC:
+		  case SCBD_PIR: 
 			break;
 		}
 
