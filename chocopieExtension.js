@@ -188,11 +188,11 @@
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
 
-	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION );
+	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION ),
 		check_ble = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION );
 	
-	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);		//이 형태로 보내게되면 배열로 생성되어 한번에 감
-	var	ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
+	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]),		//이 형태로 보내게되면 배열로 생성되어 한번에 감
+		ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
