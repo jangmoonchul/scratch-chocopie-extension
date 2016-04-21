@@ -27,9 +27,9 @@
 		SCBD_LED = 0xC0,
 		SCBD_STEPPER = 0xD0, 
 		SCBD_DC_MOTOR = 0xE0,		//SCBD_CHOCOPI_USB 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
-		SCBD_SERVO = 0xF0,			//SCBD_CHOCOPI_BLE 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
-		SCBD_ULTRASONIC = 0x10,		
-		SCBD_PIR = 0x11;
+		SCBD_SERVO = 0xF0;			//SCBD_CHOCOPI_BLE 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
+		//SCBD_ULTRASONIC = 0x10,		
+		//SCBD_PIR = 0x11;
 	/*Chocopie const definition
 	 * SCBD_ULTRASONIC 와 SCBD_PIR 은 아직 존재하지않는 확장영역으로써 설계되어져있음
 	*/
@@ -320,9 +320,7 @@
 		  storedInputData[sysexBytesRead++] = inputData[i];
           parsingSysex = false;
           processSysexMessage();
-		  console.log(inputData[i]);
 		}
-
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
 		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
 
