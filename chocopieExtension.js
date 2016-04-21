@@ -402,12 +402,12 @@
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
 		console.log('It is first if ');
 		} else if ((inputData[0] >= 0xE1 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF3) || inputData[0] == 0xEF) {
-			detail *= inputData[0];
+			detail = inputData[0];
 			console.log('It is first elif ');
         } else {														// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
-		  detail *= inputData[0] & 0xF0;									// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
+		  detail = inputData[0] & 0xF0;									// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
           multiByteChannel *= inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
-		  port *= hwList.search_bypin(multiByteChannel);
+		  port = hwList.search_bypin(multiByteChannel);
 		  console.log('It is first else ');
         }
 		console.log('detail is ' + detail);
