@@ -457,6 +457,7 @@
 		  case SCBD_CHOCOPI_BLE:
 			parsingSysex = true;
 			sysexBytesRead = 0;
+			console.log('sysexBytesRead Setting OK');
 			break;
 		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
 		  case SCBD_CHOCOPI_BLE | 0x01:					
@@ -473,6 +474,7 @@
 			waitForData = 0;
 			_shutdown();
 			break;*/
+			
 		}
       }
     }
