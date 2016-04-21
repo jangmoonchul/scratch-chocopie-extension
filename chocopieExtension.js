@@ -506,25 +506,6 @@
     return digitalInputData[pin];
   }
 
-/*
-  function analogWrite(pin, val) {
-	var hw = hwList.search_bypin(pin);
-    if (!hw) {
-      console.log('ERROR: valid analog sensor not found.');
-      return;
-    }
-    if (val < 0) val = 0;
-    else if (val > 100) val = 100;
-    val = Math.round((val / 100) * 255);
-
-    var msg = new Uint8Array([
-        ANALOG_MESSAGE | (pin & 0x0F),
-        val & 0x7F,
-        val >> 7]);
-    device.send(msg.buffer);
-  }
- */
-
   function digitalWrite(pin, val) {
 	var hw = hwList.search_bypin(pin);
     if (!hw) {
