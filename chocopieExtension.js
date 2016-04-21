@@ -247,9 +247,10 @@
 		  
 		  //device.send(output_start.buffer);		
           setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
-		  device.send(output_block.buffer);
+		  
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
         }
+		device.send(output_block.buffer);
         pinging = false;
         pingCount = 0;
         break;
@@ -314,13 +315,14 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead == 11) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead == 12) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
           parsingSysex = false;
           processSysexMessage();
 		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
 		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
         }else{
 			storedInputData[sysexBytesRead++] = inputData[i];
+			console.log(inputData[i]);
 		}
 			/*	아두이노에서 사용하던 함수 원형 -> inputData[i] 번째에 대해서 테일러 값을 검증해서 System Message 를 파싱하고 있음
 			if (inputData[i] == END_SYSEX) {
