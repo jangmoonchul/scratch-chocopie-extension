@@ -383,7 +383,7 @@
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
         }
-		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6){
+		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead < 11){
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			storedInputData[sysexBytesRead++] = inputData[i];					// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치
