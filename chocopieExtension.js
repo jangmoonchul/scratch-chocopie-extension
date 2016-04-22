@@ -333,7 +333,6 @@
             parsingSysex = true;
             sysexBytesRead = 0;
             break;
-
         }
       }
     }
