@@ -288,58 +288,6 @@
 
 	*/
 
-
- function processInput(inputData) {
-    for (var i=0; i < inputData.length; i++) {
-		console.log('storedInputData ['+ sysexBytesRead +']' + inputData[i]);
-      if (parsingSysex) {
-        if (( (inputData[i] === SCBD_CHOCOPI_USB) || (inputData[i] === SCBD_CHOCOPI_BLE) ) && i === 11) {
-          parsingSysex = false;
-          processSysexMessage();
-		  console.log('I am comming parsingSysex if');
-        } else {
-          storedInputData[sysexBytesRead++] = inputData[i];
-        }
-      } else if (waitForData > 0 && inputData[i] < 0x80) {
-        storedInputData[--waitForData] = inputData[i];
-        if (executeMultiByteCommand !== 0 && waitForData === 0) {
-          switch(executeMultiByteCommand) {
-            case DIGITAL_MESSAGE:
-              setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
-              break;
-            case ANALOG_MESSAGE:
-              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
-              break;
-            case REPORT_VERSION:
-              setVersion(storedInputData[1], storedInputData[0]);
-              break;
-          }
-        }
-      } else {
-        if (inputData[i] < 0xF0) {
-          command = inputData[i] & 0xF0;
-          multiByteChannel = inputData[i] & 0x0F;
-        } else {
-          command = inputData[i];
-        }
-        switch(command) {
-         case DIGITAL_MESSAGE:
-          case ANALOG_MESSAGE:
-          case CPC_VERSION:
-            waitForData = 10;
-            executeMultiByteCommand = command;
-            break;
-        case SCBD_CHOCOPI_USB:
-            parsingSysex = true;
-            sysexBytesRead = 0;
-            break;
-        }
-      }
-    }
-  }
-
-
-/*
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
@@ -462,26 +410,22 @@
 				break;
 			}
 		}
-		switch(detail) {												
+		switch(parseInt(detail)) {												
 		  case DIGITAL_MESSAGE:
 		  case ANALOG_MESSAGE:								
 			waitForData = 2;
 			executeMultiByteCommand = detail;
 			break;
-
 		  case CPC_VERSION:										
-		  	parsingSysex = true;						//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
-			sysexBytesRead = 0;
-		  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
+		  case SCBD_CHOCOPI_USB | 0x0F:					
 			waitForData = 11;							
 			executeMultiByteCommand = detail;
 			break;
-
 		  case CPC_GET_BLOCK:						
 			waitForData = 10;							
 			executeMultiByteCommand = detail;
 			break;
-		  case SCBD_CHOCOPI_USB:					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
+		  case parseInt(SCBD_CHOCOPI_USB):					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
 		  case SCBD_CHOCOPI_BLE:
 			parsingSysex = true;
 			sysexBytesRead = 0;
@@ -502,7 +446,7 @@
       }
     }
   }
-*/
+
 	function connectHW (hw, pin) {
 		hwList.add(hw, pin);
 	}
