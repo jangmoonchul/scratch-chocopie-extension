@@ -287,7 +287,7 @@
       if (parsingSysex) {
 		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && !connected) { 
 		  console.log('I am comming parsingSysex if');
-			storedInputData[0] = inputData[i];
+			storedInputData[0] = inputData[0];
           parsingSysex = false;
           processSysexMessage();
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
