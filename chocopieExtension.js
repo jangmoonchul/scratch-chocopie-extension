@@ -290,7 +290,7 @@
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 		console.log('inputData ' + inputData[i]);
       if (parsingSysex) {
-		if ((inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE) && !connected) { 
+		if ((inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE)) { 
 		  console.log('I am comming parsingSysex if');
 		  storedInputData[0] = inputData[i];
           parsingSysex = false;
