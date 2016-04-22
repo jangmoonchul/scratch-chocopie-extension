@@ -387,6 +387,7 @@
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			console.log('detail parsing success and parsingSysex running');
+			console.log('ping count ' + pingCount);
 		}
 
 		if (port != null)
