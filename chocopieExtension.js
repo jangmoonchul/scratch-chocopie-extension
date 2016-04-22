@@ -289,7 +289,7 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead === 8) { 
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead === 9) { 
 		  console.log('I am comming parsingSysex if');
 		  //storedInputData[0] = inputData[i];
           parsingSysex = false;
@@ -384,6 +384,7 @@
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6){
 			parsingSysex = true;
 			sysexBytesRead = 0;
+			storedInputData[sysexBytesRead++] = inputData[i];
 			console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
 		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
