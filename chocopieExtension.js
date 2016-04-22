@@ -289,13 +289,13 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead === 11) { 
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead === 10) { 
 		  console.log('I am comming parsingSysex if');
           parsingSysex = false;
           processSysexMessage();
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
-			if (i < 11){		
+			if (i < 10){		
 				storedInputData[sysexBytesRead++] = inputData[i];				//10바이트 이상이오면 강제로 끊어버리게 됨
 				console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
 			}
