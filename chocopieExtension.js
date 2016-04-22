@@ -211,8 +211,9 @@
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
     switch(storedInputData[0]) {
-      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
+      case SCBD_CHOCOPI_USB:				
 		//var check_start = checkSum(SCBD_CHOCOPI_USB, CPC_START);
+		//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 
 		//var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
@@ -291,14 +292,65 @@
 
 	*/
 
+/*
+ function processInput(inputData) {
+    for (var i=0; i < inputData.length; i++) {
+      if (parsingSysex) {
+        if (inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE && !connected) {
+          parsingSysex = false;
+          processSysexMessage();
+        } else {
+          storedInputData[sysexBytesRead++] = inputData[i];
+        }
+      } else if (waitForData > 0 && inputData[i] < 0x80) {
+        storedInputData[--waitForData] = inputData[i];
+        if (executeMultiByteCommand !== 0 && waitForData === 0) {
+          switch(executeMultiByteCommand) {
+            case DIGITAL_MESSAGE:
+              setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
+              break;
+            case ANALOG_MESSAGE:
+              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
+              break;
+            case REPORT_VERSION:
+              setVersion(storedInputData[1], storedInputData[0]);
+              break;
+          }
+        }
+      } else {
+        if (inputData[i] < 0xF0) {
+          command = inputData[i] & 0xF0;
+          multiByteChannel = inputData[i] & 0x0F;
+        } else {
+          command = inputData[i];
+        }
+        switch(command) {
+          case DIGITAL_MESSAGE:
+          case ANALOG_MESSAGE:
+          case REPORT_VERSION:
+            waitForData = 2;
+            executeMultiByteCommand = command;
+            break;
+          case START_SYSEX:
+            parsingSysex = true;
+            sysexBytesRead = 0;
+            break;
+        }
+      }
+    }
+  }
+*/
+
+
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && !connected) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && !connected) { 
 		  console.log('I am comming parsingSysex if');
           parsingSysex = false;
           processSysexMessage();
+		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
 			storedInputData[sysexBytesRead++] = inputData[i];
 			console.log('sysexBytesRead ' + sysexBytesRead);
@@ -412,7 +464,7 @@
 				break;
 			}
 		}
-		switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
+		switch(detail) {												
 		  case DIGITAL_MESSAGE:
 		  case ANALOG_MESSAGE:								
 			waitForData = 2;
