@@ -290,7 +290,7 @@
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 		console.log('inputData ' + inputData[i]);
       if (parsingSysex) {
-		if ((inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE) && poller == null) { 
+		if ((inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE) && !connected) { 
 		  console.log('I am comming parsingSysex if');
 		  storedInputData[0] = inputData[i];
           parsingSysex = false;
@@ -383,7 +383,7 @@
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
         }
-		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && poller == null){
+		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && !connected){
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			console.log('detail parsing success and parsingSysex running');
