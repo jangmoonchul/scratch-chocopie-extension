@@ -386,11 +386,12 @@
         }
 		console.log('detail is ' + detail);
 		console.log('SCBD_CHOCOPI_USB is ' + SCBD_CHOCOPI_USB);
-		if(detail === SCBD_CHOCOPI_USB ){
+
+		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && !connected ){
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			console.log('I am comming SCBD_CHOCOPI_USB sw1');
 		}
+
 		if (port != null)
 		{			
 			switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
@@ -410,7 +411,7 @@
 				break;
 			}
 		}
-		switch(parseInt(detail)) {												
+		switch(detail) {												
 		  case DIGITAL_MESSAGE:
 		  case ANALOG_MESSAGE:								
 			waitForData = 2;
@@ -424,12 +425,6 @@
 		  case CPC_GET_BLOCK:						
 			waitForData = 10;							
 			executeMultiByteCommand = detail;
-			break;
-		  case parseInt(SCBD_CHOCOPI_USB):					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
-		  case SCBD_CHOCOPI_BLE:
-			parsingSysex = true;
-			sysexBytesRead = 0;
-			console.log('I am comming SCBD_CHOCOPI_USB sw2');
 			break;
 		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
 		  case SCBD_CHOCOPI_BLE | 0x01:					
