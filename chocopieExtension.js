@@ -212,11 +212,8 @@
 	  // 시스템 처리 추가메세지
     switch(storedInputData[0]) {
       case SCBD_CHOCOPI_USB:				
-		//var check_start = checkSum(SCBD_CHOCOPI_USB, CPC_START);
-		//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
-
-		//var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
+		
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 		console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
         if (!connected) {
@@ -225,8 +222,7 @@
           clearTimeout(watchdog);
           watchdog = null;				//감시견을 옆집 개나줘버림
           connected = true;
-		  
-		  //device.send(output_start.buffer);		
+		  	
           setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
 		  
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
@@ -327,14 +323,16 @@
         switch(command) {
           case DIGITAL_MESSAGE:
           case ANALOG_MESSAGE:
-          case REPORT_VERSION:
             waitForData = 2;
             executeMultiByteCommand = command;
             break;
-          case START_SYSEX:
+          case SCBD_CHOCOPI_USB:
+		  case SCBD_CHOCOPI_BLE:
             parsingSysex = true;
             sysexBytesRead = 0;
+			console.log('I am comming command sw');
             break;
+
         }
       }
     }
