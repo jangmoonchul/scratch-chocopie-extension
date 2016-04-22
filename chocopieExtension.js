@@ -408,8 +408,10 @@
         }
 		console.log('detail is ' + detail);
 		console.log('SCBD_CHOCOPI_USB is ' + SCBD_CHOCOPI_USB);
-		if(SCBD_CHOCOPI_USB === detail){
-		console.log('both is same');
+		if(detail === SCBD_CHOCOPI_USB ){
+			parsingSysex = true;
+			sysexBytesRead = 0;
+			console.log('I am comming SCBD_CHOCOPI_USB sw');
 		}
 		if (port != null)
 		{			
