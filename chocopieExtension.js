@@ -291,9 +291,9 @@
 
  function processInput(inputData) {
     for (var i=0; i < inputData.length; i++) {
-		console.log('inputData ['+ i +']' + inputData[i]);
+		console.log('storedInputData ['+ sysexBytesRead +']' + inputData[i]);
       if (parsingSysex) {
-        if (inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE && !connected) {
+        if (( (inputData[i] === SCBD_CHOCOPI_USB) || (inputData[i] === SCBD_CHOCOPI_BLE) ) && i === 11) {
           parsingSysex = false;
           processSysexMessage();
 		  console.log('I am comming parsingSysex if');
