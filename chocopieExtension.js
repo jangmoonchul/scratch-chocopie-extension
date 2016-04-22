@@ -210,7 +210,8 @@
 
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
-	console.log('I am comming processSysexMessage ');
+	console.log('I am comming processSysexMessage and storedInputData[0] is' + storedInputData[0]);
+
     if(storedInputData[0] === SCBD_CHOCOPI_USB) {
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
