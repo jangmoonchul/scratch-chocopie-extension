@@ -163,7 +163,7 @@
 		console.log('ping firmware query sended');
         pinging = true;
       }
-    }, 100);
+    }, 10000);
   }
 
   function queryFirmware() {
