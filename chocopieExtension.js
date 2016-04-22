@@ -231,7 +231,7 @@
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
 
-	if (storedInputData[0] === SCBD_CHOCOPI_USB){	//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
+	if (storedInputData[0] == SCBD_CHOCOPI_USB){	//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 		console.log('I am comming processSysexMessage');
@@ -251,7 +251,7 @@
 		
         pinging = false;
         pingCount = 0;
-	}else if (storedInputData[0] === SCBD_CHOCOPI_BLE){
+	}else if (storedInputData[0] == SCBD_CHOCOPI_BLE){
 		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 
@@ -408,7 +408,7 @@
         }
 		console.log('detail is ' + detail);
 	
-		if (detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE){
+		if (detail == SCBD_CHOCOPI_USB || detail == SCBD_CHOCOPI_BLE){
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			console.log('sysexBytesRead Setting OK');
