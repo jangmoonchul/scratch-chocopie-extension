@@ -597,6 +597,7 @@
 			if(!connected) return {status: 1, msg: 'ChocopieBoard disconnected'};
 			else return {status: 2, msg: 'ChocopieBoard connected'};	
 			if(watchdog) return {status: 1, msg: 'Probing for ChocopieBoard'};
+	};
 			
 
 
