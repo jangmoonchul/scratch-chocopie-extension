@@ -291,10 +291,12 @@
 
  function processInput(inputData) {
     for (var i=0; i < inputData.length; i++) {
+		console.log('inputData ' + inputData[i]);
       if (parsingSysex) {
         if (inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE && !connected) {
           parsingSysex = false;
           processSysexMessage();
+		  console.log('I am comming parsingSysex if');
         } else {
           storedInputData[sysexBytesRead++] = inputData[i];
         }
