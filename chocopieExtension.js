@@ -231,8 +231,7 @@
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
 
-    switch(storedInputData[0]) {
-      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
+	if (storedInputData[0] === SCBD_CHOCOPI_USB){	//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 		console.log('I am comming processSysexMessage');
@@ -252,8 +251,7 @@
 		
         pinging = false;
         pingCount = 0;
-        break;
-	  case SCBD_CHOCOPI_BLE:
+	}else if (storedInputData[0] === SCBD_CHOCOPI_BLE){
 		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 
@@ -270,9 +268,7 @@
 		
 		pinging = false;
         pingCount = 0;
-		break;
-		//펌웨어에 대한 연결을 허용시키는 부분
-    }
+	}
   }
 
 
