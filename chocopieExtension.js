@@ -383,7 +383,7 @@
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
         }
-		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && (!connected || poller == null)){
+		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE)){
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			console.log('detail parsing success and parsingSysex running');
