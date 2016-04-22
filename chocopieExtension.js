@@ -406,7 +406,8 @@
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
         }
-		console.log('detail is ' + detail);
+		console.log('detail is ' + typeof(detail));
+		console.log('SCBD_CHOCOPI_USB is ' + typeof(SCBD_CHOCOPI_USB));
 		if (port != null)
 		{			
 			switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
