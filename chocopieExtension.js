@@ -228,50 +228,6 @@
 											   -> QUERY_FIRWWARE 발송 
 		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 무한루프가 형성됨								*/
 
-  function processSysexMessage() {
-	  // 시스템 처리 추가메세지
-
-	if (storedInputData[0] == SCBD_CHOCOPI_USB){	//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
-		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
-		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-		console.log('I am comming processSysexMessage');
-        if (!connected) {
-          clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
-          poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
-          clearTimeout(watchdog);
-          watchdog = null;				//감시견을 옆집 개나줘버림
-          connected = true;
-		  
-		  //device.send(output_start.buffer);		
-          setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
-		  device.send(output_block.buffer);
-		  console.log('I send block message');
-		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
-        }
-		
-        pinging = false;
-        pingCount = 0;
-	}else if (storedInputData[0] == SCBD_CHOCOPI_BLE){
-		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
-		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-
-        if (!connected) {
-          clearInterval(poller);		
-          poller = null;				
-          clearTimeout(watchdog);
-          watchdog = null;				
-          connected = true;
-		  
-          setTimeout(init, 200);			
-		  device.send(output_block.buffer);
-        }
-		
-		pinging = false;
-        pingCount = 0;
-	}
-  }
-
-
 	function escape_control(source){
 		if(source == 0x7E){
 			var msg = new Uint8Array([0x7D, 0x7E ^ 0x20]);
@@ -407,8 +363,9 @@
 		  console.log('It is first else ');
         }
 		console.log('detail is ' + detail);
+
 	
-		if (detail == SCBD_CHOCOPI_USB || detail == SCBD_CHOCOPI_BLE){
+		if (detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE){
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			console.log('sysexBytesRead Setting OK');
@@ -453,6 +410,54 @@
       }
     }
   }
+
+  function processSysexMessage() {
+	  // 시스템 처리 추가메세지
+
+    switch(storedInputData[0]) {
+      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
+		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
+		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+		console.log('I am comming processSysexMessage');
+        if (!connected) {
+          clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
+          poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
+          clearTimeout(watchdog);
+          watchdog = null;				//감시견을 옆집 개나줘버림
+          connected = true;
+		  
+		  //device.send(output_start.buffer);		
+          setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
+		  device.send(output_block.buffer);
+		  console.log('I send block message');
+		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
+        }
+		
+        pinging = false;
+        pingCount = 0;
+        break;
+	  case SCBD_CHOCOPI_BLE:
+		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
+		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+
+        if (!connected) {
+          clearInterval(poller);		
+          poller = null;				
+          clearTimeout(watchdog);
+          watchdog = null;				
+          connected = true;
+		  
+          setTimeout(init, 200);			
+		  device.send(output_block.buffer);
+        }
+		
+		pinging = false;
+        pingCount = 0;
+		break;
+		//펌웨어에 대한 연결을 허용시키는 부분
+    }
+  }
+
 
 	function connectHW (hw, pin) {
 		hwList.add(hw, pin);
