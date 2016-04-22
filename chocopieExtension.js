@@ -295,7 +295,7 @@
           processSysexMessage();
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
-			if ((sysexBytesRead < 11) && (i < 11)){		
+			if (i < 11){		
 				storedInputData[sysexBytesRead++] = inputData[i];				//10바이트 이상이오면 강제로 끊어버리게 됨
 				console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
 			}
@@ -386,7 +386,7 @@
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6 ){
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			if ( i < 10)
+			if ( i < 11 )
 				storedInputData[sysexBytesRead++] = detail;					// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치
 			console.log('detail parsing success and parsingSysex running');
 			//console.log('ping count ' + pingCount);
