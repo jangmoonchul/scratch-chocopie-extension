@@ -461,7 +461,7 @@
 			waitForData = 2;
 			executeMultiByteCommand = detail;
 			break;
-		
+		}
       }
     }
   }
