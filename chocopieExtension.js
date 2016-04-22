@@ -298,10 +298,7 @@
 			if (i < 11){
 				storedInputData[sysexBytesRead++] = inputData[i];				//detail/port + Data ( 10 Byte) = 11 Byte 이상이면 강제로 끊어버림 
 				console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
-			}else{
-				storedInputData[sysexBytesRead] = inputData[i];
 			}
-
         }
 			
       } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
