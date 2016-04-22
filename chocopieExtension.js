@@ -211,32 +211,27 @@
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
 	console.log('I am comming processSysexMessage ');
-    switch(storedInputData[0]) {
-      case SCBD_CHOCOPI_USB:				
+    if(storedInputData[0] === SCBD_CHOCOPI_USB) {
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
-		
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 		
+		console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
           poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
           clearTimeout(watchdog);
           watchdog = null;				//감시견을 옆집 개나줘버림
           connected = true;
-		  	
-          setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
-		  
+
+		  device.send(output_block.buffer);	
+          setTimeout(init, 200);		
+		  console.log('I send cpc_get_block');
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
         }
-		device.send(output_block.buffer);
         pinging = false;
         pingCount = 0;
-        break;
-	  case SCBD_CHOCOPI_BLE:
-		//var check_start = checkSum(SCBD_CHOCOPI_BLE, CPC_START),
+	}else if (storedInputData[0] === SCBD_CHOCOPI_BLE){
 		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
-
-		//var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]),	
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 
         if (!connected) {
@@ -245,17 +240,13 @@
           clearTimeout(watchdog);
           watchdog = null;				
           connected = true;
-		  
-		  //device.send(output_start.buffer);		
+
+		  device.send(output_block.buffer);
           setTimeout(init, 200);			
-		  
         }
-		device.send(output_block.buffer);
 		pinging = false;
         pingCount = 0;
-		break;
-		//펌웨어에 대한 연결을 허용시키는 부분
-    }
+	}
   }
 
 
