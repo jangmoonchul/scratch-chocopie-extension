@@ -43,30 +43,11 @@
 		CPC_ALL_SAY = 0x0E;
 	//Chocopie command definition
 	
-  var PIN_MODE = 0xF4,
-    REPORT_DIGITAL = 0xD0,		//DIGITAL 신호가 들어왔을때 보고하는 값
-    REPORT_ANALOG = 0xC0,		//아날로그 신호가 들어왔을때 보고하는 값
+  var 
     DIGITAL_MESSAGE = 0x90,
     START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
     END_SYSEX = 0x7E,			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
-    //QUERY_FIRMWARE = 0xE0,		//0x79 (아두이노) -> 0xE0 (초코파이보드용) QUERY_FIRMWARE 와 SCBD_CHOCOPI_USB 는 같은 값을 유지 (일반)--Changed By Remoted 2016.04.14
-    ANALOG_MESSAGE = 0xE0,
-    CAPABILITY_RESPONSE = 0x6C;
-
-  var INPUT = 0x00,
-    OUTPUT = 0x01,
-    ANALOG = 0x02,
-    PWM = 0x03,
-    SERVO = 0x04,
-    SHIFT = 0x05,
-    I2C = 0x06,
-    ONEWIRE = 0x07,
-    STEPPER = 0x08,
-    ENCODER = 0x09,
-    SERIAL = 0x0A,
-    PULLUP = 0x0B,
-    IGNORE = 0x7F,
-    TOTAL_PIN_MODES = 11;		//총 가능한 PIN MODE 13 (아두이노) -> 11 (초코파이) 용으로 변경
+    ANALOG_MESSAGE = 0xE0;
 
   var SAMPLING_RATE = 0x0080;
 
@@ -90,8 +71,6 @@
 
 
   var analogChannel = new Uint8Array(MAX_PINS);
-  var pinModes = [];
-  for (var i = 0; i < TOTAL_PIN_MODES; i++) pinModes[i] = [];
 
   var majorVersion = 0,
     minorVersion = 0;
