@@ -225,7 +225,7 @@
           connected = true;
 
 		  device.send(output_block.buffer);	
-          //setTimeout(init, 200);		
+          setTimeout(init, 200);		
 		  console.log('I send cpc_get_block');
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
         }
@@ -287,7 +287,7 @@
       if (parsingSysex) {
 		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && !connected) { 
 		  console.log('I am comming parsingSysex if');
-			storedInputData[0] = inputData[0];
+		  storedInputData[0] = inputData[0];
           parsingSysex = false;
           processSysexMessage();
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
