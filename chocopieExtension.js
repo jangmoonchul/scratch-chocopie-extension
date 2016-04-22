@@ -295,10 +295,8 @@
           processSysexMessage();
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
-			if (sysexBytesRead < 11){
-				storedInputData[sysexBytesRead++] = inputData[i];				//10바이트 이상이오면 강제로 끊어버리게 됨
-				console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
-			}
+			storedInputData[sysexBytesRead++] = inputData[i];				//10바이트 이상이오면 강제로 끊어버리게 됨
+			console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
         }
 			
       } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
