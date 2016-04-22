@@ -288,7 +288,6 @@
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
-		console.log('inputData ' + inputData[i]);
       if (parsingSysex) {
 		if ((inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE) && pingCount < 6) { 
 		  console.log('I am comming parsingSysex if');
@@ -298,8 +297,7 @@
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
 			storedInputData[sysexBytesRead++] = inputData[i];
-			console.log('sysexBytesRead ' + sysexBytesRead);
-			console.log('inputData ' + inputData[i]);
+			console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 		}	
       } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
@@ -388,6 +386,23 @@
 			sysexBytesRead = 0;
 			console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
+		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
+			waitForData = 2;
+			executeMultiByteCommand = detail;
+		}else if (detail === CPC_VERSION || detail === (SCBD_CHOCOPI_USB | 0x0F)){
+			waitForData = 11;							
+			executeMultiByteCommand = detail;
+		}else if (detail === CPC_GET_BLOCK){
+			waitForData = 10;							
+			executeMultiByteCommand = detail;
+		}else if (detail === (SCBD_CHOCOPI_USB | 0x01) || detail === (SCBD_CHOCOPI_BLE | 0x01)){
+			waitForData = 3;					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
+			executeMultiByteCommand = detail;
+		}else if (detail === (SCBD_CHOCOPI_USB | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x03)){
+			// Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte
+			//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
+			waitForData = 2;
+			executeMultiByteCommand = detail;
 		}
 
 		if (port != null)
@@ -408,33 +423,6 @@
 			  case SCBD_SERVO:
 				break;
 			}
-		}
-		switch(detail) {												
-		  case DIGITAL_MESSAGE:
-		  case ANALOG_MESSAGE:								
-			waitForData = 2;
-			executeMultiByteCommand = detail;
-			break;
-		  case CPC_VERSION:										
-		  case SCBD_CHOCOPI_USB | 0x0F:					
-			waitForData = 11;							
-			executeMultiByteCommand = detail;
-			break;
-		  case CPC_GET_BLOCK:						
-			waitForData = 10;							
-			executeMultiByteCommand = detail;
-			break;
-		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
-		  case SCBD_CHOCOPI_BLE | 0x01:					
-			waitForData = 3;
-			executeMultiByteCommand = detail;
-			break;
-		  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte
-		  case SCBD_CHOCOPI_BLE | 0x02:					
-		  case SCBD_CHOCOPI_BLE | 0x03:					//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
-			waitForData = 2;
-			executeMultiByteCommand = detail;
-			break;
 		}
       }
     }
