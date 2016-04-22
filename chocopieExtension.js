@@ -193,11 +193,12 @@
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]),		//이 형태로 보내게되면 배열로 생성되어 한번에 감
 		ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
-
+    
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
   }
-  //Changed BY Remoted 2016.04.11	Patched BY Remoted 2016.04.15	Complete By Remoted 2016.04.21	--> 콘솔창을 통해서 데이터가 제대로 가는것을 확인함
+  //Changed BY Remoted 2016.04.11
+  //Patched BY Remoted 2016.04.15
 
 	function checkSum(detailnport, data){
 		var sum = detailnport;
@@ -227,6 +228,59 @@
 	/* tryNextDevice -> processInput (Handler) -> processSysexMessage -> QUERY_FIRMWARE -> init -> QUERY_FIRMWARE 순으로 진행됨
 											   -> QUERY_FIRWWARE 발송 
 		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 무한루프가 형성됨								*/
+
+  function processSysexMessage() {
+	  // 시스템 처리 추가메세지
+    switch(storedInputData[0]) {
+      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
+		//var check_start = checkSum(SCBD_CHOCOPI_USB, CPC_START);
+		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
+
+		//var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_START, check_start ,END_SYSEX]),		
+		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+
+        if (!connected) {
+          clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
+          poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
+          clearTimeout(watchdog);
+          watchdog = null;				//감시견을 옆집 개나줘버림
+          connected = true;
+		  
+		  //device.send(output_start.buffer);		
+          setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
+		  
+		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
+        }
+		device.send(output_block.buffer);
+        pinging = false;
+        pingCount = 0;
+        break;
+	  case SCBD_CHOCOPI_BLE:
+		//var check_start = checkSum(SCBD_CHOCOPI_BLE, CPC_START),
+		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
+
+		//var output_start = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_START, check_start ,END_SYSEX]),	
+		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+
+        if (!connected) {
+          clearInterval(poller);		
+          poller = null;				
+          clearTimeout(watchdog);
+          watchdog = null;				
+          connected = true;
+		  
+		  //device.send(output_start.buffer);		
+          setTimeout(init, 200);			
+		  
+        }
+		device.send(output_block.buffer);
+		pinging = false;
+        pingCount = 0;
+		break;
+		//펌웨어에 대한 연결을 허용시키는 부분
+    }
+  }
+
 
 	function escape_control(source){
 		if(source == 0x7E){
@@ -261,20 +315,15 @@
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
-		console.log('storedInputData['+ i + ']' + inputData[i]);
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) &&  i == 11) { 
-		  parsingSysex = false;	//예상값) storedInputData[0] = 0xE0 혹은 0xF0
-          processSysexMessage(); 
-		  //들어오는 데이터를 파싱하다가 END 값이 들어오면 파싱을 멈추고 시스템 처리 추가메세지 함수를 호출하여 처리시작
-		  //호출하여 처리하는 검증과정 도중에서 QUERY_FIRMWARE CONNECTION 과정이 이루어짐
-		  console.log('I am comming parsingSysex if');
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && !connected) { //예상값) storedInputData[0] = 0xE0 혹은 0xF0
+          parsingSysex = false;
+          processSysexMessage();
         }else{
-		  storedInputData[sysexBytesRead++] = inputData[i];
-		  console.log('I am comming parsingSysex else');
-		}
-			console.log('sysexBytesRead ' + sysexBytesRead);	
-			
+			storedInputData[sysexBytesRead++] = inputData[i];
+			console.log('sysexBytesRead ' + sysexBytesRead);
+			console.log('inputData ' + inputData[i]);
+		}	
       } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
@@ -346,48 +395,19 @@
           }
 		}	
       } else {
-        //if ((inputData[0] == 0xE0 || inputData[0] == 0xF0)  && (inputData[1] == CPC_VERSION || inputData[1] == CPC_GET_BLOCK)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
-
-		if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && !connected) {
-			detail = inputData[i];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
+        if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && !connected) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
+			detail = inputData[1];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
-		console.log('It is first if ');
 		} else if ((inputData[0] >= 0xE1 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF3) || inputData[0] == 0xEF) {
 			detail = inputData[0];
-			console.log('It is first elif ');
         } else {														// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
 		  detail = inputData[0] & 0xF0;									// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
-		  console.log('It is first else ');
         }
-		console.log('detail is ' + detail);
-
-	
-		if (detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE){
-			parsingSysex = true;
-			sysexBytesRead = 0;
-			console.log('sysexBytesRead Setting OK');
-		}else if (detail === CPC_VERSION || (detail === SCBD_CHOCOPI_USB | 0x0F)){
-			waitForData = 11;							
-			executeMultiByteCommand = detail;
-		}else if (detail === (SCBD_CHOCOPI_USB | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x03)){	//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
-			waitForData = 2;					//Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte
-			executeMultiByteCommand = detail;	
-		}else if (detail === (SCBD_CHOCOPI_BLE | 0x01) || detail === (SCBD_CHOCOPI_USB | 0x01)){
-			waitForData = 3;					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
-			executeMultiByteCommand = detail;
-		}else if (detail === CPC_GET_BLOCK){
-			waitForData = 10;			
-			executeMultiByteCommand = detail;
-		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
-			waitForData = 2;
-			executeMultiByteCommand = detail;
-		}
-
 		if (port != null)
-		{
+		{			
 			switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
 			{
 			  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
@@ -403,61 +423,48 @@
 			  case SCBD_DC_MOTOR:	
 			  case SCBD_SERVO:
 				break;
-			  default:
-				  break;
 			}
 		}
+		switch(detail) {												/* 이 곳에서는 디테일과 포트의 분리만 이루어지며, 실질적인 처리는 위에서 처리함	*/
+		  case DIGITAL_MESSAGE:
+		  case ANALOG_MESSAGE:								
+			waitForData = 2;
+			executeMultiByteCommand = detail;
+			break;
+
+		  case CPC_VERSION:										
+		  	parsingSysex = true;						//REPORT_VERSION (아두이노용) -> CPC_VERSION (초코파이보드용)
+			sysexBytesRead = 0;
+		  case SCBD_CHOCOPI_USB | 0x0F:					//오류보고용 처리
+			waitForData = 11;							
+			executeMultiByteCommand = detail;
+			break;
+
+		  case CPC_GET_BLOCK:						
+			waitForData = 10;							
+			executeMultiByteCommand = detail;
+			break;
+		  case SCBD_CHOCOPI_USB:					//연결용 디테일/포트가 오면 sysexBytesRead 에 대해서 0값으로 리셋을 날리고, 파싱용 플래그를 다시 원상복귀시킴.
+		  case SCBD_CHOCOPI_BLE:
+			parsingSysex = true;
+			sysexBytesRead = 0;
+			console.log('I am comming SCBD_CHOCOPI_USB sw');
+			break;
+		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
+		  case SCBD_CHOCOPI_BLE | 0x01:					
+			waitForData = 3;
+			executeMultiByteCommand = detail;
+			break;
+		  case SCBD_CHOCOPI_USB | 0x02:					//일반적으로는 Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte
+		  case SCBD_CHOCOPI_BLE | 0x02:					
+		  case SCBD_CHOCOPI_BLE | 0x03:					//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
+			waitForData = 2;
+			executeMultiByteCommand = detail;
+			break;
+		
       }
     }
   }
-
-  function processSysexMessage() {
-	  // 시스템 처리 추가메세지
-
-    switch(storedInputData[0]) {
-      case SCBD_CHOCOPI_USB:				//SCBD_CHOCOPI_USB 혹은 BLE 가 들어오면 connect 확인이 완료
-		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
-		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-		console.log('I am comming processSysexMessage');
-        if (!connected) {
-          clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
-          poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
-          clearTimeout(watchdog);
-          watchdog = null;				//감시견을 옆집 개나줘버림
-          connected = true;
-		  
-		  //device.send(output_start.buffer);		
-          setTimeout(init, 200);		//setTimeout 또한 일종의 타이머함수.. init 을 0.2 초후에 발동시킴.
-		  device.send(output_block.buffer);
-		  console.log('I send block message');
-		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
-        }
-		
-        pinging = false;
-        pingCount = 0;
-        break;
-	  case SCBD_CHOCOPI_BLE:
-		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
-		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-
-        if (!connected) {
-          clearInterval(poller);		
-          poller = null;				
-          clearTimeout(watchdog);
-          watchdog = null;				
-          connected = true;
-		  
-          setTimeout(init, 200);			
-		  device.send(output_block.buffer);
-        }
-		
-		pinging = false;
-        pingCount = 0;
-		break;
-		//펌웨어에 대한 연결을 허용시키는 부분
-    }
-  }
-
 
 	function connectHW (hw, pin) {
 		hwList.add(hw, pin);
