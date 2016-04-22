@@ -210,12 +210,13 @@
 
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
+	console.log('I am comming processSysexMessage ');
     switch(storedInputData[0]) {
       case SCBD_CHOCOPI_USB:				
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 		
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-		console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
+		
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
           poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
@@ -384,9 +385,6 @@
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
         }
-		console.log('detail is ' + detail);
-		console.log('SCBD_CHOCOPI_USB is ' + SCBD_CHOCOPI_USB);
-
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && !connected ){
 			parsingSysex = true;
 			sysexBytesRead = 0;
