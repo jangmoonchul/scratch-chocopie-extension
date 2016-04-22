@@ -384,6 +384,7 @@
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && !connected ){
 			parsingSysex = true;
 			sysexBytesRead = 0;
+			console.log('detail parsing success and parsingSysex running');
 		}
 
 		if (port != null)
