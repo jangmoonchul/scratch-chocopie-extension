@@ -396,7 +396,7 @@
 		}	
       } else {
         if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && !connected) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
-			detail = inputData[1];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
+			detail = inputData[i];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
 		} else if ((inputData[0] >= 0xE1 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF3) || inputData[0] == 0xEF) {
@@ -406,6 +406,7 @@
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
         }
+		console.log('detail is ' + detail);
 		if (port != null)
 		{			
 			switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
@@ -551,17 +552,6 @@
   ext.digitalRead = function(pin) {
     return digitalRead(pin);
   };
-
-  ext.whenDigitalRead = function(pin, val) {
-    if (hasCapability(pin, INPUT)) {
-      if (val == menus[lang]['outputs'][0])
-        return digitalRead(pin);
-      else if (val == menus[lang]['outputs'][1])
-        return digitalRead(pin) === false;
-    }
-  };
-	// menus[lang]['outputs'][1] outputs 는 켜기와 끄기를 의미하는데, 3차원 배열로 1번에 해당하는 것은 도대체 뭔지 1도 모르겟음!
-
 
   ext.rotateServo = function(servo, deg) {
     var hw = hwList.search(servo);
