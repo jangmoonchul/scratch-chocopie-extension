@@ -290,9 +290,9 @@
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 		console.log('inputData ' + inputData[i]);
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && !connected) { 
+		if ((inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE) && !connected) { 
 		  console.log('I am comming parsingSysex if');
-		  storedInputData[0] = inputData[0];
+		  storedInputData[0] = inputData[i];
           parsingSysex = false;
           processSysexMessage();
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
@@ -372,7 +372,7 @@
           }
 		}	
       } else {
-        if ((inputData[0] == 0xE0 || inputData[0] == 0xF0)  && (!connected || pingCount < 6)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
+        if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && (!connected || pingCount < 6)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
 			detail = inputData[0];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
