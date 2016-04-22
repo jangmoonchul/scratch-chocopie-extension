@@ -323,13 +323,13 @@
           command = inputData[i];
         }
         switch(command) {
-          case DIGITAL_MESSAGE:
+         case DIGITAL_MESSAGE:
           case ANALOG_MESSAGE:
-            waitForData = 2;
+          case CPC_VERSION:
+            waitForData = 10;
             executeMultiByteCommand = command;
             break;
-          case SCBD_CHOCOPI_USB:
-		  case SCBD_CHOCOPI_BLE:
+        case SCBD_CHOCOPI_USB:
             parsingSysex = true;
             sysexBytesRead = 0;
             break;
