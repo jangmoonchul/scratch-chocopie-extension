@@ -291,7 +291,7 @@
 
  function processInput(inputData) {
     for (var i=0; i < inputData.length; i++) {
-		console.log('inputData ' + inputData[i]);
+		console.log('inputData ['+ i +']' + inputData[i]);
       if (parsingSysex) {
         if (inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE && !connected) {
           parsingSysex = false;
