@@ -330,7 +330,6 @@
 		  case SCBD_CHOCOPI_BLE:
             parsingSysex = true;
             sysexBytesRead = 0;
-			console.log('I am comming command sw');
             break;
 
         }
