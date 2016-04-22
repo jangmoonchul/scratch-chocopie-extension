@@ -140,7 +140,8 @@
     // TEMPORARY WORKAROUND
     // Since _deviceRemoved is not used with Serial devices
     // ping device regularly to check connection
-    pinger = setInterval(function() {		//setInterval 함수로 0.1초 단위로 6번을 핑을보내어 신호체크
+	// setInterval 함수로 0.1초 단위로 6번을 핑을보내어 신호체크
+    pinger = setInterval(function() {		
       if (pinging) {
         if (++pingCount > 6) {
           clearInterval(pinger);
@@ -148,6 +149,7 @@
           connected = false;
           if (device) device.close();
           device = null;
+		  console.log('device ping over');
           return;
         }
       } else {
@@ -157,6 +159,7 @@
           return;
         }
         queryFirmware();
+		console.log('ping firmware query sended');
         pinging = true;
       }
     }, 100);
