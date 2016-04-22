@@ -411,7 +411,7 @@
 		if(detail === SCBD_CHOCOPI_USB ){
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			console.log('I am comming SCBD_CHOCOPI_USB sw');
+			console.log('I am comming SCBD_CHOCOPI_USB sw1');
 		}
 		if (port != null)
 		{			
@@ -455,7 +455,7 @@
 		  case SCBD_CHOCOPI_BLE:
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			console.log('I am comming SCBD_CHOCOPI_USB sw');
+			console.log('I am comming SCBD_CHOCOPI_USB sw2');
 			break;
 		  case SCBD_CHOCOPI_USB | 0x01:					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
 		  case SCBD_CHOCOPI_BLE | 0x01:					
