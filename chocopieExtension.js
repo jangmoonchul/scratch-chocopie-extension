@@ -149,6 +149,7 @@
           connected = false;
           if (device) device.close();
           device = null;
+		  console.log('ping count ' + pingCount );
 		  console.log('device ping over');
           return;
         }
