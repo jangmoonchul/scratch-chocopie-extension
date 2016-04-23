@@ -229,9 +229,9 @@
           connected = true;
 
 		  device.send(output_block.buffer);	
-          setTimeout(init, 200);
+          //setTimeout(init, 200);
 		  sysexBytesRead = 0;
-		  //console.log('I send cpc_get_block');
+		  console.log('I send cpc_get_block');
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
         }
         pinging = false;
@@ -289,6 +289,7 @@
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
+		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead === 11) { 
@@ -305,9 +306,10 @@
 			else
 				continue;
         }
-		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 		
-      } else if ( waitForData > 0 && ( (inputData[0] === 0xE0 && inputData[1] === CPC_GET_BLOCK) || ((inputData[0] >= 0xF1 && inputData[0] <= 0xF2) && inputData[1] <= 0x0F) )){					
+      //} else if ( waitForData > 0 && ( (inputData[0] === 0xE0 && inputData[1] === CPC_GET_BLOCK) || ((inputData[0] >= 0xF1 && inputData[0] <= 0xF2) && inputData[1] <= 0x0F) )){
+		} else if ( waitForData > 0 &&  (inputData[i] >= 0xE0 && inputData[i] <= 0xF3)){
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//executeMultiByteCommand == detail
