@@ -288,14 +288,14 @@
 
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
-    for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
+    for (var i=0; i < inputData.length; i++) {	
 		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 11 ) { 
 		  console.log('I am comming parsingSysex if');				
           parsingSysex = false;
-		  SYSTEM_MESSAGE = false;
+		  SYSTEM_MESSAGE = false;								//ping 을 죽이려면 SYSTEM_MESSAGE 와 processSysexMessage 안에서 init 을 죽이면됨
           processSysexMessage();
 		  setVersion(storedInputData[9], storedInputData[10]);
 		  break;
@@ -304,45 +304,47 @@
         }else{
 			if (i < 12 && sysexBytesRead < 11)
 				storedInputData[sysexBytesRead++] = inputData[i-1];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
-			else
+			else															//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 				continue;
         }
-		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 
 	  } else if ( waitForData > 0 &&  (inputData[i] >= 0xE0 && inputData[i] <= 0xF3)){
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//executeMultiByteCommand == detail
-			  switch(executeMultiByteCommand) {								//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 역전현상이 발생함
-				case CPC_GET_BLOCK:															//				0 1 2  3 4 5 6 7		(포트)
-					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
-						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8,CPC_GET_BLOCK	(storedInputData)
-							connectHW(storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
-							//connectHW (hw, pin)
+			  if (executeMultiByteCommand === SCBD_CHOCOPI_USB){
+																							//				                  0 1 2  3 4 5 6 7		(포트)
+					for(var i=2 ; i < storedInputData.length; i++ ){						//SCBD_CHOCOPI_USB, CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
+						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8, CPC_GET_BLOCK, SCBD_CHOCOPI_USB	(storedInputData)
+							connectHW(storedInputData[storedInputData.length - i], i-2);	//storedInputData.length 부터 순차적으로 감소 
+							//connectHW (hw, pin)											//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 역전현상이 발생함
 						}
 					}
-					break;
-				case SCBD_CHOCOPI_USB | 0x01:								//inputData[0] 번이 0xE1 인 경우, 차례적으로 포트(1Byte), 블록타입(1Byte) 가 전송됨
-				case SCBD_CHOCOPI_BLE | 0x01:								//USB 연결 포트에 블록 연결시 가동됨
+			  }else if (executeMultiByteCommand === SCBD_CHOCOPI_BLE){						//				                  8 9 10 11 12 13 14 15		(포트)
+					for(var i=2 ; i < storedInputData.length; i++ ){						//SCBD_CHOCOPI_USB, CPC_GET_BLOCK,8 9 0  12 0  0  0  0		(inputData)
+						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8, CPC_GET_BLOCK, SCBD_CHOCOPI_USB	(storedInputData)
+							connectHW(storedInputData[storedInputData.length - i], 17-i);	//storedInputData.length 부터 순차적으로 감소 
+							//connectHW (hw, pin)											
+						}
+					}
+			  }else if ((executeMultiByteCommand === (SCBD_CHOCOPI_USB | 0x01)) || (executeMultiByteCommand === (SCBD_CHOCOPI_BLE | 0x01))){
+																			//inputData[0] 번이 0xE1 인 경우, 차례적으로 포트(1Byte), 블록타입(1Byte) 가 전송됨
 					connectHW(storedInputData[0], storedInputData[1]);		//0xE1, PORT, BLOCK_TYPE -> SCBD_SENSOR..		(inputData)
-					break;													//BLOCK_TYPE -> SCBD_SENSOR, PORT, 0xE1			(storedInputData)
-				case SCBD_CHOCOPI_USB | 0x02:								
-				case SCBD_CHOCOPI_BLE | 0x02:								//inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
-					removeHW(storedInputData[0]);							//0xE2, PORT	(inputData)
-					break;													//PORT, OxE2	(storedInputData)
-				case SCBD_CHOCOPI_USB | 0x0F:								
-				console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);
-				return;	
-				break;
-				//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
-				case SCBD_CHOCOPI_BLE | 0x03:
+																			//BLOCK_TYPE -> SCBD_SENSOR, PORT, 0xE1			(storedInputData)
+			  }else if ((executeMultiByteCommand === (SCBD_CHOCOPI_USB | 0x02)) || (executeMultiByteCommand === (SCBD_CHOCOPI_BLE | 0x02)) ){
+					removeHW(storedInputData[0]);							//0xE2, PORT	(inputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+																			//PORT, OxE2	(storedInputData)
+			  }else if (executeMultiByteCommand === (SCBD_CHOCOPI_USB | 0x0F)){
+				  console.log('에러발생 ' + storedInputData[9] + storedInputData[8] + '에서 ' + storedInputData[7] + storedInputData[6] + storedInputData[5] + storedInputData[4] + storedInputData[3] + storedInputData[2] + storedInputData[1] + storedInputData[0]);	//오류코드 (2 Byte), 참고데이터 (8 Byte) -> 참고데이터 (8 Byte), 오류코드 (2 Byte)
+				  return;
+			  }else if (executeMultiByteCommand === (SCBD_CHOCOPI_BLE | 0x03)){
 				if (storedInputData[0] == 0) 							//연결해제됨
 					ext._shutdown();									//0xF3, STATUS
 				else if (storedInputData[0] == 1)						//STATUS, 0xF3
 					ext._deviceConnected();
-				
-				break;
 			  }
+
 			}
       } else if (waitForData > 0 && inputData[0] <= 0xBF) {	//0x80-> 0xBF
         storedInputData[--waitForData] = inputData[i];
@@ -377,24 +379,25 @@
 		  port = hwList.search_bypin(multiByteChannel);					// -> hwList.search_bypin 로 조사해서 처리해야함
         }
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && SYSTEM_MESSAGE){
-			parsingSysex = true;
+			parsingSysex = true;																			//	2016.04.23 확인완료
 			sysexBytesRead = 0;
 			console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
+		}else if ((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE)){
+			//SYSTEM_MESSAGE 가 설정되지 않은 SCBD_CHOCOPI_USB, BLE 세트에서는 CPC_GET_BLOCK 이 시작됨			2016.04.23 확인완료
+			waitForData = 10;							
+			executeMultiByteCommand = detail;
 		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
 			waitForData = 2;
 			executeMultiByteCommand = detail;
-		}else if (detail === CPC_VERSION || detail === (SCBD_CHOCOPI_USB | 0x0F)){
-			waitForData = 11;							
-			executeMultiByteCommand = detail;
-		}else if (detail === CPC_GET_BLOCK){
-			waitForData = 10;							
+		}else if (detail === (SCBD_CHOCOPI_USB | 0x0F)){
+			waitForData = 11;								//				2016.04.23 확인완료
 			executeMultiByteCommand = detail;
 		}else if (detail === (SCBD_CHOCOPI_USB | 0x01) || detail === (SCBD_CHOCOPI_BLE | 0x01)){
-			waitForData = 3;					//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte
+			waitForData = 3;								//0xE1 일 경우에, Detail/Port 에 이어서 2Byte 가 딸려옴 = 총 3 Byte		2016.04.23 확인완료
 			executeMultiByteCommand = detail;
 		}else if (detail === (SCBD_CHOCOPI_USB | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x03)){
-			// Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte
+			// Detail/Port [0]  이후에 Data [1] 이 옴 = 총 2 Byte			2016.04.23 확인완료
 			//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
 			waitForData = 2;
 			executeMultiByteCommand = detail;
