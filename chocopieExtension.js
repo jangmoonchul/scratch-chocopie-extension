@@ -220,7 +220,7 @@
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 		
-		console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
+		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
           poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
@@ -231,7 +231,7 @@
 		  device.send(output_block.buffer);	
           setTimeout(init, 200);
 		  sysexBytesRead = 0;
-		  console.log('I send cpc_get_block');
+		  //console.log('I send cpc_get_block');
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
         }
         pinging = false;
@@ -290,11 +290,12 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
-		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead === 11) { 
 		  //console.log('I am comming parsingSysex if');				
           parsingSysex = false;
           processSysexMessage();
+		  setVersion(storedInputData[9], storedInputData[10]);
 		  break;
 		  //detail/port + Data ( 10 Byte) = 11 Byte 초과이면 강제로 반복문을 끊어버림 
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
@@ -304,16 +305,13 @@
 			else
 				continue;
         }
-		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 		
-      } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
+      } else if ( waitForData > 0 && ( (inputData[0] === 0xE0 && inputData[1] === CPC_GET_BLOCK) || ((inputData[0] >= 0xF1 && inputData[0] <= 0xF2) && inputData[1] <= 0x0F) )){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
-			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//witForData 는 뒤에 올 데이터가 2개가 더 있다는 것을 뜻함
-			  switch(executeMultiByteCommand) {								//executeMultiByteCommand == detail
-				case CPC_VERSION:											//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 역전현상이 발생함
-					setVersion(storedInputData[1], storedInputData[0]);		
-					break;																	
+			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//executeMultiByteCommand == detail
+			  switch(executeMultiByteCommand) {								//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 역전현상이 발생함
 				case CPC_GET_BLOCK:															//				0 1 2  3 4 5 6 7		(포트)
 					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8,9,0,12,0,0,0,0		(inputData)
 						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8,CPC_GET_BLOCK	(storedInputData)
@@ -377,22 +375,22 @@
           }
 		}	
       } else {
-        if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && (!connected || pingCount < 6)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
+        if ((inputData[0] == 0xE0 || inputData[0] == 0xF0)  && inputData[1] == CPC_VERSION ) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
 			detail = inputData[i];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
-		} else if ((inputData[0] >= 0xE1 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF1 && inputData[0] <= 0xF3) || inputData[0] == 0xEF) {
+		} else if ( ( (inputData[0] === 0xE0 && inputData[1] === CPC_GET_BLOCK) || ((inputData[0] >= 0xF1 && inputData[0] <= 0xF2) && inputData[1] <= 0x0F) )) {
 			detail = inputData[0];
         } else {														// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
 		  detail = inputData[0] & 0xF0;									// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
         }
-		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6){
+		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && inputData[1] == CPC_VERSION){
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			//console.log('detail parsing success and parsingSysex running');
-			console.log('ping count ' + pingCount);
+			//console.log('ping count ' + pingCount);
 		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
 			waitForData = 2;
 			executeMultiByteCommand = detail;
