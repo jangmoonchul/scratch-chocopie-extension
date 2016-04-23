@@ -289,7 +289,7 @@
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
-		console.log('inputData [' + i + '] = ' + inputData[i]);
+		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 11 ) { 
@@ -307,7 +307,7 @@
 			else
 				continue;
         }
-		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 
 	  } else if ( waitForData > 0 &&  (inputData[i] >= 0xE0 && inputData[i] <= 0xF3)){
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
