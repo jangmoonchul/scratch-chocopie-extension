@@ -289,17 +289,18 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead === 11) { 
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && i === 11) { 
 		  console.log('I am comming parsingSysex if');				
           parsingSysex = false;
           processSysexMessage();
 		  break;
+		  //detail/port + Data ( 10 Byte) = 11 Byte 이상이면 강제로 반복문을 끊어버림 
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
-			if (sysexBytesRead < 11)
-				storedInputData[sysexBytesRead++] = inputData[i-1];
-
-			//detail/port + Data ( 10 Byte) = 11 Byte 이상이면 강제로 끊어버림 
+			if (i < 11)
+				storedInputData[sysexBytesRead++] = inputData[i-1];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치
+				
+			
 			console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
         }
 			
@@ -388,10 +389,8 @@
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6){
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			//if ( sysexBytesRead < 11)
-			//	storedInputData[sysexBytesRead++] = detail;					// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치
 			console.log('detail parsing success and parsingSysex running');
-			//console.log('ping count ' + pingCount);
+			console.log('ping count ' + pingCount);
 		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
 			waitForData = 2;
 			executeMultiByteCommand = detail;
