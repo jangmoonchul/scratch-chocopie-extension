@@ -291,7 +291,7 @@
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
 		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && i === 10) { 
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead === 11) { 
 		  //console.log('I am comming parsingSysex if');				
           parsingSysex = false;
           processSysexMessage();
