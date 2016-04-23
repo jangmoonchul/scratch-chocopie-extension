@@ -387,8 +387,6 @@
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6 ){
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			if (sysexBytesRead === 11)
-				sysexBytesRead = 0;
 			if ( i < 11 )
 				storedInputData[sysexBytesRead++] = detail;					// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치
 
