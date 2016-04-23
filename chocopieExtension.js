@@ -305,7 +305,7 @@
 			else
 				continue;
         }
-		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 		
       } else if ( waitForData > 0 && ( (inputData[0] === 0xE0 && inputData[1] === CPC_GET_BLOCK) || ((inputData[0] >= 0xF1 && inputData[0] <= 0xF2) && inputData[1] <= 0x0F) )){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
