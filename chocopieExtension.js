@@ -293,6 +293,7 @@
 		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && i === 11  && sysexBytesRead === 10) { 
 		  //console.log('I am comming parsingSysex if');				
+
           parsingSysex = false;
           processSysexMessage();
 		  break;
