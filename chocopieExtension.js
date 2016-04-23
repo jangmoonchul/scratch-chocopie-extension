@@ -298,10 +298,10 @@
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
 			if (i < 12)
-				storedInputData[sysexBytesRead++] = inputData[i-1];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치
-			console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
+				storedInputData[sysexBytesRead++] = inputData[i-1];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
         }
-			
+		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		
       } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
