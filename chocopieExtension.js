@@ -293,15 +293,12 @@
 		  console.log('I am comming parsingSysex if');
           parsingSysex = false;
           processSysexMessage();
+		  break;
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
-			if (i < 10)
+			if (i < 11)
 				storedInputData[sysexBytesRead++] = inputData[i];
-			else if (i  === 10){
-				storedInputData[sysexBytesRead] = inputData[i];	
-			}else{
-				break;
-			}
+
 			//detail/port + Data ( 10 Byte) = 11 Byte 이상이면 강제로 끊어버림 
 			console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
         }
