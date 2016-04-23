@@ -293,6 +293,7 @@
 		  console.log('I am comming parsingSysex if');
           parsingSysex = false;
           processSysexMessage();
+		  sysexBytesRead = 0
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
 			if (i < 11){
@@ -386,7 +387,7 @@
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6 ){
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			if ( i < 11 )
+			if ( i < 10 )
 				storedInputData[sysexBytesRead++] = detail;					// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치
 			console.log('detail parsing success and parsingSysex running');
 			//console.log('ping count ' + pingCount);
@@ -411,21 +412,19 @@
 
 		if (port != null)
 		{			
-			switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
-			{
-			  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
+			if (port.name === SCBD_SENSOR){
+				//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
 				waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
-				executeMultiByteCommand = port.name;
-				break;
-			  case SCBD_TOUCH:
-			  case SCBD_SWITCH:
-			  case SCBD_MOTION:
-			  case SCBD_LED:
-			  case SCBD_STEPPER:
-			  case SCBD_STEPPER:
-			  case SCBD_DC_MOTOR:	
-			  case SCBD_SERVO:
-				break;
+				executeMultiByteCommand = port.name;		//Detail/Port, 2 Byte = 3 Byte
+			}else if (port.name === SCBD_TOUCH){
+			}else if (port.name === SCBD_SWITCH){
+			}else if (port.name === SCBD_MOTION){
+			}else if (port.name === SCBD_LED){
+			}else if (port.name === SCBD_STEPPER){
+			}else if (port.name === SCBD_STEPPER ){
+			}else if (port.name === SCBD_DC_MOTOR){
+			}else if (port.name === SCBD_SERVO)
+			{
 			}
 		}
       }
