@@ -385,7 +385,7 @@
           multiByteChannel = inputData[0] & 0x0F;						// -> hwList.search_bypin 로 조사해서 처리해야함
 		  port = hwList.search_bypin(multiByteChannel);
         }
-		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6 && !connected ){
+		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6){
 			parsingSysex = true;
 			sysexBytesRead = 0;
 			//if ( sysexBytesRead < 11)
