@@ -291,7 +291,7 @@
       if (parsingSysex) {
 		console.log('i =' + i + 'sysexBytesRead = ' + sysexBytesRead);
 		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && sysexBytesRead === 11) { 
-		  console.log('I am comming parsingSysex if');				
+		  //console.log('I am comming parsingSysex if');				
           parsingSysex = false;
           processSysexMessage();
 		  break;
@@ -390,7 +390,7 @@
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6){
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			console.log('detail parsing success and parsingSysex running');
+			//console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
 		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
 			waitForData = 2;
