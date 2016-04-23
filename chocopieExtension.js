@@ -289,16 +289,18 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
-		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead === 10) { 
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead === 11) { 
 		  console.log('I am comming parsingSysex if');
           parsingSysex = false;
           processSysexMessage();
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
-			if (i < 11){
-				storedInputData[sysexBytesRead++] = inputData[i];				//detail/port + Data ( 10 Byte) = 11 Byte 이상이면 강제로 끊어버림 
-				console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
-			}
+			if (i === 10)
+				storedInputData[sysexBytesRead] = inputData[i];
+			else if (i < 11)
+				storedInputData[sysexBytesRead++] = inputData[i];
+			//detail/port + Data ( 10 Byte) = 11 Byte 이상이면 강제로 끊어버림 
+			console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);				
         }
 			
       } else if ( waitForData > 0 && ( (inputData[0] >= 0xE0 && inputData[0] <= 0xE2) || (inputData[0] >= 0xF0 && inputData[0] <= 0xF2) ) && inputData[1] <= 0x0F ){					
