@@ -298,7 +298,7 @@
 		  //detail/port + Data ( 10 Byte) = 11 Byte 초과이면 강제로 반복문을 끊어버림 
 		  //예상값) storedInputData[0] = 0xE0 혹은 0xF0
         }else{
-			if (i < 12 && sysexBytesRead < 11)
+			if (i < 11 && sysexBytesRead < 10)
 				storedInputData[sysexBytesRead++] = inputData[i-1];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
 			else
 				continue;
