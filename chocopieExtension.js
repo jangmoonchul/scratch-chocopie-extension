@@ -289,7 +289,7 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
       if (parsingSysex) {
-		if ((inputData[i] == SCBD_CHOCOPI_USB || inputData[i] == SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead === 11) { 
+		if ((inputData[0] == SCBD_CHOCOPI_USB || inputData[0] == SCBD_CHOCOPI_BLE) && pingCount < 6 && sysexBytesRead === 11) { 
 		  console.log('I am comming parsingSysex if');
           parsingSysex = false;
           processSysexMessage();
@@ -372,7 +372,7 @@
           }
 		}	
       } else {
-        if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && (!connected)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
+        if ((inputData[i] == 0xE0 || inputData[i] == 0xF0)  && (!connected || pingCount < 6)) {	//0xE0 인 경우, 초코파이보드 확정과정에서만 쓰임
 			detail = inputData[i];	//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 									//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
 									//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
@@ -386,10 +386,8 @@
 		if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE) && pingCount < 6 ){
 			parsingSysex = true;
 			sysexBytesRead = 0;
-			
 			if ( i < 11 )
 				storedInputData[sysexBytesRead++] = detail;					// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치
-
 			console.log('detail parsing success and parsingSysex running');
 			//console.log('ping count ' + pingCount);
 		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
@@ -413,19 +411,21 @@
 
 		if (port != null)
 		{			
-			if (port.name === SCBD_SENSOR){
-				//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
-				waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
-				executeMultiByteCommand = port.name;		//Detail/Port, 2 Byte = 3 Byte
-			}else if (port.name === SCBD_TOUCH){
-			}else if (port.name === SCBD_SWITCH){
-			}else if (port.name === SCBD_MOTION){
-			}else if (port.name === SCBD_LED){
-			}else if (port.name === SCBD_STEPPER){
-			}else if (port.name === SCBD_STEPPER ){
-			}else if (port.name === SCBD_DC_MOTOR){
-			}else if (port.name === SCBD_SERVO)
+			switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
 			{
+			  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
+				waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
+				executeMultiByteCommand = port.name;
+				break;
+			  case SCBD_TOUCH:
+			  case SCBD_SWITCH:
+			  case SCBD_MOTION:
+			  case SCBD_LED:
+			  case SCBD_STEPPER:
+			  case SCBD_STEPPER:
+			  case SCBD_DC_MOTOR:	
+			  case SCBD_SERVO:
+				break;
 			}
 		}
       }
