@@ -724,7 +724,7 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
       ['-'],
-      ['R', 'read from %m.networks to %m.hwIn', 'readSENSOR', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
+      [' ', 'read from %m.networks to %m.hwIn', 'readSENSOR', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
       ['-'],																				//function_name: readSENSOR
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 																								//function_name : isTouchButtonPressed
@@ -752,7 +752,7 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
       ['-'],																						
-      ['R', '%m.networks 센서블록 %m.hwIn 의 값', 'readSENSOR', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
+      [' ', '%m.networks 센서블록 %m.hwIn 의 값', 'readSENSOR', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																			// function_name = readSENSOR
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
       //['-'],
