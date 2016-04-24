@@ -434,30 +434,31 @@
 	function removeHW(pin){
 		hwList.remove(pin);
 	}
-	
 
-  function analogRead(pin) {
-    if (pin >= 0 && 15 <= pin) {
-      return Math.round((analogInputData[pin] * 100) / 1023);
-    } else {
-      var valid = [];
-      for (var i = 0; i < 15; i++)
-        valid.push(i);
-      console.log('ERROR: valid analog pins are ' + valid.join(', '));
-      return;
-    }
-  }
-
-  function digitalRead(pin) {
-	var hw = hwList.search_bypin(pin);
-
-    if (!hw) {
-      console.log('ERROR: valid input pins are not found');
-      return;
-    }
-    return digitalInputData[pin];
-  }
-
+	function analogRead(pin) {
+		var hw = hwList.search_bypin(pin);
+		if (!hw){
+			var valid = [];
+			for (var i = 0; i < 15; i++)
+				valid.push(i);
+			console.log('ERROR: valid analog pins are ' + valid.join(', '));
+			return;
+		}else{
+			if (pin >= 0 && 15 <= pin) 
+			return Math.round((analogInputData[pin] * 100) / 1023);
+		}
+	}
+	//analogRead patched 2016.04.24
+	function digitalRead(pin) {
+		var hw = hwList.search_bypin(pin);
+		if (!hw) {
+			console.log('ERROR: valid input pins are not found');
+			return;
+		}
+		return digitalInputData[pin];
+	}
+	//digitalRead patched 2016.04.21 .. 04.24 recheck
+//------------------------------------------------------------------------------Above, Successed Line 
   function digitalWrite(pin, val) {
 	var hw = hwList.search_bypin(pin);
     if (!hw) {
@@ -655,12 +656,12 @@
 	ext.isTouchButtonPressed = function(networks, button){
 		var hw = hwList.search(SCBD_TOUCH),
 			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
-		console.log('isTouchButtonPressed is run');
+		//console.log('isTouchButtonPressed is run');
 		if(!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
 			{
-				console.log('networks is ' + networks + ' sended');
+				//console.log('networks is ' + networks + ' sended');
 				return digitalRead(hw.pin);
 			}
 		}
