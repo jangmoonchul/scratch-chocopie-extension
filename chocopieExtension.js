@@ -44,6 +44,7 @@
 	//Chocopie command definition
 	
   var SYSTEM_MESSAGE = false,
+	  TOUCH_REPOTER = false,
     DIGITAL_MESSAGE = 0x90,
     START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
     END_SYSEX = 0x7E,			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
@@ -309,7 +310,7 @@
         }
 		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 
-	  } else if ( waitForData > 0 &&  (inputData[i] >= 0xE0 && inputData[i] <= 0xF3)){
+	  } else if ( waitForData > 0 &&  (inputData[0] >= 0xE0 && inputData[i] <= 0xF3)){
 																			// CPC_VERSION, “CHOCOPI”,1,0 ->  0, 1, “CHOCOPI”, CPC_VERSION 순으로 저장됨
 	        storedInputData[--waitForData] = inputData[i];					//inputData 는 2부터 시작하므로, 2 1 0 에 해당하는 총 3개의 데이터가 저장됨
 			if (executeMultiByteCommand !== 0 && waitForData === 0) {		//executeMultiByteCommand == detail
@@ -319,13 +320,13 @@
 						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8, CPC_GET_BLOCK, SCBD_CHOCOPI_USB	(storedInputData)
 							connectHW(storedInputData[storedInputData.length - i], i-2);	//storedInputData.length 부터 순차적으로 감소 
 							//connectHW (hw, pin)											//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 역전현상이 발생함
-						}
+						}																	// USB에 대한 ALL_GET_BLOCK 처리과정
 					}
 			  }else if (executeMultiByteCommand === SCBD_CHOCOPI_BLE){						//				                  8 9 10 11 12 13 14 15		(포트)
 					for(var i=2 ; i < storedInputData.length; i++ ){						//SCBD_CHOCOPI_USB, CPC_GET_BLOCK,8 9 0  12 0  0  0  0		(inputData)
 						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8, CPC_GET_BLOCK, SCBD_CHOCOPI_USB	(storedInputData)
 							connectHW(storedInputData[storedInputData.length - i], 17-i);	//storedInputData.length 부터 순차적으로 감소 
-							//connectHW (hw, pin)											
+							//connectHW (hw, pin)											// BLE 에 대한 ALL_GET_BLOCK 처리과정
 						}
 					}
 			  }else if ((executeMultiByteCommand === (SCBD_CHOCOPI_USB | 0x01)) || (executeMultiByteCommand === (SCBD_CHOCOPI_BLE | 0x01))){
@@ -346,25 +347,24 @@
 			  }
 
 			}
-      } else if (waitForData > 0 && inputData[0] <= 0xBF) {	//0x80-> 0xBF
+      } else if (waitForData > 0 && inputData[i] <= 0xBF) {	//0x80-> 0xBF
         storedInputData[--waitForData] = inputData[i];
         if (executeMultiByteCommand !== 0 && waitForData === 0) {			//0xE0 이상에 대한 값이 겹칠지라도, 초반 GET_BLOCK 확보 이후이므로 문제가 없음
-          switch(executeMultiByteCommand) {									//겹치게 될 경우, inputData[1] 번에 오는 데이터로 판별해야함.
-            case DIGITAL_MESSAGE:
-              setDigitalInputs(multiByteChannel, (storedInputData[0] << 8) + storedInputData[1]);		
-              break;
-            case SCBD_SENSOR:																		// multiByteChannel, LOW, HIGH (inputData)
-              setAnalogInput(multiByteChannel, (storedInputData[0] << 8) | storedInputData[1]);		// HIGH, LOW, multiByteChannel (storedInputData)
-              break;
-			case SCBD_TOUCH:																		// 들어오는 데이터가 1 Byte 인 경우
-				if( i == 2 ){																		// multiByteChannel, Flag (on, off)	(inputData)
-				}else if ( i == 1 ){																// Flag (on, off), multiByteChannel	(storedInputData)
-				}
-			  break;
-
-			//이 곳에서 들어오는 command 에 대해서 추가하는 switch 들을 이루어내야함
-			//다만 parsingSysex 가 필요없는 것에 대해 패치가 필요. -> parsingSysex 을 플래그로 사용하기로 함.
-          }
+		  if (executeMultiByteCommand === DIGITAL_MESSAGE){					//겹치게 될 경우, inputData[1] 번에 오는 데이터로 판별해야함.
+	   		  setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);
+		  }else if (executeMultiByteCommand === SCBD_SENSOR){										// multiByteChannel, LOW, HIGH (inputData)
+              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		// HIGH, LOW, Detail/Port (storedInputData)
+		  }else if (executeMultiByteCommand === SCBD_TOUCH){
+			  if ( waitForData === 0 ){																// 모든 터치센서 전송인 경우
+				//setDigitalInputs(multiByteChannel, (inputData[2] << 7) + storedInputData[1]);		// Detail/Port, LOW, HIGH (inputData)
+				setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW, Detail/Port (storedInputData)
+				TOUCH_REPOTER = true;
+			  } else {																						
+				//setDigitalInputs(multiByteChannel, storedInputData[0]);								// 들어오는 데이터가 1 Byte 인 경우
+				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2]);		// Detail/Port, Flag (on, off)	(inputData)
+				TOUCH_REPOTER = false;																	// 0, Flag (on, off), Detail/Port	(storedInputData)
+			  }																						
+		  }																							
 		}	
       } else {
         if (inputData[i] >= 0xE0 && !SYSTEM_MESSAGE ) {		//0xE0, SYSTEM_MESSAGE 가 확정안된 경우
@@ -400,9 +400,11 @@
 			waitForData = 2;
 			executeMultiByteCommand = detail;
 		}else if (port.name === SCBD_SENSOR){
-			waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
+			waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정		2016.04.23 확인완료
 			executeMultiByteCommand = port.name;		//Detail/Port, 2 Byte = 3 Byte
 		}else if (port.name === SCBD_TOUCH){
+			waitForData = 3;							//Detail/Port, 1 Byte = 2 Byte or Detail/Port, 2 Byte = 3 Byte	2016.04.23 확인완료
+			executeMultiByteCommand = port.name;
 		}else if (port.name === SCBD_SWITCH){
 		}else if (port.name === SCBD_MOTION){
 		}else if (port.name === SCBD_LED){
@@ -447,25 +449,6 @@
 	}
 	//digitalRead patched 2016.04.21 .. 04.24 recheck
 //------------------------------------------------------------------------------Above, Successed Line 
-  function digitalWrite(pin, val) {
-	var hw = hwList.search_bypin(pin);
-    if (!hw) {
-      console.log('ERROR: valid output pins are not found');
-      return;
-    }
-    var portNum = (pin >> 3) & 0x0F;
-    if (val == LOW)
-      digitalOutputData[portNum] &= ~(1 << (pin & 0x07));
-    else
-      digitalOutputData[portNum] |= (1 << (pin & 0x07));
-    pinMode(pin, OUTPUT);
-    var msg = new Uint8Array([
-        DIGITAL_MESSAGE | portNum,
-        digitalOutputData[portNum] & 0x7F,
-        digitalOutputData[portNum] >> 0x07]);
-    device.send(msg.buffer);
-  }
-
   function rotateServo(pin, deg) {
     if (!hasCapability(pin, SERVO)) {
       console.log('ERROR: valid servo pins are ' + pinModes[SERVO].join(', '));
@@ -480,21 +463,6 @@
   }
 
 	//Original Function Line--------------------------------------------------------------------------
-  ext.analogWrite = function(pin, val) {
-    analogWrite(pin, val);
-  };
-
-  ext.digitalWrite = function(pin, val) {
-    if (val == menus[lang]['outputs'][0])
-      digitalWrite(pin, HIGH);
-    else if (val == menus[lang]['outputs'][1])
-      digitalWrite(pin, LOW);
-  };
-	//digitalWrite 에서 High 와 Low 는 상위비트와 하위비트를 나눠서 출력하는 듯 함?
-
-  ext.digitalRead = function(pin) {
-    return digitalRead(pin);
-  };
 
   ext.changeServo = function(servo, change) {
     var hw = hwList.search(servo);
@@ -604,11 +572,9 @@
 
 	//readSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
 	ext.reportSensor = function(networks, hwIn){
-	//리포터블록 r 의 경우는 클릭되어도 함수가 돌지 않는다..
     
-	var hw = hwList.search(SCBD_SENSOR);
-	
-	console.log('reportSensor is run');
+	var hw = hwList.search(SCBD_SENSOR);	
+	//console.log('reportSensor is run');
 
 		if(!hw) return;
 		else{
@@ -624,7 +590,6 @@
 			else {
 				if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		//일반과 무선 둘다 처리가능
 				{
-					console.log('networks is ' + networks + ' sended');
 					for (var i=0;i < dnp.length ; i++)
 					{
 						if (hwIn === menus[lang]['hwIn'][i])
@@ -637,7 +602,7 @@
 
 						device.send(sensor_output_low.buffer);
 						device.send(sensor_output_high.buffer);
-						console.log('hwIn = ' + name);
+						//console.log('hwIn = ' + name);
 						}
 					}
 				}
@@ -646,18 +611,60 @@
 		}
 		
 	};
-	ext.isTouchButtonPressed = function(networks, button){
+
+	ext.isTouchButtonPressed = function(networks, touch){
 		var hw = hwList.search(SCBD_TOUCH),
 			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
 		//console.log('isTouchButtonPressed is run');
 		if(!hw) return;
 		else{
-			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
-			{
-				//console.log('networks is ' + networks + ' sended');
-				return digitalRead(hw.pin);
+			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+				if (TOUCH_REPOTER === false)
+				{
+					var button_state = digitalRead(hw.pin) & 0x00F0;
+					if (button_state === sensor_detail[0])
+					{
+						//꺼짐
+						// 몇번이 켜졌는지 꺼졋는지 알길이 없음
+					}else if (button_state & 0x00F0 === sensor_detail[1])
+					{
+						//켜짐
+					}
+
+					/*  0, Flag (on, off), Detail/Port	(storedInputData)
+					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
+					0000 0000 0000 0000
+					0000 0000 1111 0000
+
+					console.log('networks is ' + networks + ' sended'); 
+					*/				
+				}else{
+					var button_state = digitalRead(hw.pin) & 0x00F0,
+						button_num = digitalRead(hw.pin) & 0x0FFF;
+					for (var i=1; i < 13; i++){
+						if ((button_num >> i) & 0x0001 === 1){
+							if (touch === menus[lang]['touch'][i-1])
+								return true;
+						}else if ((button_num >> i) & 0x0001 === 0){
+							if (touch === menus[lang]['touch'][i-1])
+								return false;
+						}
+					}
+					/* 모든 터치센서 번호 전송
+					setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);  
+					HIGH, LOW, Detail/Port (storedInputData)
+					  0000 0000 0110
+					  0000 0000 0001 &
+					
+					*/
+				}
 			}
 		}
+		
+	};
+
+	ext.whenTouchButtonChandged = function(networks, touch, state){
+
 	};
 
 	ext.motionbRead = function(networks,value){
@@ -716,7 +723,7 @@
       ['r', 'read from %m.networks to %m.hwIn', 'reportSensor', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
       ['-'],																						//function_name: reportSensor
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
-																								//function_name : isTouchButtonPressed
+	  ['h', 'when %m.networks touch sensor %m.touch is %m.btnStates', 'whenTouchButtonChandged', 'normal', '1', '0'],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
       ['-'],
       ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', '0'],		//sw block (button 1, .. )
       ['b', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Button 1'],				//buttons ( button 1,.. , Joystick X, ..)
@@ -744,6 +751,7 @@
       //['b', '%n 번 핀이 켜져있는가?', 'digitalRead', 1],
       //['-'],
 	  ['b', '%m.networks 터치센서 %m.touch 의 값', 'isTouchButtonPressed', '일반','1'],			//Touch Sensor is boolean block	-- normal and remote					
+	  ['h', '%m.networks 터치센서 %m.touch 가 %m.btnStates 가 될 때', 'whenTouchButtonChandged', '일반', '1', '0'],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
 	  ['-'],																					//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', '0'],				//sw block (button 1, .. )
       ['b', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','버튼 1'],							//buttons ( button 1,.. , Joystick X, ..)				
