@@ -628,7 +628,7 @@
 	
 	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임
 	
-  ext.readSENSOR = function(networks, name) {
+  ext.readSensor = function(networks, name) {
 	//리포터블록 r 의 경우는 클릭되어도 함수가 돌지 않는다..
     var hw = hwList.search(SCBD_SENSOR),
 		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
@@ -666,7 +666,7 @@
 	}
 	return analogRead(hw.pin);
   };
-  //readSENSOR 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
+  //readSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
 
   ext.isTouchButtonPressed = function(networks, button){
 	  var hw = hwList.search(SCBD_TOUCH),
@@ -724,8 +724,8 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
       ['-'],
-      ['b', 'read from %m.networks to %m.hwIn', 'readSENSOR', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
-      ['-'],																				//function_name: readSENSOR
+      ['r', 'read from %m.networks to %m.hwIn', 'readSensor', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
+      ['-'],																				//function_name: readSensor
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 																								//function_name : isTouchButtonPressed
       ['-'],
@@ -752,7 +752,7 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
       ['-'],																						
-      ['b', '%m.networks 센서블록 %m.hwIn 의 값', 'readSENSOR', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
+      ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readSensor', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																			// function_name = readSENSOR
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
       //['-'],
