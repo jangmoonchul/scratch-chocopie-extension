@@ -552,7 +552,7 @@
       return !digitalRead(hw.pin);
   };
 
-//-----------------------------------------------------------------------------------Success Line
+//----------------------------------------------------------------------------------- 
   	ext._getStatus = function() {
 			if(!connected) return {status: 1, msg: 'ChocopieBoard disconnected'};
 			else return {status: 2, msg: 'ChocopieBoard connected'};	
@@ -649,8 +649,8 @@
 					console.log('hwIn = ' + name);
 					}
 				}
-			return analogRead(hw.pin);
 			}
+			return analogRead(hw.pin);
 		}
 	};
 	ext.isTouchButtonPressed = function(networks, button){
