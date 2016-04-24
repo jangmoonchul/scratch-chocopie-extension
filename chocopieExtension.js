@@ -618,7 +618,7 @@
 
 			var	check_low = 0,
 				check_high = 0;
-			var	dnp = new Uint8Array([(sensor_detail[0] | hw.pin), (sensor_detail[1] | hw.pin), (sensor_detail[2] | hw.pin), (sensor_detail[3] | hw.pin), (sensor_detail[4] | hw.pin), (sensor_detail[5] | hw.pin), (sensor_detail[6]| hw.pin]));	//detail and port
+			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
 			//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
 			if (!hw) return;	
 			else {
