@@ -642,8 +642,8 @@
 	//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
 	console.log('readSENSOR is run');
 
-    //if (!hw) return;	
-	//else {
+    if (!hw) return;	
+	else {
 		if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		//일반과 무선 둘다 처리가능
 		{
 			console.log('networks is ' + networks + ' sended');
@@ -663,7 +663,7 @@
 				}
 			}
 		}
-	//}
+	}
 	return analogRead(hw.pin);
   };
   //readSENSOR 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
@@ -672,14 +672,14 @@
 	  var hw = hwList.search(SCBD_TOUCH),
 		  sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
 	  console.log('isTouchButtonPressed is run');
-	  //if(!hw) return;
-	  //else{
+	  if(!hw) return;
+	  else{
 		  if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
 		  {
 			console.log('networks is ' + networks + ' sended');
 			digitalRead(hw.pin);
 		  }
-	  //}
+	  }
 
   };
 
@@ -724,7 +724,7 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
       ['-'],
-      ['r', 'read from %m.networks to %m.hwIn', 'readSENSOR', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
+      ['R', 'read from %m.networks to %m.hwIn', 'readSENSOR', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
       ['-'],																				//function_name: readSENSOR
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 																								//function_name : isTouchButtonPressed
@@ -752,7 +752,7 @@
       ['-'],
       [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
       ['-'],																						
-      ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readSENSOR', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
+      ['R', '%m.networks 센서블록 %m.hwIn 의 값', 'readSENSOR', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																			// function_name = readSENSOR
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
       //['-'],
