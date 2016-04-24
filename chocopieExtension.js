@@ -650,7 +650,7 @@
 					}
 				}
 			}
-			return analogRead(hw.pin);
+			return digitalRead(hw.pin);
 		}
 	};
 	ext.isTouchButtonPressed = function(networks, button){
