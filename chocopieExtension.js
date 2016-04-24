@@ -645,6 +645,7 @@
 	else {
 		if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		//일반과 무선 둘다 처리가능
 		{
+			console.log('networks is ' + networks + ' sended');
 			for (var i=0;i < dnp.length ; i++)
 			{
 				if (name === menus[lang]['hwIn'][i])
@@ -657,7 +658,7 @@
 
 				device.send(sensor_output_low.buffer);
 				device.send(sensor_output_high.buffer);
-			
+				console.log('hwIn = ' + name);
 				}
 			}
 		}
