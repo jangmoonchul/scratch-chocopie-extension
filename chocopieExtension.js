@@ -684,24 +684,31 @@
   };
 
   ext.motionbRead = function(networks,value){
+	console.log('isTouchButtonPressed is run');
   };
 
   ext.photoGateRead = function(networks,photogate,gatestate){
+	  console.log('isTouchButtonPressed is run');
   };
 
   ext.passLEDrgb = function(networks,ledposition,r,g,b){
+	  console.log('isTouchButtonPressed is run');
   };
 
   ext.passBUZEER = function(networks,pitch,playtime){
+	  console.log('isTouchButtonPressed is run');
   };
 
   ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
+	  console.log('isTouchButtonPressed is run');
   };
 
   ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
+	  console.log('isTouchButtonPressed is run');
   };
 
   ext.passDCAD = function(networks,dcmotor,speed,direction){
+	  console.log('isTouchButtonPressed is run');
   };
 
 
