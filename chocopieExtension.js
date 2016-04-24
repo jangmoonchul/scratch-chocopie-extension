@@ -614,7 +614,7 @@
 	//Function added Line -----------------------------------------------------------------------------	
 
 	//readSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
-	ext.readSensor = function(networks, hwIn){
+	ext.reportSensor = function(networks, hwIn){
 	//리포터블록 r 의 경우는 클릭되어도 함수가 돌지 않는다..
     var hw = hwList.search(SCBD_SENSOR),
 		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
@@ -626,7 +626,7 @@
 
 	var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
 	//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
-	console.log('readSENSOR is run');
+	console.log('reportSensor is run');
 
     if (!hw) return;	
 	else {
@@ -719,8 +719,8 @@
 
   var blocks = {
     en: [
-      ['r', 'read from %m.networks to %m.hwIn', 'readSensor', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
-      ['-'],																				//function_name: readSensor
+      ['r', 'read from %m.networks to %m.hwIn', 'reportSensor', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
+      ['-'],																						//function_name: reportSensor
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 																								//function_name : isTouchButtonPressed
       ['-'],
@@ -742,8 +742,8 @@
 	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', '1', 0, 'clockwise']
     ],
     ko: [																						
-      ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readSensor', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
-      ['-'],																				// function_name = readSensor
+      ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'reportSensor', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
+      ['-'],																				// function_name = reportSensor
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
       //['-'],
       //['h', '%n 번 핀의 상태가 %m.outputs 일 때', 'whenDigitalRead', 1, '켜기'],
