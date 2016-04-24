@@ -617,41 +617,45 @@
 	//readSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
 	ext.reportSensor = function(networks, hwIn){
 	//리포터블록 r 의 경우는 클릭되어도 함수가 돌지 않는다..
-    var hw = hwList.search(SCBD_SENSOR),
-		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
-		low_data = escape_control(SAMPLING_RATE & LOW),
-		high_data = escape_control(SAMPLING_RATE & HIGH);
-
-	var	check_low = 0,
-		check_high = 0;
-
-	var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
-	//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
+    var hw = hwList.search(SCBD_SENSOR);
+	
 	console.log('reportSensor is run');
 
-		if (!hw) return;	
-		else {
-			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		//일반과 무선 둘다 처리가능
-			{
-				console.log('networks is ' + networks + ' sended');
-				for (var i=0;i < dnp.length ; i++)
+		if(!hw) return;
+		else{
+			var	sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
+			low_data = escape_control(SAMPLING_RATE & LOW),
+			high_data = escape_control(SAMPLING_RATE & HIGH);
+
+			var	check_low = 0,
+				check_high = 0;
+			var	dnp = new Uint8Array([(sensor_detail[0] | hw.pin), (sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
+			//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
+			if (!hw) return;	
+			else {
+				if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		//일반과 무선 둘다 처리가능
 				{
-					if (hwIn === menus[lang]['hwIn'][i])
+					console.log('networks is ' + networks + ' sended');
+					for (var i=0;i < dnp.length ; i++)
 					{
-						check_low = checkSum( dnp[i], low_data );
-						check_high = checkSum( dnp[i], high_data );
+						if (hwIn === menus[lang]['hwIn'][i])
+						{
+							check_low = checkSum( dnp[i], low_data );
+							check_high = checkSum( dnp[i], high_data );
 
-					var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low ,END_SYSEX]),
-						sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high ,END_SYSEX]);
+						var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low ,END_SYSEX]),
+							sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high ,END_SYSEX]);
 
-					device.send(sensor_output_low.buffer);
-					device.send(sensor_output_high.buffer);
-					console.log('hwIn = ' + name);
+						device.send(sensor_output_low.buffer);
+						device.send(sensor_output_high.buffer);
+						console.log('hwIn = ' + name);
+						}
 					}
 				}
-			}
-			return digitalRead(hw.pin);
+				return analogRead(hw.pin);				
+			}	
 		}
+		
 	};
 	ext.isTouchButtonPressed = function(networks, button){
 		var hw = hwList.search(SCBD_TOUCH),
