@@ -367,13 +367,10 @@
           }
 		}	
       } else {
-        if (inputData[i] >= 0xE0 && !SYSTEM_MESSAGE ) {	//0xE0, SYSTEM_MESSAGE 가 확정안된 경우
+        if (inputData[i] >= 0xE0 && !SYSTEM_MESSAGE ) {		//0xE0, SYSTEM_MESSAGE 가 확정안된 경우
 			detail = inputData[i];							//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
-			SYSTEM_MESSAGE	= true;							//들어온 데이터를 분석해서 상위 4비트에 대해서는 command 로, 하위 4비트에 대해서는 multiByteChannel로 사용
-															//일반적으로는 [1] 스택에 대하여 데이터가 리스팅되지만, CPC_VERSION 이나 GET_BLOCK 의 경우는 SYSTEM 명령어로써 데이터가옴
-        } else if(inputData[i] >= 0xE0){
-			detail = inputData[i];
-		} else {														
+			SYSTEM_MESSAGE	= true;																						
+        } else {														//SYSTEM_MESSAGE 가 아닌 0xE0 이상의 값은, DC_MOTOR 와 SERVO의 가능성이 있음			
 		  detail = inputData[0] & 0xF0;									// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
           multiByteChannel = inputData[0] & 0x0F;						// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
 		  port = hwList.search_bypin(multiByteChannel);					// -> hwList.search_bypin 로 조사해서 처리해야함
@@ -383,8 +380,9 @@
 			sysexBytesRead = 0;
 			console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
-		}else if ((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE)){
+		}else if ((detail === SCBD_CHOCOPI_USB && port.name != SCBD_DC_MOTOR) || (detail === SCBD_CHOCOPI_BLE && port.name != SCBD_SERVO) ){
 			//SYSTEM_MESSAGE 가 설정되지 않은 SCBD_CHOCOPI_USB, BLE 세트에서는 CPC_GET_BLOCK 이 시작됨			2016.04.23 확인완료
+			//SCBD_CHOCOPI_USB, BLE 와 0번포트에 SERVO, DC 가 배치되었을 경우는 식별할 수 없기 때문에, 하드웨어 리스트에서 실질적으로 등록된 사항인지 확인함
 			waitForData = 10;							
 			executeMultiByteCommand = detail;
 		}else if (detail === DIGITAL_MESSAGE || detail === ANALOG_MESSAGE){
@@ -401,26 +399,16 @@
 			//0xF3 은 BLE 로 연결된 보드의 상태변경을 의미함
 			waitForData = 2;
 			executeMultiByteCommand = detail;
-		}
-
-		if (port != null)
-		{			
-			switch (port.name)					//bypin 으로 역참조를 통해서 name 에 대해서 스위치분기를 시작시킴
-			{
-			  case SCBD_SENSOR:								//Detail/Port, 2 Byte = 3 Byte
-				waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
-				executeMultiByteCommand = port.name;
-				break;
-			  case SCBD_TOUCH:
-			  case SCBD_SWITCH:
-			  case SCBD_MOTION:
-			  case SCBD_LED:
-			  case SCBD_STEPPER:
-			  case SCBD_STEPPER:
-			  case SCBD_DC_MOTOR:	
-			  case SCBD_SERVO:
-				break;
-			}
+		}else if (port.name === SCBD_SENSOR){
+			waitForData = 3;							//전위연산자를 통해서 저장하기 때문에 3 Byte 로 설정
+			executeMultiByteCommand = port.name;		//Detail/Port, 2 Byte = 3 Byte
+		}else if (port.name === SCBD_TOUCH){
+		}else if (port.name === SCBD_SWITCH){
+		}else if (port.name === SCBD_MOTION){
+		}else if (port.name === SCBD_LED){
+		}else if (port.name === SCBD_STEPPER){
+		}else if (port.name === SCBD_DC_MOTOR){
+		}else if (port.name === SCBD_SERVO){
 		}
       }
     }
@@ -617,7 +605,8 @@
 	//readSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
 	ext.reportSensor = function(networks, hwIn){
 	//리포터블록 r 의 경우는 클릭되어도 함수가 돌지 않는다..
-    var hw = hwList.search(SCBD_SENSOR);
+    
+	var hw = hwList.search(SCBD_SENSOR);
 	
 	console.log('reportSensor is run');
 
@@ -629,7 +618,7 @@
 
 			var	check_low = 0,
 				check_high = 0;
-			var	dnp = new Uint8Array([(sensor_detail[0] | hw.pin), (sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
+			var	dnp = new Uint8Array([(sensor_detail[0] | hw.pin), (sensor_detail[1] | hw.pin), (sensor_detail[2] | hw.pin), (sensor_detail[3] | hw.pin), (sensor_detail[4] | hw.pin), (sensor_detail[5] | hw.pin), (sensor_detail[6]| hw.pin]));	//detail and port
 			//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
 			if (!hw) return;	
 			else {
