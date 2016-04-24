@@ -641,8 +641,8 @@
 	//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
 
 
-    if (!hw) return;	
-	else {
+    //if (!hw) return;	
+	//else {
 		if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		//일반과 무선 둘다 처리가능
 		{
 			console.log('networks is ' + networks + ' sended');
@@ -662,7 +662,7 @@
 				}
 			}
 		}
-	}
+	//}
 	return analogRead(hw.pin);
   };
   //readSENSOR 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
