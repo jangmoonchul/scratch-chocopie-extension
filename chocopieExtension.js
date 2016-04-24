@@ -629,6 +629,7 @@
 	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임
 	
   ext.readSENSOR = function(networks, name) {
+	//리포터블록 r 의 경우는 클릭되어도 함수가 돌지 않는다..
     var hw = hwList.search(SCBD_SENSOR),
 		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
 		low_data = escape_control(SAMPLING_RATE & LOW),
@@ -670,11 +671,12 @@
   ext.isTouchButtonPressed = function(networks, button){
 	  var hw = hwList.search(SCBD_TOUCH),
 		  sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
-		console.log('isTouchButtonPressed is run');
+	  console.log('isTouchButtonPressed is run');
 	  if(!hw) return;
 	  else{
 		  if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
 		  {
+			console.log('networks is ' + networks + ' sended');
 			digitalRead(hw.pin);
 		  }
 	  }
