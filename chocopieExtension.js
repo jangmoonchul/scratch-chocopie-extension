@@ -672,14 +672,14 @@
 	  var hw = hwList.search(SCBD_TOUCH),
 		  sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
 	  console.log('isTouchButtonPressed is run');
-	  if(!hw) return;
-	  else{
+	  //if(!hw) return;
+	  //else{
 		  if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
 		  {
 			console.log('networks is ' + networks + ' sended');
 			digitalRead(hw.pin);
 		  }
-	  }
+	  //}
 
   };
 
