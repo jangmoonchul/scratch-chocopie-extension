@@ -624,33 +624,9 @@
 	var	check_low = 0,
 		check_high = 0;
 
-	var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
 	//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
 	console.log('reportSensor is run');
 
-    if (!hw) return;	
-	else {
-		if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		//일반과 무선 둘다 처리가능
-		{
-			console.log('networks is ' + networks + ' sended');
-			for (var i=0;i < dnp.length ; i++)
-			{
-				if (hwIn === menus[lang]['hwIn'][i])
-				{
-					check_low = checkSum( dnp[i], low_data );
-					check_high = checkSum( dnp[i], high_data );
-
-				var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low ,END_SYSEX]),
-					sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high ,END_SYSEX]);
-
-				device.send(sensor_output_low.buffer);
-				device.send(sensor_output_high.buffer);
-				console.log('hwIn = ' + name);
-				}
-			}
-		}
-	}
-	return analogRead(hw.pin);
 	};
 	ext.isTouchButtonPressed = function(networks, button){
 		var hw = hwList.search(SCBD_TOUCH),
