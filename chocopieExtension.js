@@ -491,11 +491,6 @@
   }
 
 	//Original Function Line--------------------------------------------------------------------------
-  ext.whenConnected = function() {
-    if (notifyConnection) return true;
-    return false;
-  };
-
   ext.analogWrite = function(pin, val) {
     analogWrite(pin, val);
   };
@@ -510,15 +505,6 @@
 
   ext.digitalRead = function(pin) {
     return digitalRead(pin);
-  };
-
-  ext.rotateServo = function(servo, deg) {
-    var hw = hwList.search(servo);
-    if (!hw) return;
-    if (deg < 0) deg = 0;
-    else if (deg > 180) deg = 180;
-    rotateServo(hw.pin, deg);
-    hw.val = deg;
   };
 
   ext.changeServo = function(servo, change) {
@@ -565,14 +551,13 @@
       return !digitalRead(hw.pin);
   };
 
-
+//-----------------------------------------------------------------------------------Success Line
   	ext._getStatus = function() {
 			if(!connected) return {status: 1, msg: 'ChocopieBoard disconnected'};
 			else return {status: 2, msg: 'ChocopieBoard connected'};	
 			if(watchdog) return {status: 1, msg: 'Probing for ChocopieBoard'};
 	};
 			
-
 
   ext._deviceRemoved = function(dev) {
     console.log('Device removed');
@@ -626,8 +611,7 @@
 
 
 	
-	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임
-	
+	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임\ 
   ext.readSensor = function(networks, name) {
 	//리포터블록 r 의 경우는 클릭되어도 함수가 돌지 않는다..
     var hw = hwList.search(SCBD_SENSOR),
@@ -671,7 +655,7 @@
   ext.isTouchButtonPressed = function(networks, button){
 	  var hw = hwList.search(SCBD_TOUCH),
 		  sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
-	  console.log('isTouchButtonPressed is run');
+	  //console.log('isTouchButtonPressed is run');
 	  if(!hw) return;
 	  else{
 		  if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
@@ -684,33 +668,42 @@
   };
 
   ext.motionbRead = function(networks,value){
-	console.log('isTouchButtonPressed is run');
+	//console.log('isTouchButtonPressed is run');
   };
 
   ext.photoGateRead = function(networks,photogate,gatestate){
-	  console.log('isTouchButtonPressed is run');
+	  //console.log('photoGateRead is run');
   };
 
   ext.passLEDrgb = function(networks,ledposition,r,g,b){
-	  console.log('isTouchButtonPressed is run');
+	  //console.log('passLEDrgb is run');
   };
 
   ext.passBUZEER = function(networks,pitch,playtime){
-	  console.log('isTouchButtonPressed is run');
+	  //console.log('passBUZEER is run');
   };
 
   ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
-	  console.log('isTouchButtonPressed is run');
+	  //console.log('passSteppingAD is run');
   };
 
   ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
-	  console.log('isTouchButtonPressed is run');
+	  //console.log('passSteppingADA is run');
   };
 
   ext.passDCAD = function(networks,dcmotor,speed,direction){
-	  console.log('isTouchButtonPressed is run');
+	  //console.log('passDCAD is run');
   };
 
+	ext.rotateServo = function(servo, deg) {
+		console.log('rotateServo is run');
+		var hw = hwList.search(servo);
+		if (!hw) return;
+		if (deg < 0) deg = 0;
+		else if (deg > 180) deg = 180;
+			rotateServo(hw.pin, deg);
+		hw.val = deg;
+	};
 
 	//Function added Line - end  --------------------------------------------------------------------------------------
 
@@ -727,10 +720,6 @@
 
   var blocks = {
     en: [
-      ['h', 'when device is connected', 'whenConnected'],
-      ['-'],
-      [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
-      ['-'],
       ['r', 'read from %m.networks to %m.hwIn', 'readSensor', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
       ['-'],																				//function_name: readSensor
 	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
@@ -753,14 +742,9 @@
 	  ['-'],
 	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', '1', 0, 'clockwise']
     ],
-    ko: [
-      ['h', '초코파이가 연결됐을 때', 'whenConnected'],
-      //[' ', '%m.leds 를 %m.outputs', 'digitalLED', 'led A', '켜기'],
-      ['-'],
-      [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180],	//ServoMotor, Multiple Servo and Remote Servo is defined.
-      ['-'],																						
+    ko: [																						
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'readSensor', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
-      ['-'],																			// function_name = readSENSOR
+      ['-'],																				// function_name = readSensor
       //[' ', '%n 번 핀을 %m.outputs', 'digitalWrite', 1, '켜기'],
       //['-'],
       //['h', '%n 번 핀의 상태가 %m.outputs 일 때', 'whenDigitalRead', 1, '켜기'],
@@ -783,7 +767,11 @@
 		//Stepping Motor is defined.
 		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],																											//DC motor is defined
-	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', '1', 0, '시계']		//function_name : passDCDA passRDCDA	
+	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', '1', 0, '시계'],		//function_name : passDCDA passRDCDA	
+	  ['-'],
+	  [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
+	  ['-'],
+	  [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
     ]
   };
 
