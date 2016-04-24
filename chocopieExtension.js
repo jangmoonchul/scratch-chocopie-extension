@@ -611,8 +611,10 @@
 
 
 	
-	//Function added Line -----------------------------------------------------------------------------	BLE는 스크래치의 상호작용에서는 안쓰임\ 
-  ext.readSensor = function(networks, name) {
+	//Function added Line -----------------------------------------------------------------------------	
+
+	//readSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
+	ext.readSensor = function(networks, hwIn){
 	//리포터블록 r 의 경우는 클릭되어도 함수가 돌지 않는다..
     var hw = hwList.search(SCBD_SENSOR),
 		sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
@@ -633,7 +635,7 @@
 			console.log('networks is ' + networks + ' sended');
 			for (var i=0;i < dnp.length ; i++)
 			{
-				if (name === menus[lang]['hwIn'][i])
+				if (hwIn === menus[lang]['hwIn'][i])
 				{
 					check_low = checkSum( dnp[i], low_data );
 					check_high = checkSum( dnp[i], high_data );
@@ -649,54 +651,51 @@
 		}
 	}
 	return analogRead(hw.pin);
-  };
-  //readSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
+	};
+	ext.isTouchButtonPressed = function(networks, button){
+		var hw = hwList.search(SCBD_TOUCH),
+			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
+		//console.log('isTouchButtonPressed is run');
+		if(!hw) return;
+		else{
+			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
+			{
+				console.log('networks is ' + networks + ' sended');
+				digitalRead(hw.pin);
+			}
+		}
+	};
 
-  ext.isTouchButtonPressed = function(networks, button){
-	  var hw = hwList.search(SCBD_TOUCH),
-		  sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
-	  //console.log('isTouchButtonPressed is run');
-	  if(!hw) return;
-	  else{
-		  if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])
-		  {
-			console.log('networks is ' + networks + ' sended');
-			digitalRead(hw.pin);
-		  }
-	  }
+	ext.motionbRead = function(networks,value){
+		//console.log('isTouchButtonPressed is run');
+	};
 
-  };
+	ext.photoGateRead = function(networks,photogate,gatestate){
+		//console.log('photoGateRead is run');
+	};
 
-  ext.motionbRead = function(networks,value){
-	//console.log('isTouchButtonPressed is run');
-  };
+	ext.passLEDrgb = function(networks,ledposition,r,g,b){
+		//console.log('passLEDrgb is run');
+	};
 
-  ext.photoGateRead = function(networks,photogate,gatestate){
-	  //console.log('photoGateRead is run');
-  };
+	ext.passBUZEER = function(networks,pitch,playtime){
+		//console.log('passBUZEER is run');
+	};
 
-  ext.passLEDrgb = function(networks,ledposition,r,g,b){
-	  //console.log('passLEDrgb is run');
-  };
+	ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
+		//console.log('passSteppingAD is run');
+	};
 
-  ext.passBUZEER = function(networks,pitch,playtime){
-	  //console.log('passBUZEER is run');
-  };
+	ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
+		//console.log('passSteppingADA is run');
+	};
 
-  ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
-	  //console.log('passSteppingAD is run');
-  };
-
-  ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
-	  //console.log('passSteppingADA is run');
-  };
-
-  ext.passDCAD = function(networks,dcmotor,speed,direction){
-	  //console.log('passDCAD is run');
-  };
+	ext.passDCAD = function(networks,dcmotor,speed,direction){
+		//console.log('passDCAD is run');
+	};
 
 	ext.rotateServo = function(servo, deg) {
-		console.log('rotateServo is run');
+		//console.log('rotateServo is run');
 		var hw = hwList.search(servo);
 		if (!hw) return;
 		if (deg < 0) deg = 0;
