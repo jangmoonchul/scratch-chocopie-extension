@@ -388,7 +388,7 @@
 			  } else {																						
 				//setDigitalInputs(multiByteChannel, storedInputData[0]);								// 들어오는 데이터가 1 Byte 인 경우
 				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2]);		// Detail/Port, Flag (on, off)	(inputData)
-				TOUCH_REPOTER = false;																	// 0, Flag (on, off), Detail/Port	(storedInputData)
+				TOUCH_REPOTER = false;																	// 0, Flag Number, Detail (on, off)/Port	(storedInputData)
 			  }
 			  
 		  }else if (executeMultiByteCommand === SCBD_SWITCH){
@@ -398,7 +398,7 @@
 			  }else{																					
 				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2]);		// 들어오는 데이터가 1 Byte 인 경우
 				SWITCH_REPOTER = false;																	// Detail/Port, Flag (on, off)	(inputData)
-			  }																							// 0, Flag (on, off), Detail/Port	(storedInputData)
+			  }																							// 0, Flag Number, Detail (on, off)/Port	(storedInputData)
 		  }
 		}	
       } else {
@@ -534,7 +534,8 @@
   };
   //HIGH 에 digitalWrite 시에는 LED 가 켜져있을 때 이고, val 은 밝기를 조절하는 듯 함
 	//LOW 에 digitalWrite 시에는 LED가 꺼져있을 때 이고, val 은 밝기를 조절하는데 0으로 맞춤으로써 밝기를 날려버리는듯 함
-//----------------------------------------------------------------------------------- 
+
+//----------------------------------------------------------------------------------- SYSTEM FUNCTION LINE 
   	ext._getStatus = function() {
 			if(!connected) return {status: 1, msg: 'ChocopieBoard disconnected'};
 			else return {status: 2, msg: 'ChocopieBoard connected'};	
@@ -647,29 +648,30 @@
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
 				if (TOUCH_REPOTER === false)
 				{
-					var button_state = digitalRead(hw.pin) & 0x00F0;
-					if (button_state === sensor_detail[0])
-					{
-						if (btnStates === menus[lang]['btnStates'][0]){
-							return false;
-						}
+					var button_state = digitalRead(hw.pin) & 0x00F0,
+						button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
+					if (button_state === sensor_detail[0]){
 						//꺼짐
-						// 몇번이 켜졌는지 꺼졋는지 알길이 없음	(touch 에 비교할 수 있는 것이 없음 --> 패치필요)
-					}else if (button_state === sensor_detail[1])
-					{
-						if (btnStates === menus[lang]['btnStates'][1]){
-							return true;
-						}
+						for (var i=0 ; i < 13 ; i++){
+							if (button_num === menus[lang]['touch'][i]){
+								return false;
+							}
+						}			
+					}else if (button_state === sensor_detail[1]){
 						//켜짐
+						for (var i=0 ; i < 13 ; i++){
+							if (button_num === menus[lang]['touch'][i]){
+								return true;
+							}
+						}
 					}
 
-					/*  0, Flag (on, off), Detail/Port	(storedInputData)
+					/*   0, Flag Number, Detail (on, off)/Port	(storedInputData)
 					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
 					0000 0000 0000 0000
 					0000 0000 1111 0000
-
-					console.log('networks is ' + networks + ' sended'); 
-					*/				
+					*/
+					//console.log('networks is ' + networks + ' sended'); 
 				}else{
 					var button_num = digitalRead(hw.pin) & 0x0FFF;
 						
@@ -704,25 +706,23 @@
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
 				if (TOUCH_REPOTER === false)
 				{
-					var button_state = digitalRead(hw.pin) & 0x00F0;
-					if (button_state === sensor_detail[0])
-					{
-						if (btnStates === menus[lang]['btnStates'][0]){
-							return false;
+					var button_state = digitalRead(hw.pin) & 0x00F0,
+						button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
+					if (button_state === sensor_detail[0] && btnStates === 0){
+						//꺼짐
+						for (var i=0 ; i < 13 ; i++){
+							if (button_num === menus[lang]['touch'][i]){
+								return false;
+							}
+						}		
+					}else if (button_state === sensor_detail[1] && btnStates === 1){
+						//켜짐
+						for (var i=0 ; i < 13 ; i++){
+							if (button_num === menus[lang]['touch'][i]){
+								return true;
+							}
 						}
-						/*꺼짐
-						 몇번이 켜졌는지 꺼졋는지 알길이 없음 (touch 에 비교할 수 있는 것이 없음)
-						*/
-					}else if (button_state & 0x00F0 === sensor_detail[1])
-					{
-						if (btnStates === menus[lang]['btnStates'][1]){
-							return true;
-						}
-						/*켜짐
-
-						*/
 					}
-
 					/*  0, Flag (on, off), Detail/Port	(storedInputData)
 					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
 					0000 0000 0000 0000
@@ -832,7 +832,7 @@
     en: [
       ['r', 'read from %m.networks to %m.hwIn', 'reportSensor', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
       ['-'],																						//function_name: reportSensor
-	  ['b', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
+	  ['r', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
 	  ['h', 'when %m.networks touch sensor %m.touch is %m.btnStates', 'whenTouchButtonChandged', 'normal', '1', '0'],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
       ['-'],
       ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', '0'],		//sw block (button 1, .. )
@@ -855,7 +855,7 @@
     ko: [																						
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'reportSensor', '일반', '온도'],			// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																				// function_name = reportSensor
-	  ['b', '%m.networks 터치센서 %m.touch 의 값', 'isTouchButtonPressed', '일반','1'],			//Touch Sensor is boolean block	-- normal and remote					
+	  ['r', '%m.networks 터치센서 %m.touch 의 값', 'isTouchButtonPressed', '일반','1'],			//Touch Sensor is boolean block	-- normal and remote					
 	  ['h', '%m.networks 터치센서 %m.touch 가 %m.btnStates 가 될 때', 'whenTouchButtonChandged', '일반', '1', '0'],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
 	  ['-'],																					//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', '0'],				//sw block (button 1, .. )
