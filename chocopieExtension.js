@@ -802,7 +802,7 @@
 		if (!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-				if ( SWITCH_REPOTER === sensor_detail[0] || SWITCH_REPOTER === sensor_detail[1]) ){
+				if ( SWITCH_REPOTER === sensor_detail[0] || SWITCH_REPOTER === sensor_detail[1] ){
 					var button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
 					if (button_state === sensor_detail[0]){
 						// 버튼 꺼짐
