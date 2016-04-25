@@ -890,7 +890,7 @@
 	ext.motionbRead = function(networks, motionb){
 		//console.log('motionbRead is run');
 		var hw = hwList.search(SCBD_MOTION),
-			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);
+			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]),
 			receive_detail = new Uint8Array([0x10, 0x20, 0x30, 0x80, 0x90, 0xA0, 0xB0, 0xC0]);
 
 		var low_data = escape_control(SAMPLING_RATE & LOW),
