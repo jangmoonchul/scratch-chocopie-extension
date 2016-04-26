@@ -12,7 +12,7 @@
  *You should have received a copy of the GNU General Public License
  *along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- *It was writed by TaeHui Lee and GangMun Lee through KOREA SCIENCE.
+ *It have been writed by TaeHui Lee through KOREA SCIENCE.
  */
 
 (function(ext) {
@@ -422,8 +422,8 @@
 				  }
 			  }else if (waitForData === 2){			
 				   setAnalogInput(multiByteChannel, (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]); 		
-				   // 플래그 on, off Timed 4 Byte ( L, H, LL, HH)
-				   // 0, 0, (HH, LL, H, L)
+				   //  4 Byte ( L, H, LL, HH ) 모든 MOTION_REPOTER 에 대해서 같은 처리가 이루어짐
+				   //    0, 0, (HH, LL, H, L)
 			  }else if (waitForData === 5){			
 				  setAnalogInput(multiByteChannel, storedInputData[5]); 		
 			  }			  
@@ -910,104 +910,123 @@
 					check_low = checkSum( dnp[0], low_data );	//적외선류
 					check_high = checkSum( dnp[0], high_data );
 			
-					var sensor_output_low = new Uint8Array([START_SYSEX, dnp[0], low_data, check_low ,END_SYSEX]),
-						sensor_output_high = new Uint8Array([START_SYSEX, dnp[0], high_data, check_high ,END_SYSEX]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[0], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[0], high_data, check_high ,END_SYSEX]);
 
-					device.send(sensor_output_low.buffer);
-					device.send(sensor_output_high.buffer);
-					for (var i=0; i < 3; i++){
-						if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][i]){
-							if (i === 0){
-								var state = analogRead(hw.pin) & 0x0000FF;
-								return state;
-							}else if (i === 1){
-								var state = (analogRead(hw.pin) & 0x00FF00) >> 14;
-								return state;
-							}else if (i === 2){
-								var state = (analogRead(hw.pin) & 0xFF0000) >> 28;
-								return state;
-							}
-						}	
+					device.send(motion_output_low.buffer);
+					device.send(motion_output_high.buffer);
+					// 보내고
+					
+					if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][0]){
+						var state = analogRead(hw.pin) & 0x0000FF;
+						return state;
+					}else if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][1]){
+						var state = (analogRead(hw.pin) & 0x00FF00) >> 14;
+						return state;
+					}else if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][2]){
+						var state = (analogRead(hw.pin) & 0xFF0000) >> 28;
+						return state;
 					}
-					/*
+							
+					/* 받아온다. MOTION_REPOTER 에는 detail 이 담겨져있음.
 					//3번(HIGH, LOW), 2번(HIGH, LOW), 1번(HIGH, LOW) (storedInputData)
 				    setAnalogInput(multiByteChannel, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
 					*/
 				}else if (motionb === menus[lang]['motionb'][3] || motionb === menus[lang]['motionb'][4] || motionb === menus[lang]['motionb'][5]){
-					check_low = checkSum( dnp[1], low_data );
+					check_low = checkSum( dnp[1], low_data );	//가속도류
 					check_high = checkSum( dnp[1], high_data );
 			
-					var sensor_output_low = new Uint8Array([START_SYSEX, dnp[1], low_data, check_low ,END_SYSEX]),
-						sensor_output_high = new Uint8Array([START_SYSEX, dnp[1], high_data, check_high ,END_SYSEX]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[1], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[1], high_data, check_high ,END_SYSEX]);
 
-					device.send(sensor_output_low.buffer);
-					device.send(sensor_output_high.buffer);
+					device.send(motion_output_low.buffer);
+					device.send(motion_output_high.buffer);
 
-					for (var i=3; i < 6; i++){
-						if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][i]){
-							if (i === 3){
-								var state = SanalogRead(hw.pin) & 0x0000FF;
-								return state;
-							}else if (i === 4){
-								var state = (SanalogRead(hw.pin) & 0x00FF00) >> 14;
-								return state;
-							}else if (i === 5){
-								var state = (SanalogRead(hw.pin) & 0xFF0000) >> 28;
-								return state;
-							}
-						}	
+					if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][3]){
+						var state = SanalogRead(hw.pin) & 0x0000FF;
+						return state;
+					}else if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][4]){
+						var state = (SanalogRead(hw.pin) & 0x00FF00) >> 14;
+						return state;
+					}else if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][5]){
+						var state = (SanalogRead(hw.pin) & 0xFF0000) >> 28;
+						return state;
 					}
 				}else if (motionb === menus[lang]['motionb'][6] || motionb === menus[lang]['motionb'][7] || motionb === menus[lang]['motionb'][8]){
-					check_low = checkSum( dnp[2], low_data );
+					check_low = checkSum( dnp[2], low_data );	//각가속도류
 					check_high = checkSum( dnp[2], high_data );
 			
-					var sensor_output_low = new Uint8Array([START_SYSEX, dnp[2], low_data, check_low ,END_SYSEX]),
-						sensor_output_high = new Uint8Array([START_SYSEX, dnp[2], high_data, check_high ,END_SYSEX]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[2], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[2], high_data, check_high ,END_SYSEX]);
 
-					device.send(sensor_output_low.buffer);
-					device.send(sensor_output_high.buffer);
-					for (var i=6; i < 9; i++){
-						if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][i]){
-							if (i === 6){
-								var state = SanalogRead(hw.pin) & 0x0000FF;
-								return state;
-							}else if (i === 7){
-								var state = (SanalogRead(hw.pin) & 0x00FF00) >> 14;
-								return state;
-							}else if (i === 8){
-								var state = (SanalogRead(hw.pin) & 0xFF0000) >> 28;
-								return state;
-							}
-						}	
+					device.send(motion_output_low.buffer);
+					device.send(motion_output_high.buffer);
+
+					if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][6]){
+						var state = SanalogRead(hw.pin) & 0x0000FF;
+						return state;
+					}else if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][7]){
+						var state = (SanalogRead(hw.pin) & 0x00FF00) >> 14;
+						return state;
+					}else if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][8]){
+						var state = (SanalogRead(hw.pin) & 0xFF0000) >> 28;
+						return state;
 					}
 				}else if (motionb === menus[lang]['motionb'][9] || motionb === menus[lang]['motionb'][10]){
-					check_low = checkSum( dnp[4], low_data );
-					check_high = checkSum( dnp[4], high_data );
+					//check_low = checkSum( dnp[4], low_data );		//포토게이트류 -> 데이터가 없기 때문에, XOR 과정을 거쳐도 체크섬은 그대로 유지됨
+					//check_high = checkSum( dnp[4], high_data );	//데이터를 보내지 않기 때문에 dnp를 그대로전송
 			
-					var sensor_output_low = new Uint8Array([START_SYSEX, dnp[4],  check_low ,END_SYSEX]),
-						sensor_output_high = new Uint8Array([START_SYSEX, dnp[4], check_high ,END_SYSEX]);
-
-					device.send(sensor_output_low.buffer);
-					device.send(sensor_output_high.buffer);
-					for (var i=9; i < 11; i++){
-						if (MOTION_REPOTER === receive_detail[7] && motionb === menus[lang]['motionb'][i]){
-							var photo_ostate = analogRead(hw.pin) & 0x01,
-								photo_tstate = (analogRead(hw.pin) >> 1) & 0x01;
-							if (i === 9){
-								return photo_ostate;
-							}else if (i === 10){
-								return photo_tstate;
-							}
-						}	
+					var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4] ,END_SYSEX]);
+					device.send(motion_output.buffer);
+					
+					//포토게이트 전체 상태에 대한 처리
+					if (MOTION_REPOTER === receive_detail[7] && motionb === menus[lang]['motionb'][9]){
+						var photo_ostate = analogRead(hw.pin) & 0x01;	//0x80 인경우 on time 이기 때문에 포토게이트 1이 열린것으로 판별해도됨.
+						return photo_ostate;
+					}else if (MOTION_REPOTER === receive_detail[7] && motionb === menus[lang]['motionb'][10]){
+						var photo_tstate = (analogRead(hw.pin) >> 1) & 0x01;
+						return photo_tstate;
 					}
+					/*else{
+						return analogRead(hw.pin);		//receive_detail[3], [4], [5], [6]은 모두다 이것으로 처리가능
+					}*/
 				}
 			}
 		}
 	};
+	//REPOTER PATCH SUCCESS
 
-	ext.photoGateRead = function(networks,photogate,gatestate){
+	ext.photoGateRead = function(networks, photoGate ,gateState){
 		//console.log('photoGateRead is run');
+		var hw = hwList.search(SCBD_MOTION),
+			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]),
+			receive_detail = new Uint8Array([0x10, 0x20, 0x30, 0x80, 0x90, 0xA0, 0xB0, 0xC0]);		//0x80 0x90 0xA0 0xB0
+
+		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin ]);
+
+		if (!hw) return;
+		else{
+			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+				var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4] ,END_SYSEX]);
+				device.send(motion_output.buffer);
+
+				if( photoGate === menus[lang]['photoGate'][0] ){
+					if (gateState === menus[lang]['gateState'][1] && MOTION_REPOTER === receive_detail[3]){
+						return true;	//포토게이트 1번 열릴때.. 실질적으론 시간이 들어오지만, MOTION_REPOTER 의 디테일값만으로도 막힘 열림 판단가능
+					}else if(gateState === menus[lang]['gateState'][0] && MOTION_REPOTER === receive_detail[4]){
+						return false;	//포토게이트 1번 막힐때	
+					}
+				}else if (photoGate === menus[lang]['photoGate'][1]){
+					if (gateState === menus[lang]['gateState'][1] && MOTION_REPOTER === receive_detail[5]){
+						return true;	//포토게이트 2번 열릴때
+					}else if(gateState === menus[lang]['gateState'][0] && MOTION_REPOTER === receive_detail[6]){
+						return false;	//포토게이트 2번 막힐때	
+					}
+				}						
+			}
+		}
 	};
+	//REPOTER PATCH SUCCESS
 
 	ext.passLEDrgb = function(networks,ledposition,r,g,b){
 		//console.log('passLEDrgb is run');
@@ -1121,7 +1140,7 @@
 		outputs: ['on', 'off'],
 		ops: ['>', '=', '<'],
 		servos: ['Servo 1', 'Servo 2', 'Servo 3', 'Servo 4'],
-		//mutiservos: [ '1', '2', '3', '4', '5', '6', '7', '8'],
+
 		servosport: [ 'Port 1', 'Port 2', 'Port 3', 'Port 4', 'Port 5', 'Port 6', 'Port 7', 'Port 8'],
 
 		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
