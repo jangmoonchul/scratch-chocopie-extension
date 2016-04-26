@@ -479,7 +479,6 @@
 			waitForData = 6;							//Detail/Port, 6 Byte = 6 Byte or Detail/Port, 4 Byte = 4 Byte or Detail/Port, 1 Byte = 1 Byte
 			executeMultiByteCommand = port.name;
 			MOTION_REPOTER = detail;
-		}else if (port.name === SCBD_LED){
 		}else if (port.name === SCBD_STEPPER){
 		}else if (port.name === SCBD_DC_MOTOR){
 		}else if (port.name === SCBD_SERVO){
@@ -560,31 +559,6 @@
     rotateServo(hw.pin, deg);
     hw.val = deg;
   };
-
-  ext.setLED = function(led, val) {
-    var hw = hwList.search(led);
-    if (!hw) return;
-    analogWrite(hw.pin, val);
-    hw.val = val;
-  };
-	//led 에 대한 객체값 정의 확인불가..
-	//setLED 와 changeLED 는 analogWrite 로 써지고 있는데, 이 부분에서 어떤걸 써야하는지 검증 불가..
-
-	//함수의 인자는 블록에 표시된 갯수대로 가져온다.
-	//Writed By Remoted 2016.04.14
-  ext.digitalLED = function(led, val) {
-    var hw = hwList.search(led);
-    if (!hw) return;
-    if (val == 'on') {
-      digitalWrite(hw.pin, HIGH);
-      hw.val = 255;
-    } else if (val == 'off') {
-      digitalWrite(hw.pin, LOW);
-      hw.val = 0;
-    }
-  };
-  //HIGH 에 digitalWrite 시에는 LED 가 켜져있을 때 이고, val 은 밝기를 조절하는 듯 함
-	//LOW 에 digitalWrite 시에는 LED가 꺼져있을 때 이고, val 은 밝기를 조절하는데 0으로 맞춤으로써 밝기를 날려버리는듯 함
 
 //----------------------------------------------------------------------------------- SYSTEM FUNCTION LINE 
   	ext._getStatus = function() {
@@ -1028,12 +1002,62 @@
 	};
 	//REPOTER PATCH SUCCESS
 
-	ext.passLEDrgb = function(networks,ledposition,r,g,b){
+	ext.passLEDrgb = function(networks, ledPosition, r, g, b){
 		//console.log('passLEDrgb is run');
-	};
+		var hw = hwList.search(SCBD_LED),	//SCBD_LED 
+			sensor_detail = new Uint8Array([0x00, 0x80]);
 
-	ext.passBUZEER = function(networks,pitch,playtime){
+		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin ]);
+
+		if (!hw) return;
+		else{
+			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+				var led_position = escape_control(ledPosition),
+					red = escape_control(r),
+					green = escape_control(g),
+					blue = escape_control(b);
+
+				var check_led_position = checkSum( dnp[0], led_position ),
+					check_led_red = checkSum( dnp[0], red ),
+					check_led_green = checkSum( dnp[0], green ),
+					check_led_blue = checkSum( dnp[0], blue );
+
+				var led_output_position = new Uint8Array([START_SYSEX, dnp[0], led_position, check_led_position ,END_SYSEX]),
+					led_output_red = new Uint8Array([START_SYSEX, dnp[0], red, check_led_red ,END_SYSEX]),
+					led_output_green = new Uint8Array([START_SYSEX, dnp[0], green, check_led_green ,END_SYSEX]),
+					led_output_blue = new Uint8Array([START_SYSEX, dnp[0], blue, check_led_blue ,END_SYSEX]);
+				
+				device.send(led_output_position.buffer);
+				device.send(led_output_red.buffer);
+				device.send(led_output_green.buffer);
+				device.send(led_output_blue.buffer);
+			}
+		}
+	};
+	//LED는 수신데이터가 없음.. 오로지 설정뿐
+
+	ext.passBUZEER = function(networks, pitch, playtime){
 		//console.log('passBUZEER is run');
+		var hw = hwList.search(SCBD_LED),	//SCBD_LED 
+			sensor_detail = new Uint8Array([0x00, 0x80]);
+
+		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin ]);
+		if (!hw) return;
+		else{
+			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+				var pitch_data = escape_control(pitch),
+					playtime_data = escape_control(playtime);	
+				
+				var check_pitch = checkSum( dnp[1], pitch_data ),
+					check_playtime = checkSum( dnp[1], playtime_data );
+				
+				var buzzer_output_pitch = new Uint8Array([START_SYSEX, dnp[1], pitch_data, check_pitch ,END_SYSEX]),
+					buzzer_output_playtime = new Uint8Array([START_SYSEX, dnp[1], playtime_data, check_playtime ,END_SYSEX]);
+
+				device.send(buzzer_output_pitch.buffer);
+				device.send(buzzer_output_playtime.buffer);
+			}
+		}
 	};
 
 	ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
