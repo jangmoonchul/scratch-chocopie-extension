@@ -1026,7 +1026,7 @@
 					led_output_red = new Uint8Array([START_SYSEX, dnp[0], red, check_led_red ,END_SYSEX]),
 					led_output_green = new Uint8Array([START_SYSEX, dnp[0], green, check_led_green ,END_SYSEX]),
 					led_output_blue = new Uint8Array([START_SYSEX, dnp[0], blue, check_led_blue ,END_SYSEX]);
-				
+				// 데이터를 시프트시켜서 뭉쳐서보내야되는지 확인 필요
 				device.send(led_output_position.buffer);
 				device.send(led_output_red.buffer);
 				device.send(led_output_green.buffer);
@@ -1052,7 +1052,7 @@
 					check_playtime = checkSum( dnp[1], playtime_data );
 				
 				var buzzer_output_pitch = new Uint8Array([START_SYSEX, dnp[1], pitch_data, check_pitch ,END_SYSEX]),
-					buzzer_output_playtime = new Uint8Array([START_SYSEX, dnp[1], playtime_data, check_playtime ,END_SYSEX]);
+					buzzer_output_playtime = new Uint32Array([START_SYSEX, dnp[1], playtime_data, check_playtime ,END_SYSEX]);
 
 				device.send(buzzer_output_pitch.buffer);
 				device.send(buzzer_output_playtime.buffer);
@@ -1060,11 +1060,73 @@
 		}
 	};
 
-	ext.passSteppingAD = function(networks,steppingMotor,speed,direction){
+	ext.passSteppingAD = function(networks, steppingMotor, speed, stepDirection){
 		//console.log('passSteppingAD is run');
+		var hw = hwList.search(SCBD_STEPPER),
+			sensor_detail = new Uint8Array([0x00, 0x10]);
+
+		var speed_data = escape_control(speed),
+			motor_data = 0;
+
+		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin ]);
+		if (!hw) return;
+		else{
+			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+				if (steppingMotor === menus[lang]['steppingMotor'][0]){
+					motor_data = 0x01;
+					if (stepDirection === menus[lang]['stepDirection'][0]){
+					//시계방향
+						if(speed_data < 0){
+							speed_data = speed_data * -1;
+						}else{
+							if (speed_data > 1023)
+								speed_data = 1023;		//데이터 보정
+						}
+					}else if (stepDirection === menus[lang]['stepDirection'][1]){
+					//반시계방향
+						if (speed_data > 0){
+							speed_data = speed_data * -1;
+						}else{
+							if(speed_data < -1023){
+								speed_data = -1023;
+							}
+						}
+					}
+				}else if(steppingMotor === menus[lang]['steppingMotor'][1]){
+					motor_data = 0x02;
+					if (stepDirection === menus[lang]['stepDirection'][0]){
+					//시계방향
+						if(speed_data < 0){
+							speed_data = speed_data * -1;
+						}else{
+							if (speed_data > 1023)
+								speed_data = 1023;
+						}
+					}else if (stepDirection === menus[lang]['stepDirection'][1]){
+					//반시계방향
+						if (speed_data > 0){
+							speed_data = speed_data * -1;
+						}else{
+							if(speed_data < -1023){
+								speed_data = -1023;
+							}
+						}
+					}
+				}
+				
+				var check_motor = checkSum( dnp[0], motor_data ),
+					check_speed = checkSum( dnp[0], speed_data );
+
+				var steppingAD_output_motor = new Uint8Array([START_SYSEX, dnp[0], motor_data, check_motor ,END_SYSEX]),
+					SteppingAD_output_speed = new Int16Array([START_SYSEX, dnp[0], speed_data, check_speed ,END_SYSEX]);	//signed 로 전송
+
+				device.send(steppingAD_output_motor.buffer);
+				device.send(SteppingAD_output_speed.buffer);
+			}
+		}
 	};
 
-	ext.passSteppingADA = function(networks,steppingMotor,speed,direction,rotation_amount){
+	ext.passSteppingADA = function(networks, steppingMotor, speed, stepDirection,rotation_amount){
 		//console.log('passSteppingADA is run');
 	};
 
