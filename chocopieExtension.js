@@ -1210,10 +1210,10 @@
 			servo_hooker13 = hwList.search_bypin(13),
 			servo_hooker14 = hwList.search_bypin(14),
 			servo_hooker15 = hwList.search_bypin(15);*/
-		var servo_hooker = new Uint8Array([hwList.search_bypin(0), hwList.search_bypin(1), hwList.search_bypin(2), hwList.search_bypin(3),
+		/*var servo_hooker = new Uint8Array([hwList.search_bypin(0), hwList.search_bypin(1), hwList.search_bypin(2), hwList.search_bypin(3),
 										hwList.search_bypin(4), hwList.search_bypin(5), hwList.search_bypin(6), hwList.search_bypin(7),
 										hwList.search_bypin(8), hwList.search_bypin(9), hwList.search_bypin(10), hwList.search_bypin(11),
-										hwList.search_bypin(12), hwList.search_bypin(13), hwList.search_bypin(14),hwList.search_bypin(15)]);
+										hwList.search_bypin(12), hwList.search_bypin(13), hwList.search_bypin(14),hwList.search_bypin(15)]);*/
 
 		if (!hw) return;
 		else{
@@ -1225,9 +1225,9 @@
 			}
 
 			if (networks === menus[lang]['networks'][0] ){
-				if (servo_hooker[0].name === SCBD_SERVO){
-					var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[0].pin, sensor_detail[1] | servo_hooker[0].pin, sensor_detail[2] | servo_hooker[0].pin, sensor_detail[3] | servo_hooker[0].pin ]);
-
+				if (servo_hooker0.name === SCBD_SERVO){
+					//var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[0].pin, sensor_detail[1] | servo_hooker[0].pin, sensor_detail[2] | servo_hooker[0].pin, sensor_detail[3] | servo_hooker[0].pin ]);
+					var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
 					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
 						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
 					if (servosport === menus[lang]['servosport'][0]){
@@ -1265,9 +1265,9 @@
 						device.send(servo_output_high.buffer);
 						}
 					}
-				}else if (servo_hooker[1].name === SCBD_SERVO){
-					var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[1].pin, sensor_detail[1] | servo_hooker[1].pin, sensor_detail[2] | servo_hooker[1].pin, sensor_detail[3] | servo_hooker[1].pin ]);
-
+				}else if (servo_hooker1.name === SCBD_SERVO){
+					//var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[1].pin, sensor_detail[1] | servo_hooker[1].pin, sensor_detail[2] | servo_hooker[1].pin, sensor_detail[3] | servo_hooker[1].pin ]);
+					var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker1.pin, sensor_detail[1] | servo_hooker1.pin, sensor_detail[2] | servo_hooker1.pin, sensor_detail[3] | servo_hooker1.pin ]);
 					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
 						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
 					if (servosport === menus[lang]['servosport'][1]){
