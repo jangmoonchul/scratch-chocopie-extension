@@ -1210,6 +1210,7 @@
 			servo_hooker13 = hwList.search_bypin(13),
 			servo_hooker14 = hwList.search_bypin(14),
 			servo_hooker15 = hwList.search_bypin(15);
+
 		/*var servo_hooker = new Uint8Array([hwList.search_bypin(0), hwList.search_bypin(1), hwList.search_bypin(2), hwList.search_bypin(3),
 										hwList.search_bypin(4), hwList.search_bypin(5), hwList.search_bypin(6), hwList.search_bypin(7),
 										hwList.search_bypin(8), hwList.search_bypin(9), hwList.search_bypin(10), hwList.search_bypin(11),
@@ -1217,12 +1218,6 @@
 
 		if (!hw) return;
 		else{
-			var mod_degree = 0;
-			if (degree > 180){
-				mod_degree = 180;
-			}else if(degree < 0)
-				mod_degree = 0;
-			}
 
 		}
 	};
