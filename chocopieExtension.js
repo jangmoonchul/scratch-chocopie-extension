@@ -1305,13 +1305,7 @@
 						device.send(servo_output_high.buffer);
 						}
 					}
-				}else if (servo_hooker2.name === SCBD_SERVO){
-				}else if (servo_hooker3.name === SCBD_SERVO){
-				}else if (servo_hooker4.name === SCBD_SERVO){
-				}else if (servo_hooker5.name === SCBD_SERVO){
-				}else if (servo_hooker6.name === SCBD_SERVO){
 				}
-			}else if(networks === menus[lang]['networks'][1]){
 			}
 		};
 	};
