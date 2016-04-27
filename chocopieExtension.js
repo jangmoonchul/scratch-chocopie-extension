@@ -1191,7 +1191,129 @@
 
 	ext.rotateServo = function(networks, servosport, servos, degree) {
 		//console.log('rotateServo is run');
+		var hw = hwList.search(SCBD_SERVO),
+			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
+		
+		/*var servo_hooker0 = hwList.search_bypin(0),
+			servo_hooker1 = hwList.search_bypin(1),
+			servo_hooker2 = hwList.search_bypin(2),
+			servo_hooker3 = hwList.search_bypin(3),
+			servo_hooker4 = hwList.search_bypin(4),
+			servo_hooker5 = hwList.search_bypin(5),
+			servo_hooker6 = hwList.search_bypin(6),
+			servo_hooker7 = hwList.search_bypin(7),
+			servo_hooker8 = hwList.search_bypin(8),
+			servo_hooker9 = hwList.search_bypin(9),
+			servo_hooker10 = hwList.search_bypin(10),
+			servo_hooker11 = hwList.search_bypin(11),
+			servo_hooker12 = hwList.search_bypin(12),
+			servo_hooker13 = hwList.search_bypin(13),
+			servo_hooker14 = hwList.search_bypin(14),
+			servo_hooker15 = hwList.search_bypin(15);*/
+		/*var servo_hooker = new Uint8Array([hwList.search_bypin(0), hwList.search_bypin(1), hwList.search_bypin(2), hwList.search_bypin(3),
+										hwList.search_bypin(4), hwList.search_bypin(5), hwList.search_bypin(6), hwList.search_bypin(7),
+										hwList.search_bypin(8), hwList.search_bypin(9), hwList.search_bypin(10), hwList.search_bypin(11),
+										hwList.search_bypin(12), hwList.search_bypin(13), hwList.search_bypin(14),hwList.search_bypin(15)]);*/
 
+		if (!hw) return;
+		else{
+			var mod_degree = 0;
+			if (degree > 180){
+				mod_degree = 180;
+			}else if(degree < 0)
+				mod_degree = 0;
+			}
+
+			if (networks === menus[lang]['networks'][0] ){
+				if (servo_hooker0.name === SCBD_SERVO){
+					//var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[0].pin, sensor_detail[1] | servo_hooker[0].pin, sensor_detail[2] | servo_hooker[0].pin, sensor_detail[3] | servo_hooker[0].pin ]);
+					var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
+					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
+						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
+					if (servosport === menus[lang]['servosport'][0]){
+						if (servos === menus[lang]['servos'][0]){
+						var check_deg_low = checkSum( dnp[0], servo_deg_low ),
+							check_deg_high = checkSum( dnp[0], servo_deg_high ),
+							servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
+							servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
+						
+						device.send(servo_output_low.buffer);
+						device.send(servo_output_high.buffer);
+						}else if(servos === menus[lang]['servos'][1]){
+						var check_deg_low = checkSum( dnp[1], servo_deg_low ),
+							check_deg_high = checkSum( dnp[1], servo_deg_high ),
+							servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
+							servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
+						
+						device.send(servo_output_low.buffer);
+						device.send(servo_output_high.buffer);
+						}else if (servos === menus[lang]['servos'][2]){
+						var check_deg_low = checkSum( dnp[2], servo_deg_low ),
+							check_deg_high = checkSum( dnp[2], servo_deg_high ),
+							servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
+							servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
+						
+						device.send(servo_output_low.buffer);
+						device.send(servo_output_high.buffer);
+						}else if (servos === menus[lang]['servos'][3]){
+						var check_deg_low = checkSum( dnp[3], servo_deg_low ),
+							check_deg_high = checkSum( dnp[3], servo_deg_high ),
+							servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
+							servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
+						
+						device.send(servo_output_low.buffer);
+						device.send(servo_output_high.buffer);
+						}
+					}
+				}else if (servo_hooker1.name === SCBD_SERVO){
+					//var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[1].pin, sensor_detail[1] | servo_hooker[1].pin, sensor_detail[2] | servo_hooker[1].pin, sensor_detail[3] | servo_hooker[1].pin ]);
+					var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker1.pin, sensor_detail[1] | servo_hooker1.pin, sensor_detail[2] | servo_hooker1.pin, sensor_detail[3] | servo_hooker1.pin ]);
+					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
+						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
+					if (servosport === menus[lang]['servosport'][1]){
+						if (servos === menus[lang]['servos'][0]){
+						var check_deg_low = checkSum( dnp[0], servo_deg_low ),
+							check_deg_high = checkSum( dnp[0], servo_deg_high ),
+							servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
+							servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
+						
+						device.send(servo_output_low.buffer);
+						device.send(servo_output_high.buffer);
+						}else if(servos === menus[lang]['servos'][1]){
+						var check_deg_low = checkSum( dnp[1], servo_deg_low ),
+							check_deg_high = checkSum( dnp[1], servo_deg_high ),
+							servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
+							servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
+						
+						device.send(servo_output_low.buffer);
+						device.send(servo_output_high.buffer);
+						}else if (servos === menus[lang]['servos'][2]){
+						var check_deg_low = checkSum( dnp[2], servo_deg_low ),
+							check_deg_high = checkSum( dnp[2], servo_deg_high ),
+							servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
+							servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
+						
+						device.send(servo_output_low.buffer);
+						device.send(servo_output_high.buffer);
+						}else if (servos === menus[lang]['servos'][3]){
+						var check_deg_low = checkSum( dnp[3], servo_deg_low ),
+							check_deg_high = checkSum( dnp[3], servo_deg_high ),
+							servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
+							servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
+						
+						device.send(servo_output_low.buffer);
+						device.send(servo_output_high.buffer);
+						}
+					}
+				}else if (servo_hooker2.name === SCBD_SERVO){
+				}else if (servo_hooker3.name === SCBD_SERVO){
+				}else if (servo_hooker4.name === SCBD_SERVO){
+				}else if (servo_hooker5.name === SCBD_SERVO){
+				}else if (servo_hooker6.name === SCBD_SERVO){
+				}
+			}else if(networks === menus[lang]['networks'][1]){
+			}
+		}
 	};
 
 	//Function added Line - end  --------------------------------------------------------------------------------------
