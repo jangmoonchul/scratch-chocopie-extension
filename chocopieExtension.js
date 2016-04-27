@@ -1228,7 +1228,7 @@
 				if (servo_hooker[0].name === SCBD_SERVO){
 					var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
 
-					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW)),
+					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
 						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
 					if (servosport === menus[lang]['servosport'][0]){
 						if (servos === menus[lang]['servos'][0]){
