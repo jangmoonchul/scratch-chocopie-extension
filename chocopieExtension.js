@@ -325,7 +325,7 @@
 
 		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 11 ) { 
 		  console.log('I am comming parsingSysex if');				
           parsingSysex = false;
