@@ -1268,7 +1268,7 @@
 				}else if (servo_hooker[1].name === SCBD_SERVO){
 					var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker1.pin, sensor_detail[1] | servo_hooker1.pin, sensor_detail[2] | servo_hooker1.pin, sensor_detail[3] | servo_hooker1.pin ]);
 
-					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW)),
+					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
 						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
 					if (servosport === menus[lang]['servosport'][1]){
 						if (servos === menus[lang]['servos'][0]){
