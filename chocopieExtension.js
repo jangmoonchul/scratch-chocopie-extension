@@ -196,6 +196,7 @@
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
+	console.log("Query Firmware is running");
   }
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
