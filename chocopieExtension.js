@@ -201,11 +201,10 @@
   //Patched BY Remoted 2016.04.15
 
 	function checkSum(detailnport, data){
-		//var sum = ~detailnport;
+		//var sum = ~detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
 		var sum = detailnport;
-		//for(var i=0; i < data.length ; i++ ){
-			sum ^= data;
-		//}
+		sum ^= data;
+		
 		return sum;
 	}
 	//Port/detail, data를 XOR 시킨 후, checksum 하여 return 시킴	--> check Sum Success 2016.04.21
@@ -1226,93 +1225,93 @@
 			}
 
 			if (networks === menus[lang]['networks'][0] ){
-				if (servo_hooker[0].name === SCBD_SERVO){
-					var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[0].pin, sensor_detail[1] | servo_hooker[0].pin, sensor_detail[2] | servo_hooker[0].pin, sensor_detail[3] | servo_hooker[0].pin ]);
-					//var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
-					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
-						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
-					if (servosport === menus[lang]['servosport'][0]){
-						if (servos === menus[lang]['servos'][0]){
-						var check_deg_low = checkSum( dnp[0], servo_deg_low ),
-							check_deg_high = checkSum( dnp[0], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if(servos === menus[lang]['servos'][1]){
-						var check_deg_low = checkSum( dnp[1], servo_deg_low ),
-							check_deg_high = checkSum( dnp[1], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if (servos === menus[lang]['servos'][2]){
-						var check_deg_low = checkSum( dnp[2], servo_deg_low ),
-							check_deg_high = checkSum( dnp[2], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if (servos === menus[lang]['servos'][3]){
-						var check_deg_low = checkSum( dnp[3], servo_deg_low ),
-							check_deg_high = checkSum( dnp[3], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
+				for (var i=0; i < 8; i++){		//네트워크가 일반인경우 0번부터 7번까지 담당함.
+					if (servo_hooker[i].name === SCBD_SERVO){
+						var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[i].pin, sensor_detail[1] | servo_hooker[i].pin, sensor_detail[2] | servo_hooker[i].pin, sensor_detail[3] | servo_hooker[i].pin ]);
+						//var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
+						var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
+							servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
+						if (servosport === menus[lang]['servosport'][i]){
+							if (servos === menus[lang]['servos'][0]){
+							var check_deg_low = checkSum( dnp[0], servo_deg_low ),
+								check_deg_high = checkSum( dnp[0], servo_deg_high ),
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
+							
+							device.send(servo_output_low.buffer);
+							device.send(servo_output_high.buffer);
+							}else if(servos === menus[lang]['servos'][1]){
+							var check_deg_low = checkSum( dnp[1], servo_deg_low ),
+								check_deg_high = checkSum( dnp[1], servo_deg_high ),
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
+							
+							device.send(servo_output_low.buffer);
+							device.send(servo_output_high.buffer);
+							}else if (servos === menus[lang]['servos'][2]){
+							var check_deg_low = checkSum( dnp[2], servo_deg_low ),
+								check_deg_high = checkSum( dnp[2], servo_deg_high ),
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
+							
+							device.send(servo_output_low.buffer);
+							device.send(servo_output_high.buffer);
+							}else if (servos === menus[lang]['servos'][3]){
+							var check_deg_low = checkSum( dnp[3], servo_deg_low ),
+								check_deg_high = checkSum( dnp[3], servo_deg_high ),
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
+							
+							device.send(servo_output_low.buffer);
+							device.send(servo_output_high.buffer);
+							}
 						}
 					}
-				}else if (servo_hooker[1].name === SCBD_SERVO){
-					var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[1].pin, sensor_detail[1] | servo_hooker[1].pin, sensor_detail[2] | servo_hooker[1].pin, sensor_detail[3] | servo_hooker[1].pin ]);
-					//var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker1.pin, sensor_detail[1] | servo_hooker1.pin, sensor_detail[2] | servo_hooker1.pin, sensor_detail[3] | servo_hooker1.pin ]);
-					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
-						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
-					if (servosport === menus[lang]['servosport'][1]){
-						if (servos === menus[lang]['servos'][0]){
-						var check_deg_low = checkSum( dnp[0], servo_deg_low ),
-							check_deg_high = checkSum( dnp[0], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if(servos === menus[lang]['servos'][1]){
-						var check_deg_low = checkSum( dnp[1], servo_deg_low ),
-							check_deg_high = checkSum( dnp[1], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if (servos === menus[lang]['servos'][2]){
-						var check_deg_low = checkSum( dnp[2], servo_deg_low ),
-							check_deg_high = checkSum( dnp[2], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if (servos === menus[lang]['servos'][3]){
-						var check_deg_low = checkSum( dnp[3], servo_deg_low ),
-							check_deg_high = checkSum( dnp[3], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}
-					}
-				}else if (servo_hooker2.name === SCBD_SERVO){
-				}else if (servo_hooker3.name === SCBD_SERVO){
-				}else if (servo_hooker4.name === SCBD_SERVO){
-				}else if (servo_hooker5.name === SCBD_SERVO){
-				}else if (servo_hooker6.name === SCBD_SERVO){
-				}
+				}	
 			}else if(networks === menus[lang]['networks'][1]){
+				for (var i=8; i < 16; i++){				//네트워크가 무선인경우 8번부터 15번까지 담당함
+					if (servo_hooker[i].name === SCBD_SERVO){
+						var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[i].pin, sensor_detail[1] | servo_hooker[i].pin, sensor_detail[2] | servo_hooker[i].pin, sensor_detail[3] | servo_hooker[i].pin ]);
+						//var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
+						var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
+							servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
+						if (servosport === menus[lang]['servosport'][i]){
+							if (servos === menus[lang]['servos'][0]){
+							var check_deg_low = checkSum( dnp[0], servo_deg_low ),
+								check_deg_high = checkSum( dnp[0], servo_deg_high ),
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
+							
+							device.send(servo_output_low.buffer);
+							device.send(servo_output_high.buffer);
+							}else if(servos === menus[lang]['servos'][1]){
+							var check_deg_low = checkSum( dnp[1], servo_deg_low ),
+								check_deg_high = checkSum( dnp[1], servo_deg_high ),
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
+							
+							device.send(servo_output_low.buffer);
+							device.send(servo_output_high.buffer);
+							}else if (servos === menus[lang]['servos'][2]){
+							var check_deg_low = checkSum( dnp[2], servo_deg_low ),
+								check_deg_high = checkSum( dnp[2], servo_deg_high ),
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
+							
+							device.send(servo_output_low.buffer);
+							device.send(servo_output_high.buffer);
+							}else if (servos === menus[lang]['servos'][3]){
+							var check_deg_low = checkSum( dnp[3], servo_deg_low ),
+								check_deg_high = checkSum( dnp[3], servo_deg_high ),
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
+							
+							device.send(servo_output_low.buffer);
+							device.send(servo_output_high.buffer);
+							}
+						}
+					}
+				}
 			}
 		}
 	};
