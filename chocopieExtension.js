@@ -50,6 +50,7 @@
 	  TOUCH_REPOTER = 0,
 	  SWITCH_REPOTER = 0,
 	  MOTION_REPOTER = 0,
+	  CONNECT_REPOTER = 0,
 	  START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
 	  END_SYSEX = 0x7E;			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
 
@@ -59,7 +60,6 @@
     HIGH = 0xFF00;
 	//LOW, HIGH 를 연산하기 위해서 패치함 -- 2016.04.20 
   var MAX_DATA_BYTES = 4096;
-  var MAX_PINS = 128;
 
   var parsingSysex = false,
     waitForData = 0,
@@ -73,9 +73,6 @@
     digitalInputData = new Uint8Array(16),
     analogInputData = new Uint16Array(16),			
 	SanalogInputData = new Int8Array(16);
-
-
-  var analogChannel = new Uint8Array(MAX_PINS);
 
   var majorVersion = 0,
     minorVersion = 0;
@@ -103,7 +100,7 @@
         device = {name: dev, pin: pin, val: 0};
         this.devices.push(device);
       } else {
-		if(device.name === SCBD_SERVO){				//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
+		if(device.name === SCBD_SERVO && CONNECT_REPOTER = 1){			//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
 			device = {name: dev, pin: pin, val: 0};
 			this.devices.push(device);
 		}else{
@@ -114,7 +111,7 @@
     };
 	/* search 에서 device 가 존재하지 않는다면,  name, pin, val 을 배열로 묶어서 한번에 잘 추가시킴 
 		 -> CPC_GET_BLOCK 을 처리하는 과정에서 0이 아닌경우에만 추가하므로 문제가 되지않음
-		device 가 존재한다면, pin, val 만 추가시킴 -> name 의 값은 null 로 배정될 듯
+		device 가 존재한다면, pin, val 만 추가시킴 -> name 의 값을 유지시킴. (remove 후에 다시 connect 시키는 과정에서 구성시킴)
 	*/
 
     this.search = function(dev) {
@@ -184,18 +181,17 @@
   }
 
   function queryFirmware() {
-    //var output = new Uint8Array([START_SYSEX, QUERY_FIRMWARE, END_SYSEX]);
-	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리함
-	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 조져야함
+	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리
+	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 처리해야함
 
 	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION ),
 		check_ble = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION );
 	
-	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]),		//이 형태로 보내게되면 배열로 생성되어 한번에 감
+	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]),		
 		ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
-	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
+	device.send(ble_output.buffer);		//ble 연결도 가능한지 확인하기 위해서 함께보냄
   }
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
@@ -227,9 +223,9 @@
     minorVersion = minor;
   }
 
-	/* tryNextDevice -> processInput (Handler) -> processSysexMessage -> QUERY_FIRMWARE -> init -> QUERY_FIRMWARE 순으로 진행됨
-											   -> QUERY_FIRWWARE 발송 
-		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 무한루프가 형성됨								*/
+	/* tryNextDevice -> processInput (Handler) -> processInput -> processSysexMessage -> init -> QUERY_FIRMWARE(PING) 순으로 진행됨
+					 -> QUERY_FIRWWARE 발송 
+		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 핑이 형성됨								*/
 
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
@@ -255,9 +251,10 @@
         }
         pinging = false;
         pingCount = 0;
-	}else if (storedInputData[0] === SCBD_CHOCOPI_BLE){
+	}else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
 		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+		//핑을 통해서 BLE 포트가 활성화되었는지 지속적으로 패킷을 뿌림
 
         if (!connected) {
           clearInterval(poller);		
@@ -268,18 +265,6 @@
 
 		  device.send(output_block.buffer);
           setTimeout(init, 200);			
-        }
-		pinging = false;
-        pingCount = 0;
-	}else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
-        if (!connected) {
-          clearInterval(poller);		
-          poller = null;				
-          clearTimeout(watchdog);
-          watchdog = null;				
-          connected = true;
-
-          setTimeout(init, 200);
 		  sysexBytesRead = 0;		
         }
         pinging = false;
@@ -326,8 +311,8 @@
       if (parsingSysex) {
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 11 ) { 
-		  console.log('I am comming parsingSysex if');				
-          parsingSysex = false;
+		  console.log('I am comming parsingSysex chocopie init starter');				
+          //parsingSysex = false;	//SCBD_CHOCOPIE_USB 로써 판별을 이루어냇다면, PING 이 아니고서야 Sysex를 살려내면안됨.
 		  SYSTEM_MESSAGE = false;								
           processSysexMessage();
 		  setVersion(storedInputData[9], storedInputData[10]);
@@ -366,10 +351,11 @@
 							//connectHW (hw, pin)											// BLE 에 대한 ALL_GET_BLOCK 처리과정
 						}
 					}
+					CONNECT_REPOTER = 0;
 			  }else if ((executeMultiByteCommand === (SCBD_CHOCOPI_USB | 0x01)) || (executeMultiByteCommand === (SCBD_CHOCOPI_BLE | 0x01))){
 																			//inputData[0] 번이 0xE1 인 경우, 차례적으로 포트(1Byte), 블록타입(1Byte) 가 전송됨
 					connectHW(storedInputData[0], storedInputData[1]);		//PORT, BLOCK_TYPE -> SCBD_SENSOR..			(inputData)
-																			//BLOCK_TYPE -> SCBD_SENSOR, PORT 			(storedInputData)
+					CONNECT_REPOTER = 1;									//BLOCK_TYPE -> SCBD_SENSOR, PORT 			(storedInputData)
 			  }else if ((executeMultiByteCommand === (SCBD_CHOCOPI_USB | 0x02)) || (executeMultiByteCommand === (SCBD_CHOCOPI_BLE | 0x02)) ){
 					removeHW(storedInputData[0]);							//PORT	(inputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 																			//PORT	(storedInputData)
@@ -439,8 +425,8 @@
 			detail = inputData[i];							//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 			SYSTEM_MESSAGE	= true;																						
         } else {														//SYSTEM_MESSAGE 가 아닌 0xE0 이상의 값은, DC_MOTOR 와 SERVO의 가능성이 있음			
-		  detail = inputData[0] & 0xF0;									// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
-          multiByteChannel = inputData[0] & 0x0F;						// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
+		  detail = inputData[i] & 0xF0;									// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
+          multiByteChannel = inputData[i] & 0x0F;						// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
 		  port = hwList.search_bypin(multiByteChannel);					// -> hwList.search_bypin 로 조사해서 처리
         }
 
