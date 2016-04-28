@@ -100,7 +100,7 @@
         device = {name: dev, pin: pin, val: 0};
         this.devices.push(device);
       } else {
-		if(device.name === SCBD_SERVO && CONNECT_REPOTER = 1){			//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
+		if(device.name === SCBD_SERVO && CONNECT_REPOTER === 1){			//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
 			device = {name: dev, pin: pin, val: 0};
 			this.devices.push(device);
 		}else{
