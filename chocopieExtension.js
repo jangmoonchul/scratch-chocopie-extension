@@ -103,13 +103,8 @@
         device = {name: dev, pin: pin, val: 0};
         this.devices.push(device);
       } else {
-		if(device.name === SCBD_SERVO){				//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
-			device = {name: dev, pin: pin, val: 0};
-			this.devices.push(device);
-		}else{
-			device.pin = pin;
-	        device.val = 0;
-		}
+        device.pin = pin;
+        device.val = 0;
       }
     };
 	/* search 에서 device 가 존재하지 않는다면,  name, pin, val 을 배열로 묶어서 한번에 잘 추가시킴 
@@ -150,7 +145,7 @@
     // TEMPORARY WORKAROUND
     // Since _deviceRemoved is not used with Serial devices
     // ping device regularly to check connection
-	// setInterval 함수로 10초 단위로 6번을 핑을보내어 신호체크
+	// setInterval 함수로 0.1초 단위로 6번을 핑을보내어 신호체크
     pinger = setInterval(function() {		
       if (pinging) {
         if (++pingCount > 6) {
@@ -196,7 +191,6 @@
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 더 보냄
-	console.log("Query Firmware is running");
   }
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
@@ -204,9 +198,10 @@
 	function checkSum(detailnport, data){
 		var sum = detailnport;
 
-		for(var i=0; i < data.length ; i++ ){
+		//어차피 데이터를 넘길시에는, 1바이트씩만 보내기 때문에, 굳이 반복문을 통해서 checkSum 을 생성할 이유가 없음.
+		//for(var i=0; i < data.length ; i++ ){
 			sum ^= data;
-		}
+		//}
 		return sum;
 	}
 	//Port/detail, data를 XOR 시킨 후, checksum 하여 return 시킴	--> check Sum Success 2016.04.21
@@ -324,9 +319,9 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
 
-		console.log('inputData [' + i + '] = ' + inputData[i]);
+		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 11 ) { 
 		  console.log('I am comming parsingSysex if');				
           parsingSysex = false;
@@ -359,7 +354,7 @@
 						if (storedInputData[i] != 0){										//0, 0, 0, 0, 12, 0, 9, 8, CPC_GET_BLOCK (storedInputData)
 							connectHW(storedInputData[storedInputData.length - i], i-1);	//storedInputData.length 부터 순차적으로 감소 
 							//connectHW (hw, pin)											//inputData 는 0부터 시작되지만, waitForData 는 큰수부터 시작되므로 역전현상이 발생함
-						}																	//waitForData 가 설정된 0xE0 값은 CPC_GET_BLOCK 가 유일함
+						}																	//waitForData 가 설정된 SCBD_CHOCOPI_USB = CPC_GET_BLOCK 가 유일함
 					}
 			  }else if (executeMultiByteCommand === SCBD_CHOCOPI_BLE){						//				8 9 10 11 12 13 14 15		(포트)
 					for(var i=1 ; i < storedInputData.length; i++ ){						//CPC_GET_BLOCK,8 9 0  12 0  0  0  0		(inputData)
@@ -484,6 +479,9 @@
 			waitForData = 6;							//Detail/Port, 6 Byte = 6 Byte or Detail/Port, 4 Byte = 4 Byte or Detail/Port, 1 Byte = 1 Byte
 			executeMultiByteCommand = port.name;
 			MOTION_REPOTER = detail;
+		}else if (port.name === SCBD_STEPPER){
+		}else if (port.name === SCBD_DC_MOTOR){
+		}else if (port.name === SCBD_SERVO){
 		}
       }
     }
@@ -1058,12 +1056,18 @@
 			sensor_detail = new Uint8Array([0x00, 0x10]);
 
 		var speed_data = speed,
-			motor_data = dec2hex(steppingMotor);
+			motor_data = 0;
 
 		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin ]);
 		if (!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+				if (steppingMotor === menus[lang]['steppingMotor'][0]){
+					motor_data = 0x01;
+				}else if(steppingMotor === menus[lang]['steppingMotor'][1]){
+					motor_data = 0x02;
+				}
+
 				if (stepDirection === menus[lang]['stepDirection'][0]){
 				//시계방향
 					if(speed_data < 0){
@@ -1100,15 +1104,17 @@
 		var hw = hwList.search(SCBD_STEPPER),
 			sensor_detail = new Uint8Array([0x00, 0x10]);
 
-		var speed_data = speed,
-			motor_data = dec2hex(steppingMotor),
-			rotation_data = rotation_amount;
-
 		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin ]);
 		
 		if (!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+				if (steppingMotor === menus[lang]['steppingMotor'][0]){
+					motor_data = 0x01;
+				}else if(steppingMotor === menus[lang]['steppingMotor'][1]){
+					motor_data = 0x02;
+				}
+
 				if (stepDirection === menus[lang]['stepDirection'][0]){
 				//시계방향
 					if(speed_data < 0){
@@ -1129,17 +1135,17 @@
 				}
 
 				if(rotation_amount > 65535){
-					rotation_data = 65535;
+					rotation_amount = 65535;
 				}else if(rotation_amount < -65535){
-					rotation_data = -65535;
+					rotation_amount = -65535;
 				}
 
 				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
 					speed_data_high = escape_control(dec2hex(speed_data) & HIGH);
 
-				var mod_rotation_data = escape_control(dec2hex( Math.floor(rotation_data / 512) )),
-					merged_data = (motor_data << 42) | (speed_data_low << 35) | (speed_data_high << 28) | mod_rotation_data;
-				console.log('rotation data is ' + mod_rotation_data);
+				var mod_rotation_amount = escape_control(dec2hex( Math.floor(rotation_amount / 512) )),
+					merged_data = (motor_data << 42) | (speed_data_low << 35) | (speed_data_high << 28) | mod_rotation_amount;
+				console.log('rotation_amount is ' + mod_rotation_amount);
 
 				var check_merged_data = checkSum( dnp[1], merged_data ),
 					steppingAD_output = new Int32Array([START_SYSEX, dnp[1], merged_data, check_merged_data ,END_SYSEX]);	//singed 4 Byte
@@ -1149,173 +1155,18 @@
 		}
 	};
 
-	ext.passDCAD = function(networks, dcMotor, speed, stepDirection){
+	ext.passDCAD = function(networks,dcmotor,speed,direction){
 		//console.log('passDCAD is run');
-		var hw = hwList.search(SCBD_DC_MOTOR),
-			sensor_detail = new Uint8Array([0x10, 0x20, 0x30]);
-
-		var speed_data = speed,
-			direction_data = 0;
-		
-		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin]);
-		
-		if (!hw) return;
-		else{
-			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-
-				if(speed > 1024){
-					speed_data = 1024;
-				}else if (speed < 0){
-					speed_data = 0;
-				}
-
-				if (stepDirection === menus[lang]['stepDirection'][0])
-					direction_data = 1;
-				else
-					direction_data = 0;
-				
-				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-					speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
-					merged_data = (speed_data_low << 14) | (speed_data_high << 7) | dec2hex(direction_data);
-
-				for (var i=0; i < 3; i++ ){
-					if (dcMotor === menus[lang]['dcMotor'][i]){				
-					var check_merged_data = checkSum( dnp[i], merged_data ),
-						DCAD_output = new Uint8Array([START_SYSEX, dnp[i], merged_data, check_merged_data ,END_SYSEX]);	
-
-						device.send(DCAD_output.buffer);
-					}
-				}
-			}
-		}
 	};
 
-	ext.rotateServo = function(networks, servosport, servos, degree) {
+	ext.rotateServo = function(servo, deg) {
 		//console.log('rotateServo is run');
-		var hw = hwList.search(SCBD_SERVO),
-			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
-		
-		/*var servo_hooker0 = hwList.search_bypin(0),
-			servo_hooker1 = hwList.search_bypin(1),
-			servo_hooker2 = hwList.search_bypin(2),
-			servo_hooker3 = hwList.search_bypin(3),
-			servo_hooker4 = hwList.search_bypin(4),
-			servo_hooker5 = hwList.search_bypin(5),
-			servo_hooker6 = hwList.search_bypin(6),
-			servo_hooker7 = hwList.search_bypin(7),
-			servo_hooker8 = hwList.search_bypin(8),
-			servo_hooker9 = hwList.search_bypin(9),
-			servo_hooker10 = hwList.search_bypin(10),
-			servo_hooker11 = hwList.search_bypin(11),
-			servo_hooker12 = hwList.search_bypin(12),
-			servo_hooker13 = hwList.search_bypin(13),
-			servo_hooker14 = hwList.search_bypin(14),
-			servo_hooker15 = hwList.search_bypin(15);
-			*/
-		var servo_hooker = new Uint8Array([hwList.search_bypin(0), hwList.search_bypin(1), hwList.search_bypin(2), hwList.search_bypin(3),
-										hwList.search_bypin(4), hwList.search_bypin(5), hwList.search_bypin(6), hwList.search_bypin(7),
-										hwList.search_bypin(8), hwList.search_bypin(9), hwList.search_bypin(10), hwList.search_bypin(11),
-										hwList.search_bypin(12), hwList.search_bypin(13), hwList.search_bypin(14),hwList.search_bypin(15)]);
-
+		var hw = hwList.search(servo);
 		if (!hw) return;
-		else{
-			var mod_degree = 0;
-			if (degree > 180){
-				mod_degree = 180;
-			}else if(degree < 0){
-				mod_degree = 0;
-			}
-
-			if (networks === menus[lang]['networks'][0] ){
-				if (servo_hooker[0].name === SCBD_SERVO){
-					var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[0].pin, sensor_detail[1] | servo_hooker[0].pin, sensor_detail[2] | servo_hooker[0].pin, sensor_detail[3] | servo_hooker[0].pin ]);
-					//var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
-					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
-						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
-					if (servosport === menus[lang]['servosport'][0]){
-						if (servos === menus[lang]['servos'][0]){
-						var check_deg_low = checkSum( dnp[0], servo_deg_low ),
-							check_deg_high = checkSum( dnp[0], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if(servos === menus[lang]['servos'][1]){
-						var check_deg_low = checkSum( dnp[1], servo_deg_low ),
-							check_deg_high = checkSum( dnp[1], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if (servos === menus[lang]['servos'][2]){
-						var check_deg_low = checkSum( dnp[2], servo_deg_low ),
-							check_deg_high = checkSum( dnp[2], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if (servos === menus[lang]['servos'][3]){
-						var check_deg_low = checkSum( dnp[3], servo_deg_low ),
-							check_deg_high = checkSum( dnp[3], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}
-					}
-				}else if (servo_hooker[1].name === SCBD_SERVO){
-					var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[1].pin, sensor_detail[1] | servo_hooker[1].pin, sensor_detail[2] | servo_hooker[1].pin, sensor_detail[3] | servo_hooker[1].pin ]);
-					//var	dnp = new Uint8Array([ sensor_detail[0] | servo_hooker1.pin, sensor_detail[1] | servo_hooker1.pin, sensor_detail[2] | servo_hooker1.pin, sensor_detail[3] | servo_hooker1.pin ]);
-					var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
-						servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
-					if (servosport === menus[lang]['servosport'][1]){
-						if (servos === menus[lang]['servos'][0]){
-						var check_deg_low = checkSum( dnp[0], servo_deg_low ),
-							check_deg_high = checkSum( dnp[0], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if(servos === menus[lang]['servos'][1]){
-						var check_deg_low = checkSum( dnp[1], servo_deg_low ),
-							check_deg_high = checkSum( dnp[1], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if (servos === menus[lang]['servos'][2]){
-						var check_deg_low = checkSum( dnp[2], servo_deg_low ),
-							check_deg_high = checkSum( dnp[2], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}else if (servos === menus[lang]['servos'][3]){
-						var check_deg_low = checkSum( dnp[3], servo_deg_low ),
-							check_deg_high = checkSum( dnp[3], servo_deg_high ),
-							servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
-							servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
-						
-						device.send(servo_output_low.buffer);
-						device.send(servo_output_high.buffer);
-						}
-					}
-				}else if (servo_hooker2.name === SCBD_SERVO){
-				}else if (servo_hooker3.name === SCBD_SERVO){
-				}else if (servo_hooker4.name === SCBD_SERVO){
-				}else if (servo_hooker5.name === SCBD_SERVO){
-				}else if (servo_hooker6.name === SCBD_SERVO){
-				}
-			}else if(networks === menus[lang]['networks'][1]){
-			}
-		}
+		if (deg < 0) deg = 0;
+		else if (deg > 180) deg = 180;
+			rotateServo(hw.pin, deg);
+		hw.val = deg;
 	};
 
 	//Function added Line - end  --------------------------------------------------------------------------------------
@@ -1353,9 +1204,7 @@
 		//Stepping Motor is defined.
 		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],
-	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', '1', 0, 'clockwise'],
-	  ['-'],
-	  [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180]
+	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', '1', 0, 'clockwise']
     ],
     ko: [																						
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'reportSensor', '일반', '온도'],										// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
@@ -1379,6 +1228,8 @@
 		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],																											//DC motor is defined
 	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', '1', 0, '시계'],		//function_name : passDCDA passRDCDA	
+	  ['-'],
+	  [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
 	  ['-'],
 	  [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
     ]
@@ -1419,7 +1270,7 @@
 		stepDirection:['clockwise','declockwise'],
 		//steppingMotor is defined.
 
-		dcMotor: ['1','2','3']
+		dcMotor: ['1','2','3','4']
 		//dcMotor is defined.
 
     },
@@ -1456,7 +1307,7 @@
 		stepDirection:['시계','반시계'],
 		//steppingMotor is defined.
 
-		dcMotor: ['1','2','3']
+		dcMotor: ['1','2','3','4']
 		//dcMotor is defined.
     }
   };
