@@ -201,7 +201,7 @@
   //Patched BY Remoted 2016.04.15
 
 	function checkSum(detailnport, data){
-		var sum = detailnport;
+		var sum = 0xFF ^ detailnport;
 
 		//for(var i=0; i < data.length ; i++ ){
 			sum ^= data;
