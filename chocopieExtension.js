@@ -312,7 +312,7 @@
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 11 ) { 
 		  console.log('I am comming parsingSysex chocopie init starter');				
-          //parsingSysex = false;	//SCBD_CHOCOPIE_USB 로써 판별을 이루어냇다면, PING 이 아니고서야 Sysex를 살려내면안됨.
+          parsingSysex = false;		//SCBD_CHOCOPIE_USB 로써 판별을 이루어냇다면, PING 이 아니고서야 Sysex를 살려내면안됨. -> 보드 도착시 패치요망
 		  SYSTEM_MESSAGE = false;								
           processSysexMessage();
 		  setVersion(storedInputData[9], storedInputData[10]);
