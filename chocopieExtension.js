@@ -323,7 +323,7 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
 
-		//console.log('inputData [' + i + '] = ' + inputData[i]);
+		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 11 ) { 
