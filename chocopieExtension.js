@@ -199,9 +199,9 @@
 		var sum = detailnport;
 
 		//어차피 데이터를 넘길시에는, 1바이트씩만 보내기 때문에, 굳이 반복문을 통해서 checkSum 을 생성할 이유가 없음.
-		//for(var i=0; i < data.length ; i++ ){
+		for(var i=0; i < data.length ; i++ ){
 			sum ^= data;
-		//}
+		}
 		return sum;
 	}
 	//Port/detail, data를 XOR 시킨 후, checksum 하여 return 시킴	--> check Sum Success 2016.04.21
@@ -479,9 +479,6 @@
 			waitForData = 6;							//Detail/Port, 6 Byte = 6 Byte or Detail/Port, 4 Byte = 4 Byte or Detail/Port, 1 Byte = 1 Byte
 			executeMultiByteCommand = port.name;
 			MOTION_REPOTER = detail;
-		}else if (port.name === SCBD_STEPPER){
-		}else if (port.name === SCBD_DC_MOTOR){
-		}else if (port.name === SCBD_SERVO){
 		}
       }
     }
@@ -1056,18 +1053,12 @@
 			sensor_detail = new Uint8Array([0x00, 0x10]);
 
 		var speed_data = speed,
-			motor_data = 0;
+			motor_data = dec2hex(steppingMotor);
 
 		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin ]);
 		if (!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-				if (steppingMotor === menus[lang]['steppingMotor'][0]){
-					motor_data = 0x01;
-				}else if(steppingMotor === menus[lang]['steppingMotor'][1]){
-					motor_data = 0x02;
-				}
-
 				if (stepDirection === menus[lang]['stepDirection'][0]){
 				//시계방향
 					if(speed_data < 0){
@@ -1104,17 +1095,14 @@
 		var hw = hwList.search(SCBD_STEPPER),
 			sensor_detail = new Uint8Array([0x00, 0x10]);
 
+		var speed_data = speed,
+			motor_data = dec2hex(steppingMotor);
+
 		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin ]);
 		
 		if (!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-				if (steppingMotor === menus[lang]['steppingMotor'][0]){
-					motor_data = 0x01;
-				}else if(steppingMotor === menus[lang]['steppingMotor'][1]){
-					motor_data = 0x02;
-				}
-
 				if (stepDirection === menus[lang]['stepDirection'][0]){
 				//시계방향
 					if(speed_data < 0){
@@ -1155,8 +1143,45 @@
 		}
 	};
 
-	ext.passDCAD = function(networks,dcmotor,speed,direction){
+	ext.passDCAD = function(networks, dcMotor, speed, stepDirection){
 		//console.log('passDCAD is run');
+		var hw = hwList.search(SCBD_DC_MOTOR),
+			sensor_detail = new Uint8Array([0x10, 0x20, 0x30]);
+
+		var speed_data = speed,
+			direction_data = 0;
+		
+		var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin]);
+		
+		if (!hw) return;
+		else{
+			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+
+				if(speed > 1024){
+					speed_data = 1024;
+				}else if (speed < 0){
+					speed_data = 0;
+				}
+
+				if (stepDirection === menus[lang]['stepDirection'][0])
+					direction_data = 1;
+				else
+					direction_data = 0;
+				
+				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
+					speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
+					merged_data = (speed_data_low << 14) | (speed_data_high << 7) | dec2hex(direction_data);
+
+				for (var i=0; i < 3; i++ ){
+					if (dcMotor === menus[lang]['dcMotor'][i]){				
+					var check_merged_data = checkSum( dnp[i], merged_data ),
+						DCAD_output = new Uint8Array([START_SYSEX, dnp[i], merged_data, check_merged_data ,END_SYSEX]);	
+
+						device.send(DCAD_output.buffer);
+					}
+				}
+			}
+		}
 	};
 
 	ext.rotateServo = function(servo, deg) {
@@ -1204,7 +1229,9 @@
 		//Stepping Motor is defined.
 		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],
-	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', '1', 0, 'clockwise']
+	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', '1', 0, 'clockwise'],
+	  ['-'],
+	  [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180]
     ],
     ko: [																						
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'reportSensor', '일반', '온도'],										// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
@@ -1228,8 +1255,6 @@
 		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],																											//DC motor is defined
 	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', '1', 0, '시계'],		//function_name : passDCDA passRDCDA	
-	  ['-'],
-	  [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180],
 	  ['-'],
 	  [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
     ]
@@ -1270,7 +1295,7 @@
 		stepDirection:['clockwise','declockwise'],
 		//steppingMotor is defined.
 
-		dcMotor: ['1','2','3','4']
+		dcMotor: ['1','2','3']
 		//dcMotor is defined.
 
     },
@@ -1307,7 +1332,7 @@
 		stepDirection:['시계','반시계'],
 		//steppingMotor is defined.
 
-		dcMotor: ['1','2','3','4']
+		dcMotor: ['1','2','3']
 		//dcMotor is defined.
     }
   };
