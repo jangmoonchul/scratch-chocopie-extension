@@ -45,12 +45,10 @@
 		CPC_ALL_SAY = 0x0E;
 	//Chocopie command definition
 	
-  var SYSTEM_MESSAGE = false,
-	  SENSOR_REPOTER = 0,
+  var SENSOR_REPOTER = 0,
 	  TOUCH_REPOTER = 0,
 	  SWITCH_REPOTER = 0,
 	  MOTION_REPOTER = 0,
-	  CONNECT_REPOTER = 0,
 	  START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
 	  END_SYSEX = 0x7E;			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
 
@@ -98,8 +96,8 @@
       var device = this.search(dev);
 	  var device_hooker = this.search_bypin(pin);
 
-      if (!device || (device.name === SCBD_SERVO && !device_hooker)) {	//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
-        device = {name: dev, pin: pin, val: 0};							//이름이 SCBD_SERVO 이면서 핀이 비어있다면 추가. 2016.04.29 패치
+      if (!device || (dev === SCBD_SERVO && !device_hooker)) {	//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
+        device = {name: dev, pin: pin, val: 0};					//이름이 SCBD_SERVO 이면서 핀이 비어있다면 추가. 2016.04.29 패치
         this.devices.push(device);
 
       } else {
@@ -182,11 +180,11 @@
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 처리해야함
 
-	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION ),
-		check_ble = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION );
+	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION );
+		//check_ble = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION );
 	
-	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]),		
-		ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
+	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);
+		//ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	device.send(ble_output.buffer);		//ble 연결도 가능한지 확인하기 위해서 함께보냄
@@ -221,7 +219,7 @@
     minorVersion = minor;
   }
 
-	/* tryNextDevice -> processInput (Handler) -> processInput -> processSysexMessage -> init -> QUERY_FIRMWARE(PING) 순으로 진행됨
+	/* tryNextDevice -> processInput (Handler) -> processSysexMessage -> init -> QUERY_FIRMWARE(PING) 순으로 진행됨
 					 -> QUERY_FIRWWARE 발송 
 		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 핑이 형성됨								*/
 
@@ -250,9 +248,9 @@
         pinging = false;
         pingCount = 0;
 	}else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
-		//var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
-		//var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-		//핑을 통해서 BLE 포트가 활성화되었는지 지속적으로 패킷을 뿌림
+		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
+		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+		//핑을 통해서 지속적으로 연결된 블록리스트를 요청함으로써, BLE 활성화 상태를 알아낼 수 있음.. 연결된 BLE + USB 블록들이 동시에 오는지 확인필요
 
         if (!connected) {
           clearInterval(poller);		
@@ -311,37 +309,43 @@
 		//if ( sysexBytesRead === 11 && (storedInputData[1] === CPC_VERSION & LOW) && (storedInputData[2] === CPC_VERSION & HIGH) ) {	//새 보드 도착시 패치요망
 		if ( sysexBytesRead === 11 ){
 		  console.log('I am comming parsingSysex chocopie init starter');				
-          parsingSysex = false;		//SCBD_CHOCOPIE_USB 로써 판별을 이루어냇다면, PING 이 아니고서야 Sysex를 살려내면안됨. -> 보드 도착시 패치요망
-		  //SYSTEM_MESSAGE = false;								
+          parsingSysex = false;		
+		 
           processSysexMessage();
-		  setVersion(storedInputData[10], storedInputData[11]);
+		  setVersion(storedInputData[10], storedInputData[11]);		//0xE0, CPC_VERSION, “CHOCOPI”,1,0
 		  break;
 		  //detail/port + Data ( 10 Byte) = 11 Byte 초과이면 강제로 반복문을 끊어버림   예상값) storedInputData[0] = 0xE0 혹은 0xF0
 		  
         } else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
 		  parsingSysex = false;
-		  //SYSTEM_MESSAGE = false;								
           processSysexMessage();
 		  break;
         } else if (sysexBytesRead === 10 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
-		  parsingSysex = false;				//										   0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
-		  CONNECT_REPOTER = 0;				// CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
-		  for (var i=2; i<18; i++){			// CPC_GET_BLOCK 에서 논리적 에러가 없으려면, 초반에 한번만 불러와야함
+		  parsingSysex = false;				//											     0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
+											// 0xE0, CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
+		  for (var i=3; i<19; i++){			
 			if(storedInputData[i] != 0){
-				connectHW(storedInputData[i], i-2);
+				connectHW(storedInputData[i], i-3);
 			}
 		  }
         } else if (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01) || storedInputData[0] ===(SCBD_CHOCOPI_BLE | 0x01)){
-			CONNECT_REPOTER = 1;
-			connectHW(storedInputData[1] | storedInputData[2], storedInputData[0]);		//PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
+			connectHW(storedInputData[2] | storedInputData[3], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
         } else if ((storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)) || (storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x02))){
-			//PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 			removeHW(storedInputData[1]);
-        }else if (storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
-			if (storedInputData[1] == 0) 							//연결해제
-				ext._shutdown();									//STATUS (inputData)
-			else if (storedInputData[1] == 1)						//STATUS (storedInputData)
-				ext._deviceConnected();
+
+        } else if (storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
+			if (storedInputData[1] == 0){ 							//연결해제
+				for (var i=8; i < 16; i++){							//0xF3, STATUS (inputData, storedInputData)
+					removeHW(i);									//2016.04.30 재패치
+				}
+				console.log("BLE is disconnected");
+			}else if (storedInputData[1] == 1){						
+				var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
+				var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+				device.send(output_block.buffer);
+				console.log("BLE is connected");
+			}
         }else if (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
 			console.log('에러발생 ' + storedInputData[1] + storedInputData[2] + '에서 ' + storedInputData[3] + storedInputData[4] + storedInputData[5] + storedInputData[6] + storedInputData[7] + storedInputData[8] + storedInputData[9] + storedInputData[10]);	
 			break;	//오류코드 (2 Byte), 참고데이터 (8 Byte)
@@ -402,9 +406,9 @@
 		  }																									
 		}	
       } else {
-        if (inputData[i] >= 0xE0) {		//0xE0, SYSTEM_MESSAGE 가 확정안된 경우	--> 굳이 SYSTEM_MESSAGE 가 없어도 됨
+        if (inputData[i] >= 0xE0) {							//0xE0 이상의 값을 시스템 메세지용 값으로 분리시킴
 			detail = inputData[i];							//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
-			//SYSTEM_MESSAGE	= true;																						
+															
         } else {														//SYSTEM_MESSAGE 가 아닌 0xE0 이상의 값은, DC_MOTOR 와 SERVO의 가능성이 있음			
 		  detail = inputData[i] & 0xF0;									// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
           multiByteChannel = inputData[i] & 0x0F;						// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
@@ -490,30 +494,6 @@
 	}
 	//digitalRead patched 2016.04.21 .. 04.24 recheck
 //------------------------------------------------------------------------------Above, Successed Line 
-  function rotateServo(pin, deg) {
-    if (!hasCapability(pin, SERVO)) {
-      console.log('ERROR: valid servo pins are ' + pinModes[SERVO].join(', '));
-      return;
-    }
-    pinMode(pin, SERVO);
-    var msg = new Uint8Array([
-        ANALOG_MESSAGE | (pin & 0x0F),
-        deg & 0x7F,
-        deg >> 0x07]);
-    device.send(msg.buffer);
-  }
-
-	//Original Function Line--------------------------------------------------------------------------
-
-  ext.changeServo = function(servo, change) {
-    var hw = hwList.search(servo);
-    if (!hw) return;
-    var deg = hw.val + change;
-    if (deg < 0) deg = 0;
-    else if (deg > 180) deg = 180;
-    rotateServo(hw.pin, deg);
-    hw.val = deg;
-  };
 
 //----------------------------------------------------------------------------------- SYSTEM FUNCTION LINE 
   	ext._getStatus = function() {
