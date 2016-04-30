@@ -305,9 +305,9 @@
 
 		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		//if ( sysexBytesRead === 11 && (storedInputData[1] === CPC_VERSION & LOW) && (storedInputData[2] === CPC_VERSION & HIGH) ) {	//새 보드 도착시 패치요망
-		if ( sysexBytesRead === 11 ){
+		if ( sysexBytesRead === 11 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
 		 
