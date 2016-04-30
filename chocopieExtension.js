@@ -320,7 +320,7 @@
 		  parsingSysex = false;
           processSysexMessage();
 		  break;
-        } else if (sysexBytesRead === 10 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
+        } else if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
 		  parsingSysex = false;				//											     0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
 											// 0xE0, CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
 		  for (var i=3; i<19; i++){			
@@ -328,13 +328,13 @@
 				connectHW(storedInputData[i], i-3);
 			}
 		  }
-        } else if (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01) || storedInputData[0] ===(SCBD_CHOCOPI_BLE | 0x01)){
+        } else if (sysexBytesRead === 3 && (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01) || storedInputData[0] ===(SCBD_CHOCOPI_BLE | 0x01))){
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
         } else if ((storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)) || (storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x02))){
 			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 			removeHW(storedInputData[1]);
 
-        } else if (storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
+        } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
 			if (storedInputData[1] == 0){ 							//연결해제
 				for (var i=8; i < 16; i++){							//0xF3, STATUS (inputData, storedInputData)
 					removeHW(i);									//2016.04.30 재패치
@@ -346,7 +346,7 @@
 				device.send(output_block.buffer);
 				console.log("BLE is connected");
 			}
-        }else if (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
+        }else if (sysexBytesRead === 10 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
 			console.log('에러발생 ' + storedInputData[1] + storedInputData[2] + '에서 ' + storedInputData[3] + storedInputData[4] + storedInputData[5] + storedInputData[6] + storedInputData[7] + storedInputData[8] + storedInputData[9] + storedInputData[10]);	
 			break;	//오류코드 (2 Byte), 참고데이터 (8 Byte)
         }else{
@@ -355,7 +355,7 @@
 			else															//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 				continue;
         }
-		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 
       } else if (waitForData > 0 && inputData[i] <= 0xCF) {	
         storedInputData[--waitForData] = inputData[i];						//0xE0 이상에 대한 값이 겹칠지라도, 초반 GET_BLOCK 확보 이후이므로 문제가 없음
