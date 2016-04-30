@@ -187,7 +187,7 @@
 		//ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
-	device.send(ble_output.buffer);		//ble 연결도 가능한지 확인하기 위해서 함께보냄
+	//device.send(ble_output.buffer);		//ble 연결도 가능한지 확인하기 위해서 함께보냄
   }
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
@@ -329,7 +329,7 @@
 			}
 		  }
         } else if (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01) || storedInputData[0] ===(SCBD_CHOCOPI_BLE | 0x01)){
-			connectHW(storedInputData[2] | storedInputData[3], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
+			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
         } else if ((storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)) || (storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x02))){
 			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 			removeHW(storedInputData[1]);
