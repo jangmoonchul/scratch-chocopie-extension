@@ -307,12 +307,12 @@
       if (parsingSysex) {
 		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		//if ( sysexBytesRead === 11 && (storedInputData[1] === CPC_VERSION & LOW) && (storedInputData[2] === CPC_VERSION & HIGH) ) {	//새 보드 도착시 패치요망
-		if ( sysexBytesRead === 11 && storedInputData[0] === SCBD_CHOCOPI_USB){
+		if ( i === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
 		 
           processSysexMessage();
-		  setVersion(storedInputData[10], storedInputData[11]);		//0xE0, CPC_VERSION, “CHOCOPI”,1,0
+		  setVersion(storedInputData[8], storedInputData[9]);		//0xE0, CPC_VERSION, “CHOCOPI”,1,0
 		  break;
 		  //detail/port + Data ( 10 Byte) = 11 Byte 초과이면 강제로 반복문을 끊어버림   예상값) storedInputData[0] = 0xE0 혹은 0xF0
 		  
