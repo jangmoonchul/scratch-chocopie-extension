@@ -305,7 +305,7 @@
 
 		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		//if ( sysexBytesRead === 11 && (storedInputData[1] === CPC_VERSION & LOW) && (storedInputData[2] === CPC_VERSION & HIGH) ) {	//새 보드 도착시 패치요망
 		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
@@ -569,14 +569,13 @@
 	ext.reportSensor = function(networks, hwIn){
     
 	var hw = hwList.search(SCBD_SENSOR);	
-	//console.log('reportSensor is run');
 
 		if(!hw) return;
-		else{
-			var	sensor_detail = new Uint8Array([0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x80]),
+		else{								
+			var	sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]),
 			low_data = escape_control(SAMPLING_RATE & LOW),
 			high_data = escape_control(SAMPLING_RATE & HIGH);
-
+			//for문을 위해서 detail 순서를 온,습,조,아날로그 1,2,3,4 순으로 재조정 -- 2016.05.01 패치	
 			var	check_low = 0,
 				check_high = 0;
 			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
@@ -632,12 +631,12 @@
 					}
 
 					/*   0, Button Number, Detail (on, off)/Port	(storedInputData)
-					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
+					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);
 					0000 0000 0000 0000
-					0000 0000 1111 0000
+					0000 1001 1111 0000
 					*/
 					//console.log('networks is ' + networks + ' sended'); 
-				}else if(TOUCH_REPOTER === sensor_detail[2]){
+				}else if(TOUCH_REPOTER === sensor_detail[2]){	
 					var button_num = digitalRead(hw.pin) & 0x0FFF;
 						
 					for (var i=0; i < 13; i++){
@@ -1276,10 +1275,10 @@
     en: [
       ['r', 'read from %m.networks to %m.hwIn', 'reportSensor', 'normal','temperature sensor'],		//light, temperature, humidity and analog sensor combined (normal, remote)
       ['-'],																						//function_name: reportSensor
-	  ['r', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', '1'],		//Touch Sensor is boolean block (normal, remote)
-	  ['h', 'when %m.networks touch sensor %m.touch is %m.btnStates', 'whenTouchButtonChandged', 'normal', '1', '0'],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
+	  ['r', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', 1],		//Touch Sensor is boolean block (normal, remote)
+	  ['h', 'when %m.networks touch sensor %m.touch is %m.btnStates', 'whenTouchButtonChandged', 'normal', 1, 0],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
       ['-'],
-      ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', '0'],		//sw block (button 1, .. )
+      ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', 0],		//sw block (button 1, .. )
       ['b', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Button 1'],				//buttons ( button 1,.. , Joystick X, ..)
 																												//Buttons, Joystick and Potencyometer function is combined.
 	  ['-'],																									//function_name : whenButton	isButtonPressed
@@ -1289,22 +1288,22 @@
 	  [' ', '%m.networks LED LOCATION %n RED %n GREEN %n BLUE %n', 'passLEDrgb', 'normal', 0, 0, 0, 0],		//LED block is defined.	function_name : passLEDrgb
 	  [' ', '%m.networks BUZZER PITCH %n DURATION %n seconds', 'passBUZEER', 'normal', 0, 1000],			//Buzzer block is defined. function_name : passBUZEER
 	  ['-'],
-	  [' ', '%m.networks %m.steppingMotor Stepping Motor Accel %n Direction %m.stepDirection', 'passSteppingAD', 'normal', '1', 0, 'clockwise'],
-	  [' ', '%m.networks %m.steppingMotor Stepping Motor Accel %n Direction %m.stepDirection Angle %n', 'passSteppingADA', 'normal', '1', 0, 'clockwise', 0],
+	  [' ', '%m.networks %m.steppingMotor Stepping Motor Accel %n Direction %m.stepDirection', 'passSteppingAD', 'normal', 1, 0, 'clockwise'],
+	  [' ', '%m.networks %m.steppingMotor Stepping Motor Accel %n Direction %m.stepDirection Angle %n', 'passSteppingADA', 'normal', 1, 0, 'clockwise', 0],
 		//Stepping Motor is defined.
 		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],
-	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', '1', 0, 'clockwise'],
+	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', 1, 0, 'clockwise'],
 	  ['-'],
 	  [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180]
     ],
     ko: [																						
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'reportSensor', '일반', '온도'],										// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
       ['-'],																											// function_name = reportSensor
-	  ['r', '%m.networks 터치센서 %m.touch 의 값', 'isTouchButtonPressed', '일반','1'],									//Touch Sensor is boolean block	-- normal and remote					
-	  ['h', '%m.networks 터치센서 %m.touch 가 %m.btnStates 가 될 때', 'whenTouchButtonChandged', '일반', '1', '0'],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
+	  ['r', '%m.networks 터치센서 %m.touch 의 값', 'isTouchButtonPressed', '일반', 1],									//Touch Sensor is boolean block	-- normal and remote					
+	  ['h', '%m.networks 터치센서 %m.touch 가 %m.btnStates 가 될 때', 'whenTouchButtonChandged', '일반', 1, 0],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
 	  ['-'],																											//function_name : isTouchButtonPressed 
-      ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', '0'],				//sw block (button 1, .. )
+      ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', 0],				//sw block (button 1, .. )
       ['b', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','버튼 1'],							//buttons ( button 1,.. , Joystick X, ..)				
 																													//Buttons, Joystick and Potencyometer function is combined.
 	  ['-'],																										//function_name :  isButtonPressed	whenButton
@@ -1314,12 +1313,12 @@
 	  [' ', '%m.networks LED블록 위치 %n 빨강 %n 녹색 %n 파랑 %n', 'passLEDrgb', '일반', 0, 0, 0, 0],		//LED block is defined.	function_name : passLEDrgb
 	  [' ', '%m.networks 버저 음높이 %n 연주시간 %n 밀리초', 'passBUZEER', '일반', 0, 1000],			//Buzzer block is defined. function_name : passBUZEER
 	  ['-'],
-	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection', 'passSteppingAD', '일반', '1', 0, '시계'],
-	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection 회전량 %n', 'passSteppingADA', '일반', '1', 0, '시계', 0],
+	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection', 'passSteppingAD', '일반', 1, 0, '시계'],
+	  [' ', '%m.networks %m.steppingMotor 번 스테핑모터 속도 %n 방향 %m.stepDirection 회전량 %n', 'passSteppingADA', '일반', 1, 0, '시계', 0],
 		//Stepping Motor is defined.
 		//function_name : passSteppingAD	passSteppingADA
 	  ['-'],																											//DC motor is defined
-	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', '1', 0, '시계'],		//function_name : passDCDA passRDCDA	
+	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', 1, 0, '시계'],		//function_name : passDCDA passRDCDA	
 	  ['-'],
 	  [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
     ]
@@ -1332,7 +1331,7 @@
 		sw: ['Button 1', 'Button 2', 'Button 3', 'Button 4', 'Button J'],
 		//Buttons, Joystick sensor and potencyomer sensor listing
 
-		btnStates: ['0', '1'],
+		btnStates: [0, 1],
 		//0 : pressed  1: released
 
 		hwIn: [ 'temperature sensor', 'humidity sensor', 'light sensor', 'Analog 1', 'Analog 2', 'Analog 3', 'Analog 4'],						
@@ -1344,7 +1343,7 @@
 
 		servosport: [ 'Port 1', 'Port 2', 'Port 3', 'Port 4', 'Port 5', 'Port 6', 'Port 7', 'Port 8'],
 
-		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
+		touch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
 		// Touch sensor and Remoted touch sensor listing
 	
 		motionb: ['infrared 1', 'infrared 2', 'infrared 3', 
@@ -1356,11 +1355,11 @@
 		//infrared sensor and acceler and pacceler sensor listing
 		//photogate and gate status is defined.
 
-		steppingMotor: ['1', '2'],
+		steppingMotor: [1, 2],
 		stepDirection:['clockwise','declockwise'],
 		//steppingMotor is defined.
 
-		dcMotor: ['1','2','3']
+		dcMotor: [1, 2, 3]
 		//dcMotor is defined.
 
     },
@@ -1370,7 +1369,7 @@
 		sw : ['버튼 1', '버튼 2', '버튼 3', '버튼 4', '버튼 J'],
 		//Joystick sensor and potencyomer sensor listing
 
-		btnStates: ['0', '1'],
+		btnStates: [0, 1],
 		// 0 : 눌림  1 : 떼짐
 
 		hwIn: ['온도', '습도','조도','아날로그 1', '아날로그 2', '아날로그 3', '아날로그 4'],
@@ -1381,7 +1380,7 @@
 		servos: ['서보모터 1', '서보모터 2', '서보모터 3', '서보모터 4'],
 		servosport: [ '포트 1', '포트 2', '포트 3', '포트 4', '포트 5', '포트 6', '포트 7', '포트 8'],
 
-		touch: ['1', '2', '3', '4', '5', '6', '7','8','9','10','11','12'],
+		touch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
 		// Touch sensor listing
 
 		motionb: ['적외선 감지 1', '적외선 감지  2', '적외선 감지  3', 
@@ -1393,11 +1392,11 @@
 		//infrared sensor and acceler and pacceler sensor listing
 		//photogate and gate status is defined.
 
-		steppingMotor: ['1', '2'],
+		steppingMotor: [1, 2],
 		stepDirection:['시계','반시계'],
 		//steppingMotor is defined.
 
-		dcMotor: ['1','2','3']
+		dcMotor: [1, 2, 3]
 		//dcMotor is defined.
     }
   };
