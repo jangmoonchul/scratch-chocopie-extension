@@ -421,7 +421,6 @@
 			parsingSysex = true;		//	2016.04.23 확인완료
 			sysexBytesRead = 0
 			storedInputData[sysexBytesRead++] = detail;
-			//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 			console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
 		}else if (detail === (SCBD_CHOCOPI_USB | 0x01) || detail === (SCBD_CHOCOPI_BLE | 0x01) || detail === (SCBD_CHOCOPI_USB | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x03)){
