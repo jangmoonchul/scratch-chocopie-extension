@@ -351,9 +351,9 @@
 			break;	//오류코드 (2 Byte), 참고데이터 (8 Byte)
         }else{
 			if (i < 17 && sysexBytesRead < 16)								//
-				storedInputData[sysexBytesRead++] = inputData[i-1];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
+				storedInputData[sysexBytesRead++] = inputData[i];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
 			else															//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
-				continue;
+				continue;													//i가 먼저 끝나면서 데이터를 
         }
 		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 
@@ -408,7 +408,7 @@
       } else {
         if (inputData[i] >= 0xE0) {							//0xE0 이상의 값을 시스템 메세지용 값으로 분리시킴
 			detail = inputData[i];							//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
-															
+			
         } else {														//SYSTEM_MESSAGE 가 아닌 0xE0 이상의 값은, DC_MOTOR 와 SERVO의 가능성이 있음			
 		  detail = inputData[i] & 0xF0;									// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
           multiByteChannel = inputData[i] & 0x0F;						// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
@@ -419,7 +419,7 @@
 		//if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE || detail === SCBD_CHOCOPI_USB_PING) && SYSTEM_MESSAGE){
 		if(detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE || detail === SCBD_CHOCOPI_USB_PING || detail === (SCBD_CHOCOPI_USB | 0x0F)){
 			parsingSysex = true;																			//	2016.04.23 확인완료
-			sysexBytesRead = 0;
+			storedInputData[sysexBytesRead++] = detail;
 			console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
 		}else if (detail === (SCBD_CHOCOPI_USB | 0x01) || detail === (SCBD_CHOCOPI_BLE | 0x01) || detail === (SCBD_CHOCOPI_USB | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x03)){
