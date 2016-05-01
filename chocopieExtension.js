@@ -307,7 +307,7 @@
       if (parsingSysex) {
 		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		//if ( sysexBytesRead === 11 && (storedInputData[1] === CPC_VERSION & LOW) && (storedInputData[2] === CPC_VERSION & HIGH) ) {	//새 보드 도착시 패치요망
-		if ( i === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
+		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
 		 
@@ -328,13 +328,18 @@
 				connectHW(storedInputData[i], i-3);
 			}
 		  }
+		  break;
         } else if (sysexBytesRead === 3 && (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01) || storedInputData[0] ===(SCBD_CHOCOPI_BLE | 0x01))){
+			parsingSysex = false;
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
-        } else if ((storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)) || (storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x02))){
+			break;
+        } else if (sysexBytesRead === 1 && ( (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)) || (storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x02)) ) ){
 			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+			parsingSysex = false;
 			removeHW(storedInputData[1]);
-
+			break;
         } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
+			parsingSysex = false;
 			if (storedInputData[1] == 0){ 							//연결해제
 				for (var i=8; i < 16; i++){							//0xF3, STATUS (inputData, storedInputData)
 					removeHW(i);									//2016.04.30 재패치
@@ -346,7 +351,9 @@
 				device.send(output_block.buffer);
 				console.log("BLE is connected");
 			}
+			break;
         }else if (sysexBytesRead === 10 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
+			parsingSysex = false;
 			console.log('에러발생 ' + storedInputData[1] + storedInputData[2] + '에서 ' + storedInputData[3] + storedInputData[4] + storedInputData[5] + storedInputData[6] + storedInputData[7] + storedInputData[8] + storedInputData[9] + storedInputData[10]);	
 			break;	//오류코드 (2 Byte), 참고데이터 (8 Byte)
         }else{
@@ -355,14 +362,14 @@
 			else															//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 				continue;													//i가 먼저 끝나면서 데이터를 
         }
-		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
-
+		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+	
       } else if (waitForData > 0 && inputData[i] <= 0xCF) {	
-        storedInputData[--waitForData] = inputData[i];						//0xE0 이상에 대한 값이 겹칠지라도, 초반 GET_BLOCK 확보 이후이므로 문제가 없음
-        if (executeMultiByteCommand !== 0 && waitForData === 0) {			//겹치게 될 경우, inputData[1] 번에 오는 데이터로 판별해야함.
-		  if (executeMultiByteCommand === SCBD_SENSOR){												// LOW, HIGH (inputData)
-																									// HIGH, LOW (storedInputData)
-              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		
+        storedInputData[--waitForData] = inputData[i];						// inputData 를 지속적으로 저장하는 과정에서 0xCF (207) 보다 작은값을 판별한다면,
+        if (executeMultiByteCommand !== 0 && waitForData === 0) {			// inputData 를 기준으로 판별하면 문제가 생길 가능성이 있음. 
+		  if (executeMultiByteCommand === SCBD_SENSOR){						// LOW HIGH 로 나눠서온다면 문제가 없을 것으로 예상
+																									// LOW, HIGH (inputData)
+              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		// HIGH, LOW (storedInputData)
 			   	
 		  }else if (executeMultiByteCommand === SCBD_TOUCH){
 			  
@@ -409,24 +416,23 @@
         if (inputData[i] >= 0xE0) {							//0xE0 이상의 값을 시스템 메세지용 값으로 분리시킴
 			detail = inputData[i];							//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
 			
-        } else {														//SYSTEM_MESSAGE 가 아닌 0xE0 이상의 값은, DC_MOTOR 와 SERVO의 가능성이 있음			
-		  detail = inputData[i] & 0xF0;									// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xBF 까지이므로 이 부분을 반드시 타게됨
-          multiByteChannel = inputData[i] & 0x0F;						// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
-		  port = hwList.search_bypin(multiByteChannel);					// -> hwList.search_bypin 로 조사해서 처리
+        } else {											//SYSTEM_MESSAGE 가 아닌 0xE0 이상의 값은, DC_MOTOR 와 SERVO의 가능성이 있음			
+		  detail = inputData[i] & 0xF0;						// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xCF 까지이므로 이 부분을 반드시 타게됨
+          multiByteChannel = inputData[i] & 0x0F;			// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
+		  port = hwList.search_bypin(multiByteChannel);		// -> hwList.search_bypin 로 조사해서 처리
         }
 
-
-		//if((detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE || detail === SCBD_CHOCOPI_USB_PING) && SYSTEM_MESSAGE){
 		if(detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE || detail === SCBD_CHOCOPI_USB_PING || detail === (SCBD_CHOCOPI_USB | 0x0F)){
-			parsingSysex = true;		//	2016.04.23 확인완료
+			parsingSysex = true;		//	시스템 메세지 분류 2016.04.23 확인완료
 			sysexBytesRead = 0
 			storedInputData[sysexBytesRead++] = detail;
-			console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+			//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 			console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
 		}else if (detail === (SCBD_CHOCOPI_USB | 0x01) || detail === (SCBD_CHOCOPI_BLE | 0x01) || detail === (SCBD_CHOCOPI_USB | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x03)){
-			parsingSysex = true;																			//	2016.04.23 확인완료
+			parsingSysex = true;		//	시스템 메세지 분류 2016.04.23 확인완료
 			sysexBytesRead = 0;
+			storedInputData[sysexBytesRead++] = detail;
 		}else if (port.name === SCBD_SENSOR){
 			waitForData = 2;							//전위연산자를 통해서 저장하기 때문에 2 Byte 로 설정		2016.04.23 확인완료
 			executeMultiByteCommand = port.name;		//Detail/Port, 2 Byte = 2 Byte
