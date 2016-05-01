@@ -614,28 +614,31 @@
 		if(!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-				if (TOUCH_REPOTER === sensor_detail[0] || TOUCH_REPOTER === sensor_detail[1])
+				if (TOUCH_REPOTER === sensor_detail[0])
 				{
-					var button_state = digitalRead(hw.pin) & 0x00F0,
-						button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
-					if (button_state === sensor_detail[0]){
+					//var button_state = digitalRead(hw.pin) & 0x00F0,			//혹시모른 예외상황에 대비했던 코드
+					var	button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
+					//if (button_state === sensor_detail[0]){
 						//꺼짐
 						if (button_num === touch){
 							return false;
 						}			
-					} else if (button_state === sensor_detail[1]){
-						//켜짐
-						if (button_num === touch){
-							return true;
-						}
-					}
-
+					//} 
+					
 					/*   0, Button Number, Detail (on, off)/Port	(storedInputData)
 					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);
 					0000 0000 0000 0000
 					0000 1001 1111 0000
 					*/
 					//console.log('networks is ' + networks + ' sended'); 
+				}else if (TOUCH_REPOTER === sensor_detail[1]){
+					var	button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
+					//if (button_state === sensor_detail[1]){
+						//켜짐
+						if (button_num === touch){
+							return true;
+						}
+					//}
 				}else if(TOUCH_REPOTER === sensor_detail[2]){	
 					var button_num = digitalRead(hw.pin) & 0x0FFF;
 						
@@ -667,21 +670,18 @@
 		if(!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-				if (TOUCH_REPOTER === sensor_detail[0] || TOUCH_REPOTER === sensor_detail[1]){
-					var button_state = digitalRead(hw.pin) & 0x00F0,
-						button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
+				if (TOUCH_REPOTER === sensor_detail[0] ){
+					//var button_state = digitalRead(hw.pin) & 0x00F0,
+					var	button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
 
-					if (button_state === sensor_detail[0] && btnStates === 0){
+					//if (button_state === sensor_detail[0] && btnStates === 0){
+					if (btnStates === 0){
 						//꺼짐
 						if (button_num === touch){
 							return false;
 						}				
-					}else if (button_state === sensor_detail[1] && btnStates === 1){
-						//켜짐
-						if (button_num === touch){
-							return true;
-						}
 					}
+					
 					/*  0, Button Number, Detail (on, off)/Port	(storedInputData)
 					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
 					0000 0000 0000 0000
@@ -689,6 +689,14 @@
 
 					console.log('networks is ' + networks + ' sended'); 
 					*/				
+				} else if (TOUCH_REPOTER === sensor_detail[1]){
+					var	button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
+					if (btnStates === 1){
+						//켜짐
+						if (button_num === touch){
+							return true;
+						}
+					}
 				}else if(TOUCH_REPOTER === sensor_detail[2]){
 					var button_num = digitalRead(hw.pin) & 0x0FFF;
 						
