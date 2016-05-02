@@ -231,7 +231,7 @@
 		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
 		
-		console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
+		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
           poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
@@ -242,7 +242,7 @@
 		  device.send(output_block.buffer);	
           setTimeout(init, 200);
 		  sysexBytesRead = 0;
-		  console.log('I send cpc_get_block');
+		  //console.log('I send cpc_get_block');
 		  /* Connection 처리가 완료되었으므로, 이 곳에서 CPC_GET_BLOCK 에 대한 처리를 하는게 맞음 (1차 확인) -> (2차 확인 필요) */		
         }
         pinging = false;
@@ -291,7 +291,6 @@
 	}
 	/*2 Byte -> 1 Byte 간으로 축약 및 재확장에 따라서 데이터 손실을 해결하기 위해서 함수제작 
 	http://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript 
-
 	*/
 
   function processInput(inputData) {
@@ -374,8 +373,8 @@
 				
 			  } else {																						
 				//setDigitalInputs(multiByteChannel, storedInputData[0]);								// 들어오는 데이터가 1 Byte 인 경우
-				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);			// Flag (on, off)	(inputData)
-																										// 0, Flag Number 	(storedInputData)
+				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);			// Button Number (on, off)	(inputData)
+																										// 0, Button Number 		(storedInputData)
 			  }																							// 들어오는 데이터에 대해서 디테일을 확인한 리포터를 보냄
 			 
 		  }else if (executeMultiByteCommand === SCBD_SWITCH){
@@ -388,8 +387,8 @@
 				}																
 			  }else{																					// 예상값 0x10, 0x20, ....	
 				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + SWITCH_REPOTER);			// 들어오는 데이터가 1 Byte 인 경우
-			  }																							// Flag (on, off)	(inputData)
-																										// 0, Flag Number	(storedInputData)
+			  }																							// Button Number (on, off)	(inputData)
+																										// 0, Button Number			(storedInputData)
 		  }else if (executeMultiByteCommand === SCBD_MOTION){												
 																										//1번(LOW, HIGH), 2번(LOW, HIGH), 3번(LOW, HIGH) (inputData)
 			  if (waitForData === 0){																	//3번(HIGH, LOW), 2번(HIGH, LOW), 1번(HIGH, LOW) (storedInputData)
@@ -422,7 +421,7 @@
 			sysexBytesRead = 0
 			storedInputData[sysexBytesRead++] = detail;
 			//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
-			console.log('detail parsing success and parsingSysex running');
+			//console.log('detail parsing success and parsingSysex running');
 			console.log('ping count ' + pingCount);
 		}else if (detail === (SCBD_CHOCOPI_USB | 0x01) || detail === (SCBD_CHOCOPI_BLE | 0x01) || detail === (SCBD_CHOCOPI_USB | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x02) || detail === (SCBD_CHOCOPI_BLE | 0x03)){
 			parsingSysex = true;		//	시스템 메세지 분류 2016.04.23 확인완료
@@ -430,18 +429,18 @@
 			storedInputData[sysexBytesRead++] = detail;
 		}else if (port.name === SCBD_SENSOR){
 			waitForData = 2;							//전위연산자를 통해서 저장하기 때문에 2 Byte 로 설정		2016.04.23 확인완료
-			executeMultiByteCommand = port.name;		//Detail/Port, 2 Byte = 2 Byte
+			executeMultiByteCommand = port.name;		//2 Byte = 2 Byte
 			SENSOR_REPOTER = detail;
 		}else if (port.name === SCBD_TOUCH){
-			waitForData = 2;							//Detail/Port, 1 Byte = 1 Byte or Detail/Port, 2 Byte = 2 Byte	2016.04.23 확인완료
+			waitForData = 2;							//1 Byte, 2 Byte = 2 Byte	2016.04.23 확인완료
 			executeMultiByteCommand = port.name;
 			TOUCH_REPOTER = detail;
 		}else if (port.name === SCBD_SWITCH){
-			waitForData = 2;							//Detail/Port, 1 Byte = 1 Byte or Detail/Port, 2 Byte = 2 Byte	2016.04.23 확인완료			
+			waitForData = 2;							//1 Byte, 2 Byte = 2 Byte	2016.04.23 확인완료			
 			executeMultiByteCommand = port.name;		
 			SWITCH_REPOTER = detail;
 		}else if (port.name === SCBD_MOTION){
-			waitForData = 6;							//Detail/Port, 6 Byte = 6 Byte or Detail/Port, 4 Byte = 4 Byte or Detail/Port, 1 Byte = 1 Byte
+			waitForData = 6;							// 6 Byte, 4 Byte, 1 Byte = 6 Byte
 			executeMultiByteCommand = port.name;
 			MOTION_REPOTER = detail;
 		}
@@ -1117,9 +1116,9 @@
 				}
 
 				if (stepDirection === menus[lang]['stepDirection'][0])
-					direction_data = 1;
+					direction_data = 1;	//시계
 				else
-					direction_data = 0;
+					direction_data = 0;	//반시계
 				
 				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
 					speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
@@ -1142,23 +1141,6 @@
 		var hw = hwList.search(SCBD_SERVO),
 			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
 		
-		/*var servo_hooker0 = hwList.search_bypin(0),
-			servo_hooker1 = hwList.search_bypin(1),
-			servo_hooker2 = hwList.search_bypin(2),
-			servo_hooker3 = hwList.search_bypin(3),
-			servo_hooker4 = hwList.search_bypin(4),
-			servo_hooker5 = hwList.search_bypin(5),
-			servo_hooker6 = hwList.search_bypin(6),
-			servo_hooker7 = hwList.search_bypin(7),
-			servo_hooker8 = hwList.search_bypin(8),
-			servo_hooker9 = hwList.search_bypin(9),
-			servo_hooker10 = hwList.search_bypin(10),
-			servo_hooker11 = hwList.search_bypin(11),
-			servo_hooker12 = hwList.search_bypin(12),
-			servo_hooker13 = hwList.search_bypin(13),
-			servo_hooker14 = hwList.search_bypin(14),
-			servo_hooker15 = hwList.search_bypin(15);
-			*/
 		var servo_hooker = new Uint8Array([hwList.search_bypin(0), hwList.search_bypin(1), hwList.search_bypin(2), hwList.search_bypin(3),
 										hwList.search_bypin(4), hwList.search_bypin(5), hwList.search_bypin(6), hwList.search_bypin(7),
 										hwList.search_bypin(8), hwList.search_bypin(9), hwList.search_bypin(10), hwList.search_bypin(11),
@@ -1177,7 +1159,7 @@
 				for (var i=0; i < 8; i++){		//네트워크가 일반인경우 0번부터 7번까지 담당함.
 					if (servo_hooker[i].name === SCBD_SERVO){
 						var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[i].pin, sensor_detail[1] | servo_hooker[i].pin, sensor_detail[2] | servo_hooker[i].pin, sensor_detail[3] | servo_hooker[i].pin ]);
-						//var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
+						
 						var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
 							servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
 						if (servosport === menus[lang]['servosport'][i]){
@@ -1221,7 +1203,7 @@
 				for (var i=8; i < 16; i++){				//네트워크가 무선인경우 8번부터 15번까지 담당함
 					if (servo_hooker[i].name === SCBD_SERVO){
 						var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[i].pin, sensor_detail[1] | servo_hooker[i].pin, sensor_detail[2] | servo_hooker[i].pin, sensor_detail[3] | servo_hooker[i].pin ]);
-						//var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker0.pin, sensor_detail[1] | servo_hooker0.pin, sensor_detail[2] | servo_hooker0.pin, sensor_detail[3] | servo_hooker0.pin ]);
+						
 						var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
 							servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
 						if (servosport === menus[lang]['servosport'][i]){
