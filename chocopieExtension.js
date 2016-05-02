@@ -248,10 +248,6 @@
         pinging = false;
         pingCount = 0;
 	}else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
-		var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
-		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-		//핑을 통해서 지속적으로 연결된 블록리스트를 요청함으로써, BLE 활성화 상태를 알아낼 수 있음.. 연결된 BLE + USB 블록들이 동시에 오는지 확인필요
-
         if (!connected) {
           clearInterval(poller);		
           poller = null;				
@@ -259,7 +255,6 @@
           watchdog = null;				
           connected = true;
 
-		  device.send(output_block.buffer);
           setTimeout(init, 200);			
 		  sysexBytesRead = 0;		
         }
@@ -346,9 +341,9 @@
 				}
 				console.log("BLE is disconnected");
 			}else if (storedInputData[1] == 1){						
-				var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
+				/*var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
 				var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-				device.send(output_block.buffer);
+				device.send(output_block.buffer);*/
 				console.log("BLE is connected");
 			}
 			break;
@@ -614,16 +609,12 @@
 		if(!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-				if (TOUCH_REPOTER === sensor_detail[0])
-				{
-					//var button_state = digitalRead(hw.pin) & 0x00F0,			//혹시모른 예외상황에 대비했던 코드
+				if (TOUCH_REPOTER === sensor_detail[0]){
 					var	button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
-					//if (button_state === sensor_detail[0]){
-						//꺼짐
-						if (button_num === touch){
-							return false;
-						}			
-					//} 
+					//꺼짐
+					if (button_num === touch){
+						return 0;
+					}			
 					
 					/*   0, Button Number, Detail (on, off)/Port	(storedInputData)
 					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);
@@ -633,22 +624,20 @@
 					//console.log('networks is ' + networks + ' sended'); 
 				}else if (TOUCH_REPOTER === sensor_detail[1]){
 					var	button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
-					//if (button_state === sensor_detail[1]){
-						//켜짐
-						if (button_num === touch){
-							return true;
-						}
-					//}
+					//켜짐
+					if (button_num === touch){
+						return 1;
+					}
 				}else if(TOUCH_REPOTER === sensor_detail[2]){	
 					var button_num = digitalRead(hw.pin) & 0x0FFF;
 						
 					for (var i=0; i < 13; i++){
 						if ((button_num >> i) & 0x0001 === 1){
 							if (touch === menus[lang]['touch'][i])
-								return true;
+								return 1;
 						}else if ((button_num >> i) & 0x0001 === 0){
 							if (touch === menus[lang]['touch'][i])
-								return false;
+								return 0;
 						}
 					}
 					/* 모든 터치센서 번호 전송
@@ -671,14 +660,11 @@
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
 				if (TOUCH_REPOTER === sensor_detail[0] ){
-					//var button_state = digitalRead(hw.pin) & 0x00F0,
 					var	button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
-
-					//if (button_state === sensor_detail[0] && btnStates === 0){
 					if (btnStates === 0){
 						//꺼짐
 						if (button_num === touch){
-							return false;
+							return 0;
 						}				
 					}
 					
@@ -694,7 +680,7 @@
 					if (btnStates === 1){
 						//켜짐
 						if (button_num === touch){
-							return true;
+							return 1;
 						}
 					}
 				}else if(TOUCH_REPOTER === sensor_detail[2]){
@@ -703,10 +689,10 @@
 					for (var i=0; i < 13; i++){
 						if ((button_num >> i) & 0x0001 === menus[lang]['btnStates'][1]){
 							if (touch === menus[lang]['touch'][i])
-								return true;
+								return 1;
 						}else if ((button_num >> i) & 0x0001 === menus[lang]['btnStates'][0]){
 							if (touch === menus[lang]['touch'][i])
-								return false;
+								return 0;
 						}
 					}
 				}
@@ -722,10 +708,9 @@
 		if (!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-				if (SWITCH_REPOTER === sensor_detail[0] || SWITCH_REPOTER === sensor_detail[1]){
-					
+				if (SWITCH_REPOTER === sensor_detail[0]){
 					var button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
-					if (button_state === sensor_detail[0] && btnStates === 0){
+					if (btnStates === 0){
 						// 버튼 꺼짐
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
@@ -734,7 +719,9 @@
 								}
 							}
 						}
-					}else if (button_state === sensor_detail[1] && btnStates === 1){
+					}
+				}else if (SWITCH_REPOTER === sensor_detail[1]){
+					if (btnStates === 1){
 						// 버튼 켜짐
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
@@ -744,6 +731,7 @@
 							}
 						}
 					}
+				}
 					/*  0, Button Number, Detail (on, off)/Port	(storedInputData)
 					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
 					0000 0000 0000 0000
@@ -751,44 +739,55 @@
 
 					console.log('networks is ' + networks + ' sended'); 
 					*/
-				}
 			}
 		}
 	};
 	//REPOTER PATCH CLEAR
+
+	ext.isSwButtonPressed = function(networks, sw){
+		//Boolean Block
+		var hw = hwList.search(SCBD_SWITCH),
+			sensor_detail = new Uint8Array([0x00, 0x10]);
+		if (!hw) return;
+		else{
+			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
+				if (SWITCH_REPOTER === sensor_detail[0]){
+					var button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
+					
+					// 버튼 꺼짐
+					for (var i=1; i < 6; i++){
+						if (button_num === i){
+							if (sw === menus[lang]['sw'][i-1]){
+								return false;
+							}
+						}
+					}
+				}else if (SWITCH_REPOTER === sensor_detail[1]){
+					// 버튼 켜짐
+					for (var i=1; i < 6; i++){
+						if (button_num === i){
+							if (sw === menus[lang]['sw'][i-1]){
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+	};
+	//2016.05.01 스위치 블록 boolean 패치에 따라서 생겨난 함수
 	
 	ext.isButtonPressed = function(networks, buttons){
-		// 버튼 1, 2, 3, 4, 5(J), 조이스틱X, 조이스틱Y, 포텐시오미터
+		// 조이스틱X, 조이스틱Y, 포텐시오미터
 		var hw = hwList.search(SCBD_SWITCH),
 			sensor_detail = new Uint8Array([0x00, 0x10, 0x30, 0x40, 0x50]);
 
 		if (!hw) return;
 		else{
 			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1]){
-				if ( SWITCH_REPOTER === sensor_detail[0] || SWITCH_REPOTER === sensor_detail[1] ){
-					var button_num = (digitalRead(hw.pin) & 0x0F00) >> 7;
-					if (button_state === sensor_detail[0]){
-						// 버튼 꺼짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['buttons'][i-1]){
-									return false;			//최대 4번인덱스 (버튼 J) 까지 참조가능
-								}
-							}
-						}
-					}else if (button_state === sensor_detail[1]){
-						// 버튼 켜짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['buttons'][i-1]){
-									return true;
-								}
-							}
-						}
-					}
-				} else if (SWITCH_REPOTER === sensor_detail[2]){
+				if (SWITCH_REPOTER === sensor_detail[2]){
 					// 포텐시오미터를 REPOTER 값에 따라서 처리함	--> 아날로그로
-					if (buttons === menus[lang]['buttons'][7]){
+					if (buttons === menus[lang]['buttons'][2]){
 						return analogRead(hw.pin);
 					}
 					/*
@@ -797,12 +796,12 @@
 					*/
 				}else if (SWITCH_REPOTER === sensor_detail[3]){
 					// 조이스틱X
-					if (buttons === menus[lang]['buttons'][5]){
+					if (buttons === menus[lang]['buttons'][0]){
 						return digitalRead(hw.pin);
 					}
 				}else if (SWITCH_REPOTER === sensor_detail[4]){
 					// 조이스틱 Y
-					if (buttons === menus[lang]['buttons'][6]){
+					if (buttons === menus[lang]['buttons'][1]){
 						return digitalRead(hw.pin);
 					}
 				}
@@ -810,7 +809,7 @@
 		}
 	};
 	//REPOTER PATCH CLEAR
-	
+
 	ext.motionbRead = function(networks, motionb){
 		//console.log('motionbRead is run');
 		var hw = hwList.search(SCBD_MOTION),
@@ -1286,10 +1285,10 @@
 	  ['r', '%m.networks touch sensor %m.touch is pressed?', 'isTouchButtonPressed', 'normal', 1],		//Touch Sensor is boolean block (normal, remote)
 	  ['h', 'when %m.networks touch sensor %m.touch is %m.btnStates', 'whenTouchButtonChandged', 'normal', 1, 0],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
       ['-'],
-      ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', 0],		//sw block (button 1, .. )
-      ['b', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Button 1'],				//buttons ( button 1,.. , Joystick X, ..)
-																												//Buttons, Joystick and Potencyometer function is combined.
-	  ['-'],																									//function_name : whenButton	isButtonPressed
+      ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', 0],	//sw block (button 1, .. )		function_name :
+      [' ', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Joystick X'],			//buttons ( button 1, 2, 3, 4)	whenButton
+	  ['b', '%m.networks sw block %m.sw of value', 'isSwButtonPressed', 'normal','Button 1'],					//Joystick and Potencyometer	isButtonPressed
+	  ['-'],																									
 	  ['r', '%m.networks motion-block %m.motionb of value', 'motionbRead', 'normal','infrared 1'],								//Motion block is infrared, acceler and so on
 	  ['h', 'when %m.networks motion-block %m.photoGate is %m.gateState', 'photoGateRead', 'normal', 'photoGate 1', 'blocked'],	//function_name : motionbRead	photoGateRead	
 	  ['-'],
@@ -1312,8 +1311,8 @@
 	  ['h', '%m.networks 터치센서 %m.touch 가 %m.btnStates 가 될 때', 'whenTouchButtonChandged', '일반', 1, 0],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
 	  ['-'],																											//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', 0],				//sw block (button 1, .. )
-      ['b', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','버튼 1'],							//buttons ( button 1,.. , Joystick X, ..)				
-																													//Buttons, Joystick and Potencyometer function is combined.
+      [' ', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','조이스틱 X'],							//buttons ( button 1, 2, 3, 4, J)				
+	  ['b', '%m.networks 스위치블록 %m.sw 의 값', 'isSwButtonPressed', '일반','버튼 1'],							//Joystick and Potencyometer function is combined.
 	  ['-'],																										//function_name :  isButtonPressed	whenButton
 	  ['r', '%m.networks 모션블록 %m.motionb 의 값', 'motionbRead', '일반','적외선 감지 1'],								//Motion block is infrared, acceler and so on
 	  ['h', '%m.networks 모션블록 %m.photoGate 가 %m.gateState', 'photoGateRead', '일반', '포토게이트 1', '막힐때'],	//function_name : motionbRead	photoGateRead	
@@ -1335,7 +1334,7 @@
   var menus = {
     en: {
 		networks: ['normal', 'remote'],
-		buttons: ['Button 1', 'Button 2', 'Button 3', 'Button 4', 'Button J', 'Joystick X', 'Joystick Y', 'Potencyometer'],
+		buttons: ['Joystick X', 'Joystick Y', 'Potencyometer'],
 		sw: ['Button 1', 'Button 2', 'Button 3', 'Button 4', 'Button J'],
 		//Buttons, Joystick sensor and potencyomer sensor listing
 
@@ -1373,7 +1372,7 @@
     },
     ko: {
 		networks: ['일반', '무선'],
-		buttons: ['버튼 1', '버튼 2', '버튼 3', '버튼 4', '버튼 J', '조이스틱 X', '조이스틱 Y', '포텐시오미터'],
+		buttons: ['조이스틱 X', '조이스틱 Y', '포텐시오미터'],
 		sw : ['버튼 1', '버튼 2', '버튼 3', '버튼 4', '버튼 J'],
 		//Joystick sensor and potencyomer sensor listing
 
