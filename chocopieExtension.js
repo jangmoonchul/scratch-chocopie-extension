@@ -93,15 +93,16 @@
     this.devices = [];
 
     this.add = function(dev, pin) {
-      var device = this.search(dev);
+      //var device = this.search(dev);
 	  var device_hooker = this.search_bypin(pin);
 
-      if (!device || (dev === SCBD_SERVO && !device_hooker)) {	//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
+      if (!device_hooker) {										//SCBD_SERVO는 여러개가 삽입 될 수 있음. 2016.04.27 패치
         device = {name: dev, pin: pin, val: 0};					//이름이 SCBD_SERVO 이면서 핀이 비어있다면 추가. 2016.04.29 패치
-        this.devices.push(device);
-
+        this.devices.push(device);								//SCBD_SERVO 이외에도 여러개의 모듈이 총 2개씩 삽입되어질 수 있음. 
+																//이름이 아닌 pin으로 검색해서 처리해야함.		2016.05.03 패치
       } else {
-		device.pin = pin;
+		//device.pin = pin;
+		device.name = dev;
 	    device.val = 0;
       }
     };
@@ -300,8 +301,8 @@
 		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		//if ( sysexBytesRead === 11 && (storedInputData[1] === CPC_VERSION & LOW) && (storedInputData[2] === CPC_VERSION & HIGH) ) {	//새 보드 도착시 패치요망
-		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
+		if ( sysexBytesRead === 11 && (storedInputData[1] === CPC_VERSION & LOW) && (storedInputData[2] === CPC_VERSION & HIGH) ) {	//새 보드 도착시 패치요망
+		//if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
 		 
@@ -575,8 +576,7 @@
 			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);	//detail and port
 			//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
 			//SCBD_SENSOR 가 등록된 핀을 찾아오기에, 일반과 무선 둘다 처리가능
-			if (networks === menus[lang]['networks'][0] || networks === menus[lang]['networks'][1])		
-			{
+			if (networks === menus[lang]['networks'][0]){
 				for (var i=0;i < dnp.length ; i++)
 				{
 					if (hwIn === menus[lang]['hwIn'][i])
@@ -596,7 +596,8 @@
 						}
 					}
 				}
-			}	
+			}else if (networks === menus[lang]['networks'][1]){
+			}
 		}
 	};
 	//REPOTER PATCH CLEAR
