@@ -263,7 +263,7 @@
           watchdog = null;				//감시견을 옆집 개나줘버림
           connected = true;
 
-		  device.send(output_block.buffer);	
+		  //device.send(output_block.buffer);	
           setTimeout(init, 200);
 		  sysexBytesRead = 0;	
         }
@@ -581,6 +581,54 @@
 
 //-------------------------------------------------------------------SAMPLING FUNCTION START
 
+	var low_data = escape_control(SAMPLING_RATE & LOW),
+		high_data = escape_control(SAMPLING_RATE & HIGH);
+	
+	var	check_low = 0,
+		check_high = 0;
+
+	var sample_functions = {
+		sensor_sender: function(port) {
+			var hw = hwList.search_bypin(port),	
+				sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]);
+			
+			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw_normal.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);
+
+			for (var i=0;i < dnp.length ; i++){
+				check_low = checkSum( dnp[i], low_data );
+				check_high = checkSum( dnp[i], high_data );
+		
+				var sensor_output_low = new Uint8Array([dnp[i], low_data, check_low]),
+					sensor_output_high = new Uint8Array([dnp[i], high_data, check_high]);
+
+				device.send(sensor_output_low.buffer);
+				device.send(sensor_output_high.buffer);				
+			}
+		},
+		// 리포터 센더 정의 완료. 터치는 센더가 없음.
+		motion_sendor: function(port) {
+			var hw = hwList.search_bypin(port),	
+				sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);	
+
+			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin, sensor_detail[2] | hw_normal.pin, sensor_detail[3] | hw_normal.pin, sensor_detail[4] | hw_normal.pin ]);	
+			
+			for (var i=0;i < dnp.length -1; i++){
+				check_low = checkSum( dnp[i], low_data );	
+				check_high = checkSum( dnp[i], high_data );
+					
+				var motion_output_low = new Uint8Array([dnp[i], low_data, check_low]),
+					motion_output_high = new Uint8Array([dnp[i], high_data, check_high]);
+					
+				device.send(motion_output_low.buffer);
+				device.send(motion_output_high.buffer);
+			}
+			var motion_output = new Uint8Array([dnp[4],  dnp[4]]);
+				device.send(motion_output.buffer);
+				//포토게이트의 경우 보내는 데이터가 없기 때문에, detail/port 이후에 checkSum 을 예상하여 dnp를 그대로 보낸다.
+				//check_low = checkSum( dnp[4], low_data );		//포토게이트류 -> 데이터가 없기 때문에, XOR 과정을 거쳐도 체크섬은 그대로 유지됨
+				//check_high = checkSum( dnp[4], high_data );	//데이터를 보내지 않기 때문에 dnp를 그대로전송
+		}
+	};
 	
 	//Function added Line -----------------------------------------------------------------------------	
 
@@ -920,59 +968,6 @@
 			}
 	};
 	//REPOTER PATCH CLEAR
-
-	var low_data = escape_control(SAMPLING_RATE & LOW),
-		high_data = escape_control(SAMPLING_RATE & HIGH);
-	
-	var	check_low = 0,
-		check_high = 0;
-
-	var sample_functions = {
-		sensor_sender: function(port) {
-			var hw = hwList.search_bypin(port),	
-				sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]);
-			
-			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw_normal.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);
-
-			for (var i=0;i < dnp.length ; i++){
-				check_low = checkSum( dnp[i], low_data );
-				check_high = checkSum( dnp[i], high_data );
-		
-				var sensor_output_low = new Uint8Array([dnp[i], low_data, check_low]),
-					sensor_output_high = new Uint8Array([dnp[i], high_data, check_high]);
-
-				device.send(sensor_output_low.buffer);
-				device.send(sensor_output_high.buffer);				
-			}
-		},
-		// 리포터 센더 정의 완료. 터치는 센더가 없음.
-		motion_sendor: function(port) {
-			var hw = hwList.search_bypin(port),	
-				sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);	
-
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin, sensor_detail[2] | hw_normal.pin, sensor_detail[3] | hw_normal.pin, sensor_detail[4] | hw_normal.pin ]);	
-			
-			for (var i=0;i < dnp.length -1; i++){
-				check_low = checkSum( dnp[i], low_data );	
-				check_high = checkSum( dnp[i], high_data );
-					
-				var motion_output_low = new Uint8Array([dnp[i], low_data, check_low]),
-					motion_output_high = new Uint8Array([dnp[i], high_data, check_high]);
-					
-				device.send(motion_output_low.buffer);
-				device.send(motion_output_high.buffer);
-			}
-			var motion_output = new Uint8Array([dnp[4],  dnp[4]]);
-				device.send(motion_output.buffer);
-				//포토게이트의 경우 보내는 데이터가 없기 때문에, detail/port 이후에 checkSum 을 예상하여 dnp를 그대로 보낸다.
-				//check_low = checkSum( dnp[4], low_data );		//포토게이트류 -> 데이터가 없기 때문에, XOR 과정을 거쳐도 체크섬은 그대로 유지됨
-				//check_high = checkSum( dnp[4], high_data );	//데이터를 보내지 않기 때문에 dnp를 그대로전송
-		},
-
-		thirdFunc: function(string) {
-			// do something
-		}
-	};
 
 	ext.motionbRead = function(networks, motionb){
 		//console.log('motionbRead is run');
