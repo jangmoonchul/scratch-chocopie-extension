@@ -318,9 +318,9 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
 
-		//console.log('inputData [' + i + '] = ' + inputData[i]);
+		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
@@ -346,11 +346,11 @@
         } else if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
 			parsingSysex = false;
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
-			/*
+			
 			if(storedInputData[3] << 7 | storedInputData[2] === SCBD_SENSOR){
 				sample_functions.sensor_sender(storedInputData[1]);			//SCBD_SENSOR 에 대한 샘플링레이트 전송
 			}
-			*/
+			
 			break;
         } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
 			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
@@ -577,7 +577,7 @@
   };
 
 //-------------------------------------------------------------------SAMPLING FUNCTION START
-/*
+
 	var low_data = escape_control(SAMPLING_RATE & LOW),
 		high_data = escape_control(SAMPLING_RATE & HIGH);
 	
@@ -612,7 +612,7 @@
 			// do something
 		}
 	};
-*/	
+	
 	//Function added Line -----------------------------------------------------------------------------	
 
 	//reportSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
