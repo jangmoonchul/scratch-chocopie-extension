@@ -318,9 +318,10 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
 
-		console.log('inputData [' + i + '] = ' + inputData[i]);
+		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		//if ( sysexBytesRead === 11 && (storedInputData[1] === CPC_VERSION & LOW) && (storedInputData[2] === CPC_VERSION & HIGH) ) {	//새 보드 도착시 패치요망
 		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
@@ -346,11 +347,6 @@
         } else if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
 			parsingSysex = false;
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
-			
-			if(storedInputData[3] << 7 | storedInputData[2] === SCBD_SENSOR){
-				sample_functions.sensor_sender(storedInputData[1]);			//SCBD_SENSOR 에 대한 샘플링레이트 전송
-			}
-			
 			break;
         } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
 			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
@@ -364,7 +360,10 @@
 					removeHW(i);									//2016.04.30 재패치
 				}
 				console.log("BLE is disconnected");
-			}else if (storedInputData[1] == 1){
+			}else if (storedInputData[1] == 1){						
+				/*var	check_get_block = checkSum(SCBD_CHOCOPI_BLE, CPC_GET_BLOCK);
+				var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
+				device.send(output_block.buffer);*/
 				console.log("BLE is connected");
 			}
 			break;
@@ -390,13 +389,14 @@
 		  }else if (executeMultiByteCommand === SCBD_TOUCH){
 			  
 			  if ( waitForData === 0 ){																// 모든 터치센서 전송인 경우
-																									// LOW, HIGH (inputData)
+				//setDigitalInputs(multiByteChannel, (inputData[2] << 7) + storedInputData[1]);		// LOW, HIGH (inputData)
 				setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
 				
-			  } else {																					// 들어오는 데이터가 1 Byte 인 경우	
+			  } else {																						
+				//setDigitalInputs(multiByteChannel, storedInputData[0]);								// 들어오는 데이터가 1 Byte 인 경우
 				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);			// Button Number (on, off)	(inputData)
-			  }																							// 0, Button Number 		(storedInputData)
-			  																							// 들어오는 데이터에 대해서 디테일을 확인한 리포터를 보냄
+																										// 0, Button Number 		(storedInputData)
+			  }																							// 들어오는 데이터에 대해서 디테일을 확인한 리포터를 보냄
 			 
 		  }else if (executeMultiByteCommand === SCBD_SWITCH){
 			  
@@ -576,42 +576,7 @@
     device = null;
   };
 
-//-------------------------------------------------------------------SAMPLING FUNCTION START
 
-	var low_data = escape_control(SAMPLING_RATE & LOW),
-		high_data = escape_control(SAMPLING_RATE & HIGH);
-	
-	var	check_low = 0,
-		check_high = 0;
-
-	var sample_functions = {
-		sensor_sender: function(port) {
-			var hw = hwList.search_bypin(port),	
-				sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]);
-			
-			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw_normal.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);
-
-			for (var i=0;i < dnp.length ; i++){
-				check_low = checkSum( dnp[i], low_data );
-				check_high = checkSum( dnp[i], high_data );
-		
-				var sensor_output_low = new Uint8Array([dnp[i], low_data, check_low]),
-					sensor_output_high = new Uint8Array([dnp[i], high_data, check_high]);
-
-				device.send(sensor_output_low.buffer);
-				device.send(sensor_output_high.buffer);				
-			}
-		},
-		// 리포터 센더 정의 완료. 터치는 센더가 없음.
-		touch_sendor: function(port) {
-
-
-		},
-
-		thirdFunc: function(string) {
-			// do something
-		}
-	};
 	
 	//Function added Line -----------------------------------------------------------------------------	
 
@@ -620,17 +585,33 @@
     
 	var hw_normal = hwList.search_normal(SCBD_SENSOR),	
 		hw_ble = hwList.search_ble(SCBD_SENSOR),
-		sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]);
+		sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]),
+		low_data = escape_control(SAMPLING_RATE & LOW),
+		high_data = escape_control(SAMPLING_RATE & HIGH);
 
 	//for문을 위해서 detail 순서를 온,습,조,아날로그 1,2,3,4 순으로 재조정 -- 2016.05.01 패치	
+	var	check_low = 0,
+		check_high = 0;
+
 	
 		//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
+		//SCBD_SENSOR 가 등록된 핀을 찾아오기에, 일반과 무선 둘다 처리가능
 		if (networks === menus[lang]['networks'][0]){
 			if(!hw_normal) return;
 			else{									
 				var	dnp = new Uint8Array([sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin, sensor_detail[2] | hw_normal.pin, sensor_detail[3] | hw_normal.pin, sensor_detail[4] | hw_normal.pin, sensor_detail[5] | hw_normal.pin, sensor_detail[6]| hw_normal.pin]);
 				for (var i=0;i < dnp.length ; i++){
 					if (hwIn === menus[lang]['hwIn'][i]){
+						check_low = checkSum( dnp[i], low_data );
+						check_high = checkSum( dnp[i], high_data );
+
+						var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low ,END_SYSEX]),
+						sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high ,END_SYSEX]);
+
+						device.send(sensor_output_low.buffer);
+						device.send(sensor_output_high.buffer);
+						//console.log('hwIn = ' + name);
+
 						if (SENSOR_REPOTER === dnp[i] & 0xF0){		//2016.04.25 데이터 읽기 재패치 완료
 							return analogRead(hw_normal.pin);
 						}
@@ -643,6 +624,16 @@
 				var	dnp = new Uint8Array([sensor_detail[0] | hw_ble.pin, sensor_detail[1] | hw_ble.pin, sensor_detail[2] | hw_ble.pin, sensor_detail[3] | hw_ble.pin, sensor_detail[4] | hw_ble.pin, sensor_detail[5] | hw_ble.pin, sensor_detail[6]| hw_ble.pin]);
 				for (var i=0;i < dnp.length ; i++){
 					if (hwIn === menus[lang]['hwIn'][i]){
+						check_low = checkSum( dnp[i], low_data );
+						check_high = checkSum( dnp[i], high_data );
+
+						var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low ,END_SYSEX]),
+						sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high ,END_SYSEX]);
+
+						device.send(sensor_output_low.buffer);
+						device.send(sensor_output_high.buffer);
+						//console.log('hwIn = ' + name);
+
 						if (SENSOR_REPOTER === dnp[i] & 0xF0){		//2016.04.25 데이터 읽기 재패치 완료
 							return analogRead(hw_ble.pin);
 						}
@@ -651,7 +642,7 @@
 			}
 		}
 	};
-	//REPOTER PATCH CLEAR --2016.05.08 간소화 패치 완료
+	//REPOTER PATCH CLEAR
 
 	ext.isTouchButtonPressed = function(networks, touch){
 		var hw_normal = hwList.search_normal(SCBD_TOUCH),
@@ -661,7 +652,26 @@
 		if (networks === menus[lang]['networks'][0]){
 			if(!hw_normal) return;
 			else{
-				if(TOUCH_REPOTER === sensor_detail[2]){	
+				if (TOUCH_REPOTER === sensor_detail[0]){
+					var	button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
+					//꺼짐
+					if (button_num === touch){
+						return 0;
+					}			
+					
+					/*   0, Button Number, Detail (on, off)/Port	(storedInputData)
+					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);
+					0000 0000 0000 0000
+					0000 1001 1111 0000
+					*/
+					//console.log('networks is ' + networks + ' sended'); 
+				}else if (TOUCH_REPOTER === sensor_detail[1]){
+					var	button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
+					//켜짐
+					if (button_num === touch){
+						return 1;
+					}
+				}else if(TOUCH_REPOTER === sensor_detail[2]){	
 					var button_num = digitalRead(hw_normal.pin) & 0x0FFF;
 						
 					for (var i=0; i < 13; i++){
@@ -684,7 +694,26 @@
 		}else if (networks === menus[lang]['networks'][1]){
 			if(!hw_ble) return;
 			else{
-				if(TOUCH_REPOTER === sensor_detail[2]){	
+				if (TOUCH_REPOTER === sensor_detail[0]){
+					var	button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
+					//꺼짐
+					if (button_num === touch){
+						return 0;
+					}			
+					
+					/*   0, Button Number, Detail (on, off)/Port	(storedInputData)
+					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);
+					0000 0000 0000 0000
+					0000 1001 1111 0000
+					*/
+					//console.log('networks is ' + networks + ' sended'); 
+				}else if (TOUCH_REPOTER === sensor_detail[1]){
+					var	button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
+					//켜짐
+					if (button_num === touch){
+						return 1;
+					}
+				}else if(TOUCH_REPOTER === sensor_detail[2]){	
 					var button_num = digitalRead(hw_ble.pin) & 0x0FFF;
 						
 					for (var i=0; i < 13; i++){
@@ -696,11 +725,17 @@
 								return 0;
 						}
 					}
+					/* 모든 터치센서 번호 전송
+					setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);  
+					HIGH, LOW, Detail/Port (storedInputData)
+					  0000 0000 0110
+					  0000 0000 0001 &
+					*/
 				}
 			}
 		}	
 	};
-	//REPOTER PATCH CLEAR	--2016.05.08 간소화 패치 완료
+	//REPOTER PATCH CLEAR
 
 	ext.whenTouchButtonChandged = function(networks, touch, btnStates){
 		var hw_normal = hwList.search_normal(SCBD_TOUCH),
@@ -734,6 +769,18 @@
 							return 1;
 						}
 					}
+				}else if(TOUCH_REPOTER === sensor_detail[2]){
+					var button_num = digitalRead(hw_normal.pin) & 0x0FFF;
+						
+					for (var i=0; i < 13; i++){
+						if ((button_num >> i) & 0x0001 === menus[lang]['btnStates'][1]){
+							if (touch === menus[lang]['touch'][i])
+								return 1;
+						}else if ((button_num >> i) & 0x0001 === menus[lang]['btnStates'][0]){
+							if (touch === menus[lang]['touch'][i])
+								return 0;
+						}
+					}
 				}
 			}
 		}else if (networks === menus[lang]['networks'][1]){
@@ -746,13 +793,32 @@
 						if (button_num === touch){
 							return 0;
 						}				
-					}			
+					}
+					
+					/*  0, Button Number, Detail (on, off)/Port	(storedInputData)
+					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
+					0000 0000 0000 0000
+					0000 0000 1111 0000
+						console.log('networks is ' + networks + ' sended'); 
+					*/				
 				} else if (TOUCH_REPOTER === sensor_detail[1]){
 					var	button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
 					if (btnStates === 1){
 						//켜짐
 						if (button_num === touch){
 							return 1;
+						}
+					}
+				}else if(TOUCH_REPOTER === sensor_detail[2]){
+					var button_num = digitalRead(hw_ble.pin) & 0x0FFF;
+						
+					for (var i=0; i < 13; i++){
+						if ((button_num >> i) & 0x0001 === menus[lang]['btnStates'][1]){
+							if (touch === menus[lang]['touch'][i])
+								return 1;
+						}else if ((button_num >> i) & 0x0001 === menus[lang]['btnStates'][0]){
+							if (touch === menus[lang]['touch'][i])
+								return 0;
 						}
 					}
 				}
@@ -977,8 +1043,8 @@
 					check_low = checkSum( dnp[0], low_data );	//적외선류
 					check_high = checkSum( dnp[0], high_data );
 				
-					var motion_output_low = new Uint8Array([dnp[0], low_data, check_low]),
-						motion_output_high = new Uint8Array([dnp[0], high_data, check_high]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[0], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[0], high_data, check_high ,END_SYSEX]);
 					
 					device.send(motion_output_low.buffer);
 					device.send(motion_output_high.buffer);
@@ -1003,8 +1069,8 @@
 					check_low = checkSum( dnp[1], low_data );	//가속도류
 					check_high = checkSum( dnp[1], high_data );
 
-					var motion_output_low = new Uint8Array([dnp[1], low_data, check_low]),
-						motion_output_high = new Uint8Array([dnp[1], high_data, check_high]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[1], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[1], high_data, check_high ,END_SYSEX]);
 					device.send(motion_output_low.buffer);
 					device.send(motion_output_high.buffer);
 					
@@ -1022,8 +1088,8 @@
 					check_low = checkSum( dnp[2], low_data );	//각가속도류
 					check_high = checkSum( dnp[2], high_data );
 			
-					var motion_output_low = new Uint8Array([dnp[2], low_data, check_low]),
-						motion_output_high = new Uint8Array([dnp[2], high_data, check_high]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[2], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[2], high_data, check_high ,END_SYSEX]);
 
 					device.send(motion_output_low.buffer);
 					device.send(motion_output_high.buffer);
@@ -1042,7 +1108,7 @@
 					//check_low = checkSum( dnp[4], low_data );		//포토게이트류 -> 데이터가 없기 때문에, XOR 과정을 거쳐도 체크섬은 그대로 유지됨
 					//check_high = checkSum( dnp[4], high_data );	//데이터를 보내지 않기 때문에 dnp를 그대로전송
 			
-					var motion_output = new Uint8Array([dnp[4],  dnp[4]]);
+					var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4] ,END_SYSEX]);
 					device.send(motion_output.buffer);
 					
 					//포토게이트 전체 상태에 대한 처리
@@ -1068,8 +1134,8 @@
 					check_low = checkSum( dnp[0], low_data );	//적외선류
 					check_high = checkSum( dnp[0], high_data );
 				
-					var motion_output_low = new Uint8Array([dnp[0], low_data, check_low]),
-						motion_output_high = new Uint8Array([dnp[0], high_data, check_high]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[0], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[0], high_data, check_high ,END_SYSEX]);
 					
 					device.send(motion_output_low.buffer);
 					device.send(motion_output_high.buffer);
@@ -1094,8 +1160,8 @@
 					check_low = checkSum( dnp[1], low_data );	//가속도류
 					check_high = checkSum( dnp[1], high_data );
 
-					var motion_output_low = new Uint8Array([dnp[1], low_data, check_low]),
-						motion_output_high = new Uint8Array([dnp[1], high_data, check_high]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[1], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[1], high_data, check_high ,END_SYSEX]);
 					device.send(motion_output_low.buffer);
 					device.send(motion_output_high.buffer);
 					
@@ -1113,8 +1179,8 @@
 					check_low = checkSum( dnp[2], low_data );	//각가속도류
 					check_high = checkSum( dnp[2], high_data );
 			
-					var motion_output_low = new Uint8Array([dnp[2], low_data, check_low]),
-						motion_output_high = new Uint8Array([dnp[2], high_data, check_high]);
+					var motion_output_low = new Uint8Array([START_SYSEX, dnp[2], low_data, check_low ,END_SYSEX]),
+						motion_output_high = new Uint8Array([START_SYSEX, dnp[2], high_data, check_high ,END_SYSEX]);
 
 					device.send(motion_output_low.buffer);
 					device.send(motion_output_high.buffer);
@@ -1133,7 +1199,7 @@
 					//check_low = checkSum( dnp[4], low_data );		//포토게이트류 -> 데이터가 없기 때문에, XOR 과정을 거쳐도 체크섬은 그대로 유지됨
 					//check_high = checkSum( dnp[4], high_data );	//데이터를 보내지 않기 때문에 dnp를 그대로전송
 			
-					var motion_output = new Uint8Array([dnp[4],  dnp[4]]);
+					var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4] ,END_SYSEX]);
 					device.send(motion_output.buffer);
 					
 					//포토게이트 전체 상태에 대한 처리
@@ -1147,6 +1213,7 @@
 				}
 			}
 		}
+		
 	};
 	//REPOTER PATCH SUCCESS
 
@@ -1161,7 +1228,7 @@
 			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin, sensor_detail[2] | hw_normal.pin, sensor_detail[3] | hw_normal.pin, sensor_detail[4] | hw_normal.pin ]);
 			if (!hw_normal) return;
 			else{
-				var motion_output = new Uint8Array([dnp[4],  dnp[4]]);
+				var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4] ,END_SYSEX]);
 				device.send(motion_output.buffer);
 
 				if( photoGate === menus[lang]['photoGate'][0] ){
@@ -1182,7 +1249,7 @@
 			var	dnp = new Uint8Array([ sensor_detail[0] | hw_ble.pin, sensor_detail[1] | hw_ble.pin, sensor_detail[2] | hw_ble.pin, sensor_detail[3] | hw_ble.pin, sensor_detail[4] | hw_ble.pin ]);
 			if (!hw_ble) return;
 			else{
-				var motion_output = new Uint8Array([dnp[4],  dnp[4]]);
+				var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4] ,END_SYSEX]);
 				device.send(motion_output.buffer);
 
 				if( photoGate === menus[lang]['photoGate'][0] ){
@@ -1221,7 +1288,7 @@
 				var merged_data = (led_position << 21) | (red << 14) | (green << 7) | blue,
 					check_merged_data = checkSum( dnp[0], merged_data );
 
-				var led_output = new Uint8Array([dnp[0], merged_data, check_merged_data]);		
+				var led_output = new Uint8Array([START_SYSEX, dnp[0], merged_data, check_merged_data ,END_SYSEX]);		
 					device.send(led_output.buffer);
 			}
 		}else if (networks === menus[lang]['networks'][1]){
@@ -1236,7 +1303,7 @@
 				var merged_data = (led_position << 21) | (red << 14) | (green << 7) | blue,
 					check_merged_data = checkSum( dnp[0], merged_data );
 
-				var led_output = new Uint8Array([dnp[0], merged_data, check_merged_data]);		
+				var led_output = new Uint8Array([START_SYSEX, dnp[0], merged_data, check_merged_data ,END_SYSEX]);		
 					device.send(led_output.buffer);
 			}
 		}
@@ -1259,7 +1326,7 @@
 				
 				var check_merged_data  = checkSum( dnp[1], merged_data );
 				
-				var buzzer_output = new Uint8Array([dnp[1], merged_data, check_merged_data]);	
+				var buzzer_output = new Uint8Array([START_SYSEX, dnp[1], merged_data, check_merged_data ,END_SYSEX]);	
 				//낭비되는 데이터 공간의 최대한 절약을 위해서 Uint8Array 로 보냄
 				device.send(buzzer_output.buffer);
 			}
@@ -1273,7 +1340,7 @@
 				
 				var check_merged_data  = checkSum( dnp[1], merged_data );
 				
-				var buzzer_output = new Uint8Array([dnp[1], merged_data, check_merged_data]);	
+				var buzzer_output = new Uint8Array([START_SYSEX, dnp[1], merged_data, check_merged_data ,END_SYSEX]);	
 				//낭비되는 데이터 공간의 최대한 절약을 위해서 Uint8Array 로 보냄
 				device.send(buzzer_output.buffer);
 			}
@@ -1317,7 +1384,7 @@
 					merged_data = (motor_data << 14) | (speed_data_low << 7) | speed_data_high;
 
 				var check_merged_data = checkSum( dnp[0], merged_data ),
-					steppingAD_output = new Int16Array([dnp[0], merged_data, check_merged_data]);	//signed 로 전송
+					steppingAD_output = new Int16Array([START_SYSEX, dnp[0], merged_data, check_merged_data ,END_SYSEX]);	//signed 로 전송
 
 				device.send(steppingAD_output.buffer);
 			}
@@ -1349,7 +1416,7 @@
 					merged_data = (motor_data << 14) | (speed_data_low << 7) | speed_data_high;
 
 				var check_merged_data = checkSum( dnp[0], merged_data ),
-					steppingAD_output = new Int16Array([dnp[0], merged_data, check_merged_data]);	//signed 로 전송
+					steppingAD_output = new Int16Array([START_SYSEX, dnp[0], merged_data, check_merged_data ,END_SYSEX]);	//signed 로 전송
 
 				device.send(steppingAD_output.buffer);
 			}
@@ -1403,7 +1470,7 @@
 				console.log('rotation data is ' + mod_rotation_data);
 
 				var check_merged_data = checkSum( dnp[1], merged_data ),
-					steppingAD_output = new Int32Array([dnp[1], merged_data, check_merged_data]);	//singed 4 Byte
+					steppingAD_output = new Int32Array([START_SYSEX, dnp[1], merged_data, check_merged_data ,END_SYSEX]);	//singed 4 Byte
 
 				device.send(steppingAD_output.buffer);
 			}
@@ -1444,7 +1511,7 @@
 				console.log('rotation data is ' + mod_rotation_data);
 
 				var check_merged_data = checkSum( dnp[1], merged_data ),
-					steppingAD_output = new Int32Array([dnp[1], merged_data, check_merged_data]);	//singed 4 Byte
+					steppingAD_output = new Int32Array([START_SYSEX, dnp[1], merged_data, check_merged_data ,END_SYSEX]);	//singed 4 Byte
 
 				device.send(steppingAD_output.buffer);
 			}
@@ -1482,7 +1549,7 @@
 				for (var i=0; i < 3; i++ ){
 					if (dcMotor === menus[lang]['dcMotor'][i]){				
 					var check_merged_data = checkSum( dnp[i], merged_data ),
-						DCAD_output = new Uint8Array([dnp[i], merged_data, check_merged_data]);	
+						DCAD_output = new Uint8Array([START_SYSEX, dnp[i], merged_data, check_merged_data ,END_SYSEX]);	
 
 						device.send(DCAD_output.buffer);
 					}
@@ -1510,7 +1577,7 @@
 				for (var i=0; i < 3; i++ ){
 					if (dcMotor === menus[lang]['dcMotor'][i]){				
 					var check_merged_data = checkSum( dnp[i], merged_data ),
-						DCAD_output = new Uint8Array([dnp[i], merged_data, check_merged_data]);	
+						DCAD_output = new Uint8Array([START_SYSEX, dnp[i], merged_data, check_merged_data ,END_SYSEX]);	
 
 						device.send(DCAD_output.buffer);
 					}
@@ -1550,32 +1617,32 @@
 							if (servos === menus[lang]['servos'][0]){
 							var check_deg_low = checkSum( dnp[0], servo_deg_low ),
 								check_deg_high = checkSum( dnp[0], servo_deg_high ),
-								servo_output_low = new Uint8Array([dnp[0], servo_deg_low, check_deg_low]),
-								servo_output_high = new Uint8Array([dnp[0], servo_deg_high, check_deg_high]);
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
 							
 							device.send(servo_output_low.buffer);
 							device.send(servo_output_high.buffer);
 							}else if(servos === menus[lang]['servos'][1]){
 							var check_deg_low = checkSum( dnp[1], servo_deg_low ),
 								check_deg_high = checkSum( dnp[1], servo_deg_high ),
-								servo_output_low = new Uint8Array([dnp[1], servo_deg_low, check_deg_low]),
-								servo_output_high = new Uint8Array([dnp[1], servo_deg_high, check_deg_high]);
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
 							
 							device.send(servo_output_low.buffer);
 							device.send(servo_output_high.buffer);
 							}else if (servos === menus[lang]['servos'][2]){
 							var check_deg_low = checkSum( dnp[2], servo_deg_low ),
 								check_deg_high = checkSum( dnp[2], servo_deg_high ),
-								servo_output_low = new Uint8Array([dnp[2], servo_deg_low, check_deg_low]),
-								servo_output_high = new Uint8Array([dnp[2], servo_deg_high, check_deg_high]);
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
 							
 							device.send(servo_output_low.buffer);
 							device.send(servo_output_high.buffer);
 							}else if (servos === menus[lang]['servos'][3]){
 							var check_deg_low = checkSum( dnp[3], servo_deg_low ),
 								check_deg_high = checkSum( dnp[3], servo_deg_high ),
-								servo_output_low = new Uint8Array([dnp[3], servo_deg_low, check_deg_low]),
-								servo_output_high = new Uint8Array([dnp[3], servo_deg_high, check_deg_high]);
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
 							
 							device.send(servo_output_low.buffer);
 							device.send(servo_output_high.buffer);
@@ -1594,32 +1661,32 @@
 							if (servos === menus[lang]['servos'][0]){
 							var check_deg_low = checkSum( dnp[0], servo_deg_low ),
 								check_deg_high = checkSum( dnp[0], servo_deg_high ),
-								servo_output_low = new Uint8Array([dnp[0], servo_deg_low, check_deg_low]),
-								servo_output_high = new Uint8Array([dnp[0], servo_deg_high, check_deg_high]);
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high ,END_SYSEX]);
 							
 							device.send(servo_output_low.buffer);
 							device.send(servo_output_high.buffer);
 							}else if(servos === menus[lang]['servos'][1]){
 							var check_deg_low = checkSum( dnp[1], servo_deg_low ),
 								check_deg_high = checkSum( dnp[1], servo_deg_high ),
-								servo_output_low = new Uint8Array([dnp[1], servo_deg_low, check_deg_low]),
-								servo_output_high = new Uint8Array([dnp[1], servo_deg_high, check_deg_high]);
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high ,END_SYSEX]);
 							
 							device.send(servo_output_low.buffer);
 							device.send(servo_output_high.buffer);
 							}else if (servos === menus[lang]['servos'][2]){
 							var check_deg_low = checkSum( dnp[2], servo_deg_low ),
 								check_deg_high = checkSum( dnp[2], servo_deg_high ),
-								servo_output_low = new Uint8Array([dnp[2], servo_deg_low, check_deg_low]),
-								servo_output_high = new Uint8Array([dnp[2], servo_deg_high, check_deg_high]);
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high ,END_SYSEX]);
 							
 							device.send(servo_output_low.buffer);
 							device.send(servo_output_high.buffer);
 							}else if (servos === menus[lang]['servos'][3]){
 							var check_deg_low = checkSum( dnp[3], servo_deg_low ),
 								check_deg_high = checkSum( dnp[3], servo_deg_high ),
-								servo_output_low = new Uint8Array([dnp[3], servo_deg_low, check_deg_low]),
-								servo_output_high = new Uint8Array([dnp[3], servo_deg_high, check_deg_high]);
+								servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low ,END_SYSEX]),
+								servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high ,END_SYSEX]);
 							
 							device.send(servo_output_low.buffer);
 							device.send(servo_output_high.buffer);
