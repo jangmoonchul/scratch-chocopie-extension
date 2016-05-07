@@ -580,14 +580,16 @@
   };
 
 //-------------------------------------------------------------------SAMPLING FUNCTION START
-	var low_data = escape_control(SAMPLING_RATE & LOW),
-		high_data = escape_control(SAMPLING_RATE & HIGH);
-	
-	var	check_low = 0,
-		check_high = 0;
+
 
 	var sample_functions = {
 		sensor_sender: function(port) {
+			var low_data = escape_control(SAMPLING_RATE & LOW),
+				high_data = escape_control(SAMPLING_RATE & HIGH);
+			
+			var	check_low = 0,
+				check_high = 0;
+
 			var hw = hwList.search_bypin(port),	
 				sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]),
 			
