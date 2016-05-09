@@ -405,7 +405,7 @@
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
 		rp=0;
-		inputDataGlobal = inputData[rp++];	
+		inputDataGlobal[rp++] = inputData;	
 		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
 		if(current_job==null){
 			current_job = actionBranch;
