@@ -335,7 +335,7 @@
 		rb = inputData[rp++];
 
 		if(rb == CPC_VERSION){
-			current_job = 'get_CPCv';
+			current_job = get_CPCv;
 			status.packet_index = 0;
 			return;
 		}
@@ -349,7 +349,7 @@
 		chocoPiVersion[status.packet_index++] = rb;
 		if(status.packet_index==9){
 			//fs
-			current_job = 'actionBranch';
+			current_job = actionBranch;
 			return;
 		}
 	}
@@ -379,7 +379,7 @@
 				  setTimeout(init, 200);
 				  //sysexBytesRead = 0;	
 				}
-				current_job= 'actionChocopi';
+				current_job= actionChocopi;
 				pinging = false;
 				pingCount = 0;
 			}else if (rb === SCBD_CHOCOPI_USB_PING){
@@ -393,7 +393,7 @@
 				  setTimeout(init, 200);			
 				  //sysexBytesRead = 0;		
 				}
-				current_job = 'actionPing';
+				current_job = actionPing;
 				pinging = false;
 				pingCount = 0;
 			}	
@@ -405,7 +405,7 @@
 	  //입력 데이터 처리용도의 함수
 		rp=0;
 		if(current_job==null){
-			current_job = 'actionBranch';
+			current_job = actionBranch;
 		}
 
 		while(rp<inputData.length){
