@@ -79,6 +79,7 @@
   var notifyConnection = false;
   var device = null;
   var inputData = null;
+  var inputDataGlobal = new Uint8Array();	
 
   // TEMPORARY WORKAROUND
   // Since _deviceRemoved is not used with Serial devices
@@ -403,7 +404,7 @@
 		}	
 	}
 	//action 에 대해서 분류를 진행함
-	var inputDataGlobal = new Uint8Array();	
+	
 
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
