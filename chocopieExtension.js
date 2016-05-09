@@ -319,9 +319,7 @@
 	
 	var current_job = null,		//실행될 함수명을 가지게되는 함수지시자
 		rp,
-		rb,
-		
-
+		rb;
 	var	stored_data = {
 		chocoPiVersion : new Array()
 		/*
