@@ -67,11 +67,10 @@
 	port = 0,
     storedInputData = new Uint8Array(MAX_DATA_BYTES);
 
-  var digitalInputData = Create2DArray(16),	
-    analogInputData = Create2DArray(16),			
-	SanalogInputData = Create2DArray(16);
-  /*Column 의 갯수는 실질적으로 중요하지 않기 때문에, 행만을 이용하여 16개의 행을 가진 2차원 배열을 생성함.
-	각각의 행들에는 port로 연결되어 있음*/
+  var digitalOutputData = new Uint8Array(16),
+    digitalInputData = new Uint8Array(16),
+    analogInputData = new Uint16Array(16),			
+	SanalogInputData = new Int8Array(16);
 
   var majorVersion = 0,
     minorVersion = 0;
@@ -89,15 +88,6 @@
   var pinger = null;
 
   var hwList = new HWList();
-
-	function Create2DArray(rows) {
-	  var arr = [];
-
-	  for (var i=0;i<rows;i++) {
-		 arr[i] = [];
-	  }
-	  return arr;
-	}
 
   function HWList() {
     this.devices = [];
@@ -219,7 +209,6 @@
     
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
 	//device.send(ble_output.buffer);		//ble 연결도 가능한지 확인하기 위해서 함께보냄
-	console.log("queryFirmware seneded");
   }
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
@@ -234,16 +223,16 @@
 	//Port/detail, data를 XOR 시킨 후, checksum 하여 return 시킴	--> check Sum Success 2016.04.21
 	
 
-  function setDigitalInputs(port, detail, portData) {
-    digitalInputData[port][detail] = portData;
+  function setDigitalInputs(portNum, portData) {
+    digitalInputData[portNum] = portData;
   }
 
-  function setAnalogInput(port, detail, portData) {
-    analogInputData[port][detail] = portData;
+  function setAnalogInput(pin, val) {
+    analogInputData[pin] = val;
   }
 
-  function setSAnalogInput(port, detail, portData) {
-	SanalogInputData[port][detail] = portData;	
+  function setSAnalogInput(pin, val) {
+	SanalogInputData[pin] = val;	
   }
 
   function setVersion(major, minor) {
@@ -330,9 +319,9 @@
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
 
-		console.log('inputData [' + i + '] = ' + inputData[i]);
+		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
@@ -398,42 +387,46 @@
         storedInputData[--waitForData] = inputData[i];						// inputData 를 지속적으로 저장하는 과정에서 0xCF (207) 보다 작은값을 판별한다면,
         if (executeMultiByteCommand !== 0 && waitForData === 0) {			// inputData 를 기준으로 판별하면 문제가 생길 가능성이 있음. 
 		  if (executeMultiByteCommand === SCBD_SENSOR){						// LOW HIGH 로 나눠서온다면 문제가 없을 것으로 예상
-																													// LOW, HIGH (inputData)
-              setAnalogInput(multiByteChannel, SENSOR_REPOTER, (storedInputData[0] << 7) + storedInputData[1]);		// HIGH, LOW (storedInputData)
-			  //	analogInputData[port][detail] = portData;
+																									// LOW, HIGH (inputData)
+              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		// HIGH, LOW (storedInputData)
+			   	
 		  }else if (executeMultiByteCommand === SCBD_TOUCH){
-			  if ( waitForData === 0 ){																				// 모든 터치센서 전송인 경우
-																													// LOW, HIGH (inputData)
-				setDigitalInputs(multiByteChannel, TOUCH_REPOTER, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
-
+			  
+			  if ( waitForData === 0 ){																// 모든 터치센서 전송인 경우
+																									// LOW, HIGH (inputData)
+				setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
+				
 			  } else {																					// 들어오는 데이터가 1 Byte 인 경우	
-				setDigitalInputs(multiByteChannel, TOUCH_REPOTER, storedInputData[1]);					// Button Number (on, off)	(inputData)
+				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);			// Button Number (on, off)	(inputData)
 			  }																							// 0, Button Number 		(storedInputData)
+			  																							// 들어오는 데이터에 대해서 디테일을 확인한 리포터를 보냄
+			 
 		  }else if (executeMultiByteCommand === SCBD_SWITCH){
-			  if ( waitForData === 0 ){																					//포텐시오미터의 디테일은 0x30
-				if (SWITCH_REPOTER === 0x30){																			// LOW, HIGH (inputData)
-					setAnalogInput(multiByteChannel, SWITCH_REPOTER, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
+			  
+			  if ( waitForData === 0 ){																	//포텐시오미터
+				if (SWITCH_REPOTER === 0x30){															// LOW, HIGH (inputData)
+					setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
 				}else{
-					setDigitalInputs(multiByteChannel, SWITCH_REPOTER, (storedInputData[0] << 7) + storedInputData[1]);	//조이스틱X, Y는 디지털
+					setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	//조이스틱X, Y는 디지털
 				}																
 			  }else{																					// 예상값 0x10, 0x20, ....	
-				setDigitalInputs(multiByteChannel, SWITCH_REPOTER, storedInputData[1]);					// 들어오는 데이터가 1 Byte 인 경우
+				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + SWITCH_REPOTER);			// 들어오는 데이터가 1 Byte 인 경우
 			  }																							// Button Number (on, off)	(inputData)
 																										// 0, Button Number			(storedInputData)
 		  }else if (executeMultiByteCommand === SCBD_MOTION){												
 																										//1번(LOW, HIGH), 2번(LOW, HIGH), 3번(LOW, HIGH) (inputData)
 			  if (waitForData === 0){																	//3번(HIGH, LOW), 2번(HIGH, LOW), 1번(HIGH, LOW) (storedInputData)
 				  if (MOTION_REPOTER === 0x10){															//적외선
-				   setAnalogInput(multiByteChannel, MOTION_REPOTER, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
+				   setAnalogInput(multiByteChannel, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
 				  }else{																				//가속도, 각가속도
-				   setSAnalogInput(multiByteChannel, MOTION_REPOTER, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
+				   setSAnalogInput(multiByteChannel, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
 				  }
 			  }else if (waitForData === 2){			
-				   setAnalogInput(multiByteChannel, MOTION_REPOTER, (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]); 		
+				   setAnalogInput(multiByteChannel, (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]); 		
 				   //  4 Byte ( L, H, LL, HH ) 모든 MOTION_REPOTER 에 대해서 같은 처리가 이루어짐
 				   //    0, 0, (HH, LL, H, L)
 			  }else if (waitForData === 5){			
-				  setAnalogInput(multiByteChannel, MOTION_REPOTER, storedInputData[5]); 		
+				  setAnalogInput(multiByteChannel, storedInputData[5]); 		
 			  }			  
 		  }																									
 		}	
@@ -488,7 +481,7 @@
 		hwList.remove(pin);
 	}
 
-	function analogRead(pin, detail) {
+	function analogRead(pin) {
 		var hw = hwList.search_bypin(pin);
 		if (!hw){
 			var valid = [];
@@ -498,12 +491,12 @@
 			return;
 		}else{
 			if (pin >= 0 && 15 <= pin) 
-			return Math.round((analogInputData[pin][detail] * 100) / 4095);
+			return Math.round((analogInputData[pin] * 100) / 4095);
 		}
 	}
 	//analogRead patched 2016.04.24...	Repatch 2016.04.25
 	
-	function SanalogRead(pin, detail) {
+	function SanalogRead(pin) {
 		var hw = hwList.search_bypin(pin);
 		if (!hw){
 			var valid = [];
@@ -513,17 +506,17 @@
 			return;
 		}else{
 			if (pin >= 0 && 15 <= pin) 
-			return Math.round((SanalogInputData[pin][detail] * 100) / 4095);
+			return Math.round((SanalogInputData[pin] * 100) / 4095);
 		}
 	}
 
-	function digitalRead(pin, detail) {
+	function digitalRead(pin) {
 		var hw = hwList.search_bypin(pin);
 		if (!hw) {
 			console.log('ERROR: valid input pins are not found');
 			return;
 		}
-		return digitalInputData[pin][detail];
+		return digitalInputData[pin];
 	}
 	//digitalRead patched 2016.04.21 .. 04.24 recheck
 //------------------------------------------------------------------------------Above, Successed Line 
@@ -558,7 +551,7 @@
     device.open({ stopBits: 0, bitRate: 115200, ctsFlowControl: 0 });
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
-      var inputData = new Uint8Array(data);		//2016.05.08 Uint8Array  -> Int8Array 로 패치
+      var inputData = new Uint8Array(data);
       processInput(inputData);
     });
 	//첫째로 processInput 핸들러를 가동시키고 나서
@@ -651,23 +644,25 @@
 		//온도, 습도, 조도, 아날로그 1, 2, 3, 4, 정지명령 순서 --> 정지명령은 쓸 재간이 없음.
 		if (networks === menus[lang]['networks'][0]){
 			if(!hw_normal) return;
-			else{
-				for (var i=0;i < sensor_detail.length ; i++){
+			else{									
+				var	dnp = new Uint8Array([sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin, sensor_detail[2] | hw_normal.pin, sensor_detail[3] | hw_normal.pin, sensor_detail[4] | hw_normal.pin, sensor_detail[5] | hw_normal.pin, sensor_detail[6]| hw_normal.pin]);
+				for (var i=0;i < dnp.length ; i++){
 					if (hwIn === menus[lang]['hwIn'][i]){
-						//2016.04.25 데이터 읽기 재패치 완료
-						//2016.05.09 데이터 읽기 재패치 완료
-						return analogRead(hw_normal.pin, sensor_detail[i]);
+						if (SENSOR_REPOTER === dnp[i] & 0xF0){		//2016.04.25 데이터 읽기 재패치 완료
+							return analogRead(hw_normal.pin);
+						}
 					}
 				}
 			}
 		}else if (networks === menus[lang]['networks'][1]){
 			if(!hw_ble) return;
 			else{				
+				var	dnp = new Uint8Array([sensor_detail[0] | hw_ble.pin, sensor_detail[1] | hw_ble.pin, sensor_detail[2] | hw_ble.pin, sensor_detail[3] | hw_ble.pin, sensor_detail[4] | hw_ble.pin, sensor_detail[5] | hw_ble.pin, sensor_detail[6]| hw_ble.pin]);
 				for (var i=0;i < dnp.length ; i++){
 					if (hwIn === menus[lang]['hwIn'][i]){
-						//2016.04.25 데이터 읽기 재패치 완료
-						//2016.05.09 데이터 읽기 재패치 완료
-						return analogRead(hw_ble.pin, sensor_detail[i]);
+						if (SENSOR_REPOTER === dnp[i] & 0xF0){		//2016.04.25 데이터 읽기 재패치 완료
+							return analogRead(hw_ble.pin);
+						}
 					}
 				}
 			}
@@ -684,7 +679,7 @@
 			if(!hw_normal) return;
 			else{
 				if(TOUCH_REPOTER === sensor_detail[2]){	
-					var button_num = digitalRead(hw_normal.pin, sensor_detail[2]) & 0x0FFF;
+					var button_num = digitalRead(hw_normal.pin) & 0x0FFF;
 						
 					for (var i=0; i < 13; i++){
 						if ((button_num >> i) & 0x0001 === 1){
@@ -707,7 +702,7 @@
 			if(!hw_ble) return;
 			else{
 				if(TOUCH_REPOTER === sensor_detail[2]){	
-					var button_num = digitalRead(hw_ble.pin, sensor_detail[2]) & 0x0FFF;
+					var button_num = digitalRead(hw_ble.pin) & 0x0FFF;
 						
 					for (var i=0; i < 13; i++){
 						if ((button_num >> i) & 0x0001 === 1){
@@ -725,42 +720,54 @@
 	//REPOTER PATCH CLEAR	--2016.05.08 간소화 패치 완료
 
 	ext.whenTouchButtonChandged = function(networks, touch, btnStates){
-		var hw_normal = hwList.search_normal(SCBD_TOUCH),		//이벤트성 터치센서 블록
+		var hw_normal = hwList.search_normal(SCBD_TOUCH),
 			hw_ble = hwList.search_ble(SCBD_TOUCH),
 			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
 	
-		if (networks === menus[lang]['networks'][0]){			//일반 터치센서
+
+		if (networks === menus[lang]['networks'][0]){
 			if(!hw_normal) return;
 			else{
-				if (TOUCH_REPOTER === sensor_detail[0]){		//터치센서 번호 꺼짐인경우
-					var	button_num = digitalRead(hw_normal.pin, sensor_detail[0]);
+				if (TOUCH_REPOTER === sensor_detail[0] ){
+					var	button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
 					if (btnStates === 0){
+						//꺼짐
 						if (button_num === touch){
 							return 0;
 						}				
-					}		
-				} else if (TOUCH_REPOTER === sensor_detail[1]){	//터치센서 번호 켜짐인경우
-					var	button_num = digitalRead(hw_normal.pin, sensor_detail[1]);
+					}
+					
+					/*  0, Button Number, Detail (on, off)/Port	(storedInputData)
+					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
+					0000 0000 0000 0000
+					0000 0000 1111 0000
+						console.log('networks is ' + networks + ' sended'); 
+					*/				
+				} else if (TOUCH_REPOTER === sensor_detail[1]){
+					var	button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
 					if (btnStates === 1){
+						//켜짐
 						if (button_num === touch){
 							return 1;
 						}
 					}
 				}
 			}
-		}else if (networks === menus[lang]['networks'][1]){		//무선 터치센서
+		}else if (networks === menus[lang]['networks'][1]){
 			if(!hw_ble) return;
 			else{
 				if (TOUCH_REPOTER === sensor_detail[0] ){
-					var	button_num = digitalRead(hw_ble.pin, sensor_detail[0]);
+					var	button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
 					if (btnStates === 0){
+						//꺼짐
 						if (button_num === touch){
 							return 0;
 						}				
 					}			
 				} else if (TOUCH_REPOTER === sensor_detail[1]){
-					var	button_num = digitalRead(hw_ble.pin, sensor_detail[1]) ;
+					var	button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
 					if (btnStates === 1){
+						//켜짐
 						if (button_num === touch){
 							return 1;
 						}
@@ -772,43 +779,18 @@
 	//REPOTER PATCH CLEAR
 
 	ext.whenButton = function(networks, sw, btnStates) {
-		var hw_normal = hwList.search_normal(SCBD_SWITCH),		//이벤트성 스위치 블록에 대한 함수
+		//스위치 hat 블록에 대한 함수
+		var hw_normal = hwList.search_normal(SCBD_SWITCH),
 			hw_ble = hwList.search_ble(SCBD_SWITCH),
-			sensor_detail = new Uint8Array([0x00, 0x10]);		//차례대로 꺼짐, 켜짐 디테일을 의미함
+			sensor_detail = new Uint8Array([0x00, 0x10]);
 
 		if (networks === menus[lang]['networks'][0]){
 			if (!hw_normal) return;
 			else{
 				if (SWITCH_REPOTER === sensor_detail[0]){
-					var button_num = digitalRead(hw_normal.pin, sensor_detail[0]);
-					if (btnStates === 0){				// btnState 가 0일 경우는 버튼이 꺼진 경우
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){		//스위치 번호는 1번부터 시작하지만, 메뉴의 인덱스는 0부터 시작함
-									return false;
-								}
-							}
-						}
-					}
-				}else if (SWITCH_REPOTER === sensor_detail[1]){
-					var button_num = digitalRead(hw_normal.pin, sensor_detail[1]);
-					if (btnStates === 1){				// btnState 가 1일 경우는 버튼이 켜진 경우
-						for (var i=1; i < 6; i++){
-							if (button_num === i){		
-								if (sw === menus[lang]['sw'][i-1]){		//핀으로부터 데이터를 읽어들이고, 그 버튼번호를 확인한 이후에 메뉴에 매칭시킨후 리턴
-									return true;
-								}
-							}
-						}
-					}
-				}
-			}
-		}else if (networks === menus[lang]['networks'][1]){
-			if (!hw_ble) return;
-			else{
-				if (SWITCH_REPOTER === sensor_detail[0]){
-					var button_num = digitalRead(hw_ble.pin, sensor_detail[0]);
+					var button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
 					if (btnStates === 0){
+						// 버튼 꺼짐
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
 								if (sw === menus[lang]['sw'][i-1]){
@@ -818,8 +800,41 @@
 						}
 					}
 				}else if (SWITCH_REPOTER === sensor_detail[1]){
-					var button_num = digitalRead(hw_ble.pin, sensor_detail[1]);
 					if (btnStates === 1){
+						// 버튼 켜짐
+						for (var i=1; i < 6; i++){
+							if (button_num === i){
+								if (sw === menus[lang]['sw'][i-1]){
+									return true;
+								}
+							}
+						}
+					}
+				}
+					/*  0, Button Number, Detail (on, off)/Port	(storedInputData)
+					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
+					0000 0000 0000 0000
+					0000 0000 1111 0000
+					*/
+			}
+		}else if (networks === menus[lang]['networks'][1]){
+			if (!hw_ble) return;
+			else{
+				if (SWITCH_REPOTER === sensor_detail[0]){
+					var button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
+					if (btnStates === 0){
+						// 버튼 꺼짐
+						for (var i=1; i < 6; i++){
+							if (button_num === i){
+								if (sw === menus[lang]['sw'][i-1]){
+									return false;
+								}
+							}
+						}
+					}
+				}else if (SWITCH_REPOTER === sensor_detail[1]){
+					if (btnStates === 1){
+						// 버튼 켜짐
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
 								if (sw === menus[lang]['sw'][i-1]){
@@ -831,11 +846,13 @@
 				}
 			}
 		}
+		
 	};
 	//REPOTER PATCH CLEAR
 
 	ext.isSwButtonPressed = function(networks, sw){
-		var hw_normal = hwList.search_normal(SCBD_SWITCH),		//버튼1, 2, 3, 4, J에 대한 리포터블록의 함수
+		//Boolean Block
+		var hw_normal = hwList.search_normal(SCBD_SWITCH),
 			hw_ble = hwList.search_ble(SCBD_SWITCH),
 			sensor_detail = new Uint8Array([0x00, 0x10]);
 		
@@ -843,7 +860,9 @@
 				if (!hw_normal) return;
 				else{
 					if (SWITCH_REPOTER === sensor_detail[0]){
-						var button_num = digitalRead(hw_normal.pin, sensor_detail[0]);
+						var button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
+						
+						// 버튼 꺼짐
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
 								if (sw === menus[lang]['sw'][i-1]){
@@ -852,7 +871,7 @@
 							}
 						}
 					}else if (SWITCH_REPOTER === sensor_detail[1]){
-						var button_num = digitalRead(hw_normal.pin, sensor_detail[1]);
+						// 버튼 켜짐
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
 								if (sw === menus[lang]['sw'][i-1]){
@@ -866,8 +885,9 @@
 				if (!hw_ble) return;
 				else{
 					if (SWITCH_REPOTER === sensor_detail[0]){
-						var button_num = digitalRead(hw_ble.pin, sensor_detail[0]);
-
+						var button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
+						
+						// 버튼 꺼짐
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
 								if (sw === menus[lang]['sw'][i-1]){
@@ -876,8 +896,7 @@
 							}
 						}
 					}else if (SWITCH_REPOTER === sensor_detail[1]){
-						var button_num = digitalRead(hw_ble.pin, sensor_detail[1]);
-
+						// 버튼 켜짐
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
 								if (sw === menus[lang]['sw'][i-1]){
@@ -963,13 +982,13 @@
 			else{
 				if ( motionb === menus[lang]['motionb'][0] || motionb === menus[lang]['motionb'][1] || motionb === menus[lang]['motionb'][2]){	
 					if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][0]){			//적외선류
-						var state = analogRead(hw_normal.pin, receive_detail[0]) & 0x0000FF;
+						var state = analogRead(hw_normal.pin) & 0x0000FF;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][1]){
-						var state = (analogRead(hw_normal.pin, receive_detail[0]) & 0x00FF00) >> 14;
+						var state = (analogRead(hw_normal.pin) & 0x00FF00) >> 14;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][2]){
-						var state = (analogRead(hw_normal.pin, receive_detail[0]) & 0xFF0000) >> 28;
+						var state = (analogRead(hw_normal.pin) & 0xFF0000) >> 28;
 						return state;
 					}
 							
@@ -979,33 +998,33 @@
 					*/
 				}else if (motionb === menus[lang]['motionb'][3] || motionb === menus[lang]['motionb'][4] || motionb === menus[lang]['motionb'][5]){
 					if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][3]){		//가속도류
-						var state = SanalogRead(hw_normal.pin, receive_detail[1]) & 0x0000FF;
+						var state = SanalogRead(hw_normal.pin) & 0x0000FF;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][4]){
-						var state = (SanalogRead(hw_normal.pin, receive_detail[1]) & 0x00FF00) >> 14;
+						var state = (SanalogRead(hw_normal.pin) & 0x00FF00) >> 14;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][5]){
-						var state = (SanalogRead(hw_normal.pin, receive_detail[1]) & 0xFF0000) >> 28;
+						var state = (SanalogRead(hw_normal.pin) & 0xFF0000) >> 28;
 						return state;
 					}
 				}else if (motionb === menus[lang]['motionb'][6] || motionb === menus[lang]['motionb'][7] || motionb === menus[lang]['motionb'][8]){
 					if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][6]){		//각가속도류
-						var state = SanalogRead(hw_normal.pin, receive_detail[2]) & 0x0000FF;
+						var state = SanalogRead(hw_normal.pin) & 0x0000FF;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][7]){
-						var state = (SanalogRead(hw_normal.pin, receive_detail[2]) & 0x00FF00) >> 14;
+						var state = (SanalogRead(hw_normal.pin) & 0x00FF00) >> 14;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][8]){
-						var state = (SanalogRead(hw_normal.pin, receive_detail[2]) & 0xFF0000) >> 28;
+						var state = (SanalogRead(hw_normal.pin) & 0xFF0000) >> 28;
 						return state;
 					}
 				}else if (motionb === menus[lang]['motionb'][9] || motionb === menus[lang]['motionb'][10]){
 					//포토게이트 전체 상태에 대한 처리
 					if (MOTION_REPOTER === receive_detail[7] && motionb === menus[lang]['motionb'][9]){
-						var photo_ostate = analogRead(hw_normal.pin, receive_detail[7]) & 0x01;	//(receive_detail[7])0x80 인경우 on time 이기 때문에 포토게이트 1이 열린것으로 판별해도됨.
+						var photo_ostate = analogRead(hw_normal.pin) & 0x01;	//0x80 인경우 on time 이기 때문에 포토게이트 1이 열린것으로 판별해도됨.
 						return photo_ostate;
 					}else if (MOTION_REPOTER === receive_detail[7] && motionb === menus[lang]['motionb'][10]){
-						var photo_tstate = (analogRead(hw_normal.pin, receive_detail[7]) >> 1) & 0x01;
+						var photo_tstate = (analogRead(hw_normal.pin) >> 1) & 0x01;
 						return photo_tstate;
 					}
 					/*else{
@@ -1018,44 +1037,44 @@
 			else{
 				if ( motionb === menus[lang]['motionb'][0] || motionb === menus[lang]['motionb'][1] || motionb === menus[lang]['motionb'][2]){	
 					if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][0]){
-						var state = analogRead(hw_ble.pin, receive_detail[0]) & 0x0000FF;
+						var state = analogRead(hw_ble.pin) & 0x0000FF;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][1]){
-						var state = (analogRead(hw_ble.pin, receive_detail[0]) & 0x00FF00) >> 14;
+						var state = (analogRead(hw_ble.pin) & 0x00FF00) >> 14;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[0] && motionb === menus[lang]['motionb'][2]){
-						var state = (analogRead(hw_ble.pin, receive_detail[0]) & 0xFF0000) >> 28;
+						var state = (analogRead(hw_ble.pin) & 0xFF0000) >> 28;
 						return state;
 					}
 				}else if (motionb === menus[lang]['motionb'][3] || motionb === menus[lang]['motionb'][4] || motionb === menus[lang]['motionb'][5]){
 					if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][3]){
-						var state = SanalogRead(hw_ble.pin, receive_detail[1]) & 0x0000FF;
+						var state = SanalogRead(hw_ble.pin) & 0x0000FF;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][4]){
-						var state = (SanalogRead(hw_ble.pin, receive_detail[1]) & 0x00FF00) >> 14;
+						var state = (SanalogRead(hw_ble.pin) & 0x00FF00) >> 14;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[1] && motionb === menus[lang]['motionb'][5]){
-						var state = (SanalogRead(hw_ble.pin, receive_detail[1]) & 0xFF0000) >> 28;
+						var state = (SanalogRead(hw_ble.pin) & 0xFF0000) >> 28;
 						return state;
 					}
 				}else if (motionb === menus[lang]['motionb'][6] || motionb === menus[lang]['motionb'][7] || motionb === menus[lang]['motionb'][8]){
 					if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][6]){
-						var state = SanalogRead(hw_ble.pin, receive_detail[2]) & 0x0000FF;
+						var state = SanalogRead(hw_ble.pin) & 0x0000FF;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][7]){
-						var state = (SanalogRead(hw_ble.pin, receive_detail[2]) & 0x00FF00) >> 14;
+						var state = (SanalogRead(hw_ble.pin) & 0x00FF00) >> 14;
 						return state;
 					}else if (MOTION_REPOTER === receive_detail[2] && motionb === menus[lang]['motionb'][8]){
-						var state = (SanalogRead(hw_ble.pin, receive_detail[2]) & 0xFF0000) >> 28;
+						var state = (SanalogRead(hw_ble.pin) & 0xFF0000) >> 28;
 						return state;
 					}
 				}else if (motionb === menus[lang]['motionb'][9] || motionb === menus[lang]['motionb'][10]){
 					//포토게이트 전체 상태에 대한 처리
 					if (MOTION_REPOTER === receive_detail[7] && motionb === menus[lang]['motionb'][9]){
-						var photo_ostate = analogRead(hw_ble.pin, receive_detail[7]) & 0x01;	//0x80 인경우 on time 이기 때문에 포토게이트 1이 열린것으로 판별해도됨.
+						var photo_ostate = analogRead(hw_ble.pin) & 0x01;	//0x80 인경우 on time 이기 때문에 포토게이트 1이 열린것으로 판별해도됨.
 						return photo_ostate;
 					}else if (MOTION_REPOTER === receive_detail[7] && motionb === menus[lang]['motionb'][10]){
-						var photo_tstate = (analogRead(hw_ble.pin, receive_detail[7]) >> 1) & 0x01;
+						var photo_tstate = (analogRead(hw_ble.pin) >> 1) & 0x01;
 						return photo_tstate;
 					}
 				}
