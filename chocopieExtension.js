@@ -301,11 +301,13 @@
 	http://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript 
 	*/
 
+  var rp = 0;
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
 
 		console.log('inputData [' + i + '] = ' + inputData[i]);
+		console.log('rp is' + rp);
       if (parsingSysex) {
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
