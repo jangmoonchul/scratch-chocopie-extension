@@ -242,8 +242,9 @@
 	console.log('I am comming processSysexMessage and storedInputData[0] is' + storedInputData[0]);
 
     if(storedInputData[0] === SCBD_CHOCOPI_USB) {
-		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);
-		device.send(usb_output.buffer);		
+		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
+		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
+			
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
@@ -254,6 +255,7 @@
 
           setTimeout(init, 200);
 		  sysexBytesRead = 0;	
+		  device.send(usb_output.buffer);	
         }
         pinging = false;
         pingCount = 0;
@@ -329,6 +331,11 @@
 		  for (var i=3; i<19; i++){			
 			if(storedInputData[i] != 0){
 				connectHW(storedInputData[i], i-3);
+				if(storedInputData[i] === SCBD_SENSOR){
+					sample_functions.sensor_sender(i-3);			//SCBD_SENSOR 에 대한 샘플링 레이트
+				}else if (storedInputData[i] === SCBD_MOTION){
+					sample_functions.motion_sendor(i-3);			//SCBD_MOTION 에 대한 샘플링 레이트
+				}
 			}
 		  }
 		  break;
@@ -337,9 +344,9 @@
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
 			
 			if(storedInputData[3] << 7 | storedInputData[2] === SCBD_SENSOR){
-				//sample_functions.sensor_sender(storedInputData[1]);			//SCBD_SENSOR 에 대한 샘플링 레이트
+				sample_functions.sensor_sender(storedInputData[1]);			//SCBD_SENSOR 에 대한 샘플링 레이트
 			}else if (storedInputData[3] << 7 | storedInputData[2] === SCBD_MOTION){
-				//sample_functions.motion_sendor(storedInputData[1]);			//SCBD_MOTION 에 대한 샘플링 레이트
+				sample_functions.motion_sendor(storedInputData[1]);			//SCBD_MOTION 에 대한 샘플링 레이트
 			}
 			
 			break;
