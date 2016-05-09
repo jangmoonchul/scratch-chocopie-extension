@@ -183,8 +183,7 @@
           pinger = null;
           return;
         }
-        //chocopie_ping();				//패치가 완료되면 이 부분을 주석해제, queryFirmware(); 를 제거시킴 -- 2016.04.25
-		queryFirmware();
+        chocopie_ping();				//패치가 완료되면 이 부분을 주석해제, queryFirmware(); 를 제거시킴 -- 2016.04.25
 
 		//console.log('ping firmware query sended');
         pinging = true;
@@ -202,20 +201,15 @@
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 처리해야함
 
 	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION );
-		//check_ble = checkSum( SCBD_CHOCOPI_BLE, CPC_VERSION );
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);
-		//ble_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_BLE, CPC_VERSION, check_ble ,END_SYSEX]);
-    
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
-	//device.send(ble_output.buffer);		//ble 연결도 가능한지 확인하기 위해서 함께보냄
   }
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
 
 	function checkSum(detailnport, data){
-		//var sum = ~detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
-		var sum = detailnport;
+		var sum = ~detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
 		sum ^= data;
 		
 		return sum;
@@ -249,12 +243,6 @@
 	console.log('I am comming processSysexMessage and storedInputData[0] is' + storedInputData[0]);
 
     if(storedInputData[0] === SCBD_CHOCOPI_USB) {
-		/*
-		var check_get_block = checkSum(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
-		var	output_block = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_get_block ,END_SYSEX]);
-
-		CPC_GET_VERSION 이후에 자동적으로 CONNECT_HARDWARE PORT 들이 전송되기 때문에 보낼 필요가 없음.
-		*/
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
@@ -263,7 +251,6 @@
           watchdog = null;				//감시견을 옆집 개나줘버림
           connected = true;
 
-		  //device.send(output_block.buffer);	
           setTimeout(init, 200);
 		  sysexBytesRead = 0;	
         }
