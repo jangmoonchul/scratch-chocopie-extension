@@ -392,6 +392,18 @@
 		}
   }
 
+	function processInput(inputData) {
+		console.log("storedInputData[rp] is " + storedInputData[rp]);
+		storedInputData[rp] = inputData[rp++];
+		if(current_job==null){
+			current_job=actionBranch;
+		}
+		while(rp < inputData.length){
+			current_job();
+		}
+	}
+
+/*
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
@@ -501,7 +513,7 @@
       }
     }
   }
-
+*/
 	function connectHW (hw, pin) {
 		hwList.add(hw, pin);
 	}
