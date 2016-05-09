@@ -78,24 +78,7 @@
   var connected = false;
   var notifyConnection = false;
   var device = null;
-  var inputData = null;	
-
-	var current_job = null;		//실행될 함수명을 가지게되는 함수지시자
-	var	rp = 0;
-	var	rb = 0;
-	var	chocoPiVersion = new Array();
-	/*var	stored_data = {
-		chocoPiVersion : new Array()*/
-		/*
-		blocks : new Array(function(port){
-		},function(port){
-		});
-		*/
-	//};
-	var packet_index = 0;
-	var status = [packet_index, 0];
-	var data = new Uint8Array();
-
+  var inputData = null;
 
   // TEMPORARY WORKAROUND
   // Since _deviceRemoved is not used with Serial devices
@@ -212,6 +195,9 @@
   }
 
   function queryFirmware() {
+	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리
+	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 처리해야함
+
 	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION );
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);
@@ -222,7 +208,7 @@
   //Patched BY Remoted 2016.04.15
 
 	function checkSum(detailnport, data){
-		var sum = 0xFF ^ detailnport;
+		var sum = 0xFF ^ detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
 		sum ^= data;
 		
 		return sum;
@@ -251,12 +237,11 @@
 					 -> QUERY_FIRWWARE 발송 
 		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 핑이 형성됨								*/
 
-/*
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
 	console.log('I am comming processSysexMessage and storedInputData[0] is' + storedInputData[0]);
 
-    if(rb === SCBD_CHOCOPI_USB) {
+    if(storedInputData[0] === SCBD_CHOCOPI_USB) {
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
@@ -270,7 +255,7 @@
         }
         pinging = false;
         pingCount = 0;
-	}else if (rb === SCBD_CHOCOPI_USB_PING){
+	}else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
         if (!connected) {
           clearInterval(poller);		
           poller = null;				
@@ -285,7 +270,7 @@
         pingCount = 0;
 	}
   }
-*/
+
 
 	function escape_control(source){
 		if(source == 0x7E){
@@ -316,132 +301,13 @@
 	http://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript 
 	*/
 
-
-
-/*
-	function actionMotion(){
-		stored_data.motion[]=rb*255;
-		current_job= actionBranch;	
-	}
-*/
-
-/*
-	function actionModule(){
-		rb=inputData[rp++];
-		if(rp==inputData.length) return;
-		if(rb == SCBD_MOTION)
-			stored_data.blocks[port] = motion;		
-	}
-*/
-	
-
-	function actionChocopi(){
-		rb = data[rp++];
-
-		if(rb == CPC_VERSION){
-			current_job = get_CPCv;
-			status.packet_index = 0;
-			return;
-		}
-		return;
-	}
-
-	function get_CPCv(){
-		if(rp === data.length){
-			rp=0;
-			return;
-		}
-		
-		rb = data[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
-		chocoPiVersion[status.packet_index++] = rb;
-		if(status.packet_index==9){
-			//fs
-			current_job = actionBranch;
-			return;
-		}
-	}
-
-
-	function actionBranch(){		//Header Distributor
-		var detail = 0,
-			port = 0;
-
-		rb = data[rp++];
-		console.log("rb is " + rb);
-		detail = rb & 0xF0;
-		port = rb & 0xFF;
-
-		if(rb < 0xE0){
-			//current_job=stored_data.blocks[port]();
-		}else{
-			// SYSTEM BYTE Processing
-			if(rb === SCBD_CHOCOPI_USB) {
-				//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
-				if (!connected) {
-				  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
-				  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
-				  clearTimeout(watchdog);
-				  watchdog = null;				//감시견을 옆집 개나줘버림
-				  connected = true;
-
-				  setTimeout(init, 200);
-				  //sysexBytesRead = 0;	
-				}
-				current_job= actionChocopi;
-				pinging = false;
-				pingCount = 0;
-			}else if (rb === SCBD_CHOCOPI_USB_PING){
-				if (!connected) {
-				  clearInterval(poller);		
-				  poller = null;				
-				  clearTimeout(watchdog);
-				  watchdog = null;				
-				  connected = true;
-
-				  setTimeout(init, 200);			
-				  //sysexBytesRead = 0;		
-				}
-				current_job = actionPing;
-				pinging = false;
-				pingCount = 0;
-			}	
-		}	
-	}
-	//action 에 대해서 분류를 진행함
-	
-
-	function processInput(inputData) {
-	  //입력 데이터 처리용도의 함수
-
-		/*
-		for (var i=0;i < inputData.length; i++){
-		  console.log('inputData[' + i + '] ' + inputData[i]);
-		}
-		*/	
-		data[0] = inputData[rp++];	//헤더 확보
-		console.log('inputData[rp++] ' + inputData[rp++]);
-		console.log('data is ' + data[rp]);
-		if(current_job==null){
-			current_job = actionBranch;
-		}
-
-		while(rp<inputData.length){
-			current_job();	
-			data[rp] = inputData[rp];
-			
-		}
-	}
-
-
-/*
-
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
 
 		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
@@ -591,8 +457,6 @@
       }
     }
   }
-*/
-
 
 	function connectHW (hw, pin) {
 		hwList.add(hw, pin);
@@ -673,7 +537,7 @@
     device.open({ stopBits: 0, bitRate: 115200, ctsFlowControl: 0 });
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
-      var inputData = new Uint8Array(data);		//이곳은 반드시 Uint 형태여야만 헤더가 꺠지지 않고 옴
+      var inputData = new Uint8Array(data);
       processInput(inputData);
     });
 	//첫째로 processInput 핸들러를 가동시키고 나서
