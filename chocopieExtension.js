@@ -343,7 +343,7 @@
 	}
 
 	function get_CPCv(){
-		if(rp==inputDataGlobal.length) return;
+		if(rp === inputDataGlobal.length) return;
 		
 		rb = inputDataGlobal[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
 		chocoPiVersion[status.packet_index++] = rb;
@@ -406,7 +406,7 @@
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
 		rp=0;
-		var inputDataGlobal = inputData[rp++];	
+		inputDataGlobal = inputData[rp++];	
 
 		if(current_job==null){
 			current_job = actionBranch;
