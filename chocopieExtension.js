@@ -22,14 +22,14 @@
 		SCBD_CHOCOPI_USB_PING = 0xE4,
 		SCBD_CHOCOPI_BLE = 0xF0,	//Chocopie BLE 연결에 대한 값 디테일(상위값 15, 포트0) 를 지정	
 		SCBD_CHOCOPI_BLE_PING = 0xF4,
-		SCBD_SENSOR = 0x80,
-		SCBD_TOUCH = 0x90,
-		SCBD_SWITCH = 0xA0,
-		SCBD_MOTION = 0xB0,
-		SCBD_LED = 0xC0,
-		SCBD_STEPPER = 0xD0, 
-		SCBD_DC_MOTOR = 0xE0,		//SCBD_CHOCOPI_USB 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
-		SCBD_SERVO = 0xF0;			//SCBD_CHOCOPI_BLE 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
+		SCBD_SENSOR = 8,
+		SCBD_TOUCH = 9,
+		SCBD_SWITCH = 10,
+		SCBD_MOTION = 11,
+		SCBD_LED = 12,
+		SCBD_STEPPER = 13, 
+		SCBD_DC_MOTOR = 14,		//SCBD_CHOCOPI_USB 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
+		SCBD_SERVO = 15;			//SCBD_CHOCOPI_BLE 와 구분하기 위해서 반드시 포트에 대해서 OR 연산이 필요함
 		//SCBD_ULTRASONIC = 0x10,		
 		//SCBD_PIR = 0x11;
 	/*Chocopie const definition
