@@ -335,9 +335,9 @@
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
 			
 			if(storedInputData[3] << 7 | storedInputData[2] === SCBD_SENSOR){
-				sample_functions.sensor_sender(storedInputData[1]);			//SCBD_SENSOR 에 대한 샘플링 레이트
+				//sample_functions.sensor_sender(storedInputData[1]);			//SCBD_SENSOR 에 대한 샘플링 레이트
 			}else if (storedInputData[3] << 7 | storedInputData[2] === SCBD_MOTION){
-				sample_functions.motion_sendor(storedInputData[1]);			//SCBD_MOTION 에 대한 샘플링 레이트
+				//sample_functions.motion_sendor(storedInputData[1]);			//SCBD_MOTION 에 대한 샘플링 레이트
 			}
 			
 			break;
