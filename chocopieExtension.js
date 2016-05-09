@@ -319,15 +319,16 @@
 	
 	var current_job = null,		//실행될 함수명을 가지게되는 함수지시자
 		rp,
-		rb;
-	var	stored_data = {
-		chocoPiVersion : new Array()
+		rb,
+		chocoPiVersion = new Array();
+	/*var	stored_data = {
+		chocoPiVersion : new Array()*/
 		/*
 		blocks : new Array(function(port){
 		},function(port){
 		});
 		*/
-	};
+	//};
 	
 	var status={packet_index, 0};
 	function actionChocopi(){
@@ -345,7 +346,7 @@
 		if(rp==inputData.length) return;
 		
 		rb = inputData[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
-		stored_data.chocoPiVersion[status.packet_index++] = rb;
+		chocoPiVersion[status.packet_index++] = rb;
 		if(status.packet_index==9){
 			//fs
 			current_job = actionBranch;
