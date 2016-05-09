@@ -317,10 +317,10 @@
 	}
 */
 	
-	var current_job = null,		//실행될 함수명을 가지게되는 함수지시자
-		rp = 0,
-		rb = 0,
-		chocoPiVersion = new Array();
+	var current_job = null;		//실행될 함수명을 가지게되는 함수지시자
+	var	rp = 0;
+	var	rb = 0;
+	var	chocoPiVersion = new Array();
 	/*var	stored_data = {
 		chocoPiVersion : new Array()*/
 		/*
