@@ -311,8 +311,8 @@
 
 		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		if (storedInputData[0] === SCBD_CHOCOPI_USB){
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		if ( sysexBytesRead === 10 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
 		 
@@ -322,7 +322,7 @@
         } else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
 		  parsingSysex = false;
           processSysexMessage();
-        } else if ((storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
+        } else if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
 		  parsingSysex = false;				//											     0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
 											// 0xE0, CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
 		  for (var i=3; i<19; i++){			
@@ -335,7 +335,7 @@
 				}
 			}
 		  }
-        } else if (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
+        } else if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
 			parsingSysex = false;
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
 			
@@ -345,7 +345,7 @@
 				sample_functions.motion_sendor(storedInputData[1]);			//SCBD_MOTION 에 대한 샘플링 레이트
 			}
 
-        } else if (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
+        } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
 			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 			parsingSysex = false;
 			removeHW(storedInputData[1]);
@@ -359,7 +359,7 @@
 			}else if (storedInputData[1] == 1){
 				console.log("BLE is connected");
 			}
-        }else if (storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
+        }else if (sysexBytesRead === 10 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
 			parsingSysex = false;
 			console.log('에러발생 ' + storedInputData[1] + storedInputData[2] + '에서 ' + storedInputData[3] + storedInputData[4] + storedInputData[5] + storedInputData[6] + storedInputData[7] + storedInputData[8] + storedInputData[9] + storedInputData[10]);	
 			//오류코드 (2 Byte), 참고데이터 (8 Byte)
