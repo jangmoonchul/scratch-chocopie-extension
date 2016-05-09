@@ -332,7 +332,7 @@
 	var packet_index = 0;
 	var status = [packet_index, 0];
 	function actionChocopi(){
-		rb = inputData[rp++];
+		rb = inputDataGlobal[rp++];
 
 		if(rb == CPC_VERSION){
 			current_job = get_CPCv;
@@ -343,9 +343,9 @@
 	}
 
 	function get_CPCv(){
-		if(rp==inputData.length) return;
+		if(rp==inputDataGlobal.length) return;
 		
-		rb = inputData[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
+		rb = inputDataGlobal[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
 		chocoPiVersion[status.packet_index++] = rb;
 		if(status.packet_index==9){
 			//fs
@@ -359,10 +359,11 @@
 		var detail = 0,
 			port = 0;
 
-		rb=inputData[rp++];
+		rb=inputDataGlobal[rp++];
 		detail = rb & 0xF0;
 		port = rb & 0xFF;
 
+		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
 		if(rb < E0){
 			//current_job=stored_data.blocks[port]();
 		}else{
@@ -400,10 +401,13 @@
 		}	
 	}
 	//action 에 대해서 분류를 진행함
+	var inputDataGlobal = null;	
 
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
 		rp=0;
+		var inputDataGlobal = inputData[rp++];	
+
 		if(current_job==null){
 			current_job = actionBranch;
 		}
