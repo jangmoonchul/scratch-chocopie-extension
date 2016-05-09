@@ -312,19 +312,16 @@
 		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
+		if ( sysexBytesRead === 10 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
 		 
           processSysexMessage();
-		  setVersion(storedInputData[8], storedInputData[9]);		//0xE0, CPC_VERSION, “CHOCOPI”,1,0
-		  break;
-		  //detail/port + Data ( 10 Byte) = 11 Byte 초과이면 강제로 반복문을 끊어버림   예상값) storedInputData[0] = 0xE0 혹은 0xF0
+		  setVersion(storedInputData[9], storedInputData[10]);		//0xE0, CPC_VERSION, “CHOCOPI”,1,0
 		  
         } else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
 		  parsingSysex = false;
           processSysexMessage();
-		  break;
         } else if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
 		  parsingSysex = false;				//											     0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
 											// 0xE0, CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
@@ -338,7 +335,6 @@
 				}
 			}
 		  }
-		  break;
         } else if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
 			parsingSysex = false;
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
@@ -348,13 +344,11 @@
 			}else if (storedInputData[3] << 7 | storedInputData[2] === SCBD_MOTION){
 				sample_functions.motion_sendor(storedInputData[1]);			//SCBD_MOTION 에 대한 샘플링 레이트
 			}
-			
-			break;
+
         } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
 			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 			parsingSysex = false;
 			removeHW(storedInputData[1]);
-			break;
         } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
 			parsingSysex = false;
 			if (storedInputData[1] == 0){ 							//연결해제
@@ -365,16 +359,13 @@
 			}else if (storedInputData[1] == 1){
 				console.log("BLE is connected");
 			}
-			break;
         }else if (sysexBytesRead === 10 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
 			parsingSysex = false;
 			console.log('에러발생 ' + storedInputData[1] + storedInputData[2] + '에서 ' + storedInputData[3] + storedInputData[4] + storedInputData[5] + storedInputData[6] + storedInputData[7] + storedInputData[8] + storedInputData[9] + storedInputData[10]);	
-			break;	//오류코드 (2 Byte), 참고데이터 (8 Byte)
+			//오류코드 (2 Byte), 참고데이터 (8 Byte)
         }else{
-			if (i < 17 && sysexBytesRead < 16)								//
-				storedInputData[sysexBytesRead++] = inputData[i];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
-			else															//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
-				continue;													//i가 먼저 끝나면서 데이터를 
+				storedInputData[sysexBytesRead++] = inputData[i];		// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
+																		//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
         }
 		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 	
