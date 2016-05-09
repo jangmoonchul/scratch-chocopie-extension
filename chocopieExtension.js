@@ -80,6 +80,23 @@
   var device = null;
   var inputData = null;	
 
+	var current_job = null;		//실행될 함수명을 가지게되는 함수지시자
+	var	rp = 0;
+	var	rb = 0;
+	var	chocoPiVersion = new Array();
+	/*var	stored_data = {
+		chocoPiVersion : new Array()*/
+		/*
+		blocks : new Array(function(port){
+		},function(port){
+		});
+		*/
+	//};
+	var packet_index = 0;
+	var status = [packet_index, 0];
+	var data = new Uint8Array();
+
+
   // TEMPORARY WORKAROUND
   // Since _deviceRemoved is not used with Serial devices
   // ping device regularly to check connection
@@ -317,21 +334,7 @@
 	}
 */
 	
-	var current_job = null;		//실행될 함수명을 가지게되는 함수지시자
-	var	rp = 0;
-	var	rb = 0;
-	var	chocoPiVersion = new Array();
-	/*var	stored_data = {
-		chocoPiVersion : new Array()*/
-		/*
-		blocks : new Array(function(port){
-		},function(port){
-		});
-		*/
-	//};
-	var packet_index = 0;
-	var status = [packet_index, 0];
-	var data = new Uint8Array();
+
 	function actionChocopi(){
 		rb = data[rp++];
 
