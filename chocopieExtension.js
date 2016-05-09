@@ -329,7 +329,7 @@
 		});
 		*/
 	//};
-	
+	var packet_index = 0;
 	var status = [packet_index, 0];
 	function actionChocopi(){
 		rb = inputData[rp++];
