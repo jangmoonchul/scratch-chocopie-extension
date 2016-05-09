@@ -331,9 +331,9 @@
 	//};
 	var packet_index = 0;
 	var status = [packet_index, 0];
-	var inputDataGlobal = new Array();
+	var data = new Uint8Array();
 	function actionChocopi(){
-		rb = inputDataGlobal[rp++];
+		rb = data[rp++];
 
 		if(rb == CPC_VERSION){
 			current_job = get_CPCv;
@@ -344,12 +344,12 @@
 	}
 
 	function get_CPCv(){
-		if(rp === inputDataGlobal.length){
+		if(rp === data.length){
 			rp=0;
 			return;
 		}
 		
-		rb = inputDataGlobal[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
+		rb = data[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
 		chocoPiVersion[status.packet_index++] = rb;
 		if(status.packet_index==9){
 			//fs
@@ -363,7 +363,7 @@
 		var detail = 0,
 			port = 0;
 
-		rb = inputDataGlobal[rp++];
+		rb = data[rp++];
 		detail = rb & 0xF0;
 		port = rb & 0xFF;
 
@@ -414,15 +414,16 @@
 		  console.log('inputData[' + i + '] ' + inputData[i]);
 		}
 		*/	
-		inputDataGlobal[0] = inputData[rp++];	//헤더 확보
-		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
+		data[0] = inputData[rp++];	//헤더 확보
+		
 		if(current_job==null){
 			current_job = actionBranch;
 		}
 
 		while(rp<inputData.length){
-			inputDataGlobal[rp++] = inputData[rp++];
 			current_job();	
+			data[rp] = inputData[rp];
+			console.log('data is ' + data[rp]);
 		}
 	}
 
