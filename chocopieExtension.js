@@ -301,7 +301,6 @@
 
 
 
-
 /*
 	function actionMotion(){
 		stored_data.motion[]=rb*255;
@@ -309,12 +308,14 @@
 	}
 */
 
+/*
 	function actionModule(){
 		rb=inputData[rp++];
 		if(rp==inputData.length) return;
 		if(rb == SCBD_MOTION)
 			stored_data.blocks[port] = motion;		
 	}
+*/
 	
 	var current_job = null,		//실행될 함수명을 가지게되는 함수지시자
 		rp,
@@ -322,7 +323,7 @@
 		
 
 	var	stored_data = {
-		chocoPiVersion : new Array();
+		chocoPiVersion : new Array()
 		/*
 		blocks : new Array(function(port){
 		},function(port){
@@ -405,7 +406,7 @@
 	  //입력 데이터 처리용도의 함수
 		rp=0;
 		if(current_job==null){
-			current_job=actionBranch;
+			current_job = actionBranch;
 		}
 
 		while(rp<inputData.length){
