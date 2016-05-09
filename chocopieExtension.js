@@ -364,6 +364,7 @@
 			port = 0;
 
 		rb = data[rp++];
+		console.log("rb is " + rb);
 		detail = rb & 0xF0;
 		port = rb & 0xFF;
 
@@ -415,7 +416,8 @@
 		}
 		*/	
 		data[0] = inputData[rp++];	//헤더 확보
-		
+		console.log('inputData[rp++] ' + inputData[rp++]);
+		console.log('data is ' + data[rp]);
 		if(current_job==null){
 			current_job = actionBranch;
 		}
@@ -423,7 +425,7 @@
 		while(rp<inputData.length){
 			current_job();	
 			data[rp] = inputData[rp];
-			console.log('data is ' + data[rp]);
+			
 		}
 	}
 
