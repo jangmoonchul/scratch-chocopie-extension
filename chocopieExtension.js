@@ -195,9 +195,6 @@
   }
 
   function queryFirmware() {
-	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리
-	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 처리해야함
-
 	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION );
 	
 	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);
@@ -208,7 +205,7 @@
   //Patched BY Remoted 2016.04.15
 
 	function checkSum(detailnport, data){
-		var sum = 0xFF ^ detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
+		var sum = 0xFF ^ detailnport;
 		sum ^= data;
 		
 		return sum;
@@ -237,11 +234,12 @@
 					 -> QUERY_FIRWWARE 발송 
 		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 핑이 형성됨								*/
 
+/*
   function processSysexMessage() {
 	  // 시스템 처리 추가메세지
 	console.log('I am comming processSysexMessage and storedInputData[0] is' + storedInputData[0]);
 
-    if(storedInputData[0] === SCBD_CHOCOPI_USB) {
+    if(rb === SCBD_CHOCOPI_USB) {
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
         if (!connected) {
           clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
@@ -255,7 +253,7 @@
         }
         pinging = false;
         pingCount = 0;
-	}else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
+	}else if (rb === SCBD_CHOCOPI_USB_PING){
         if (!connected) {
           clearInterval(poller);		
           poller = null;				
@@ -270,7 +268,7 @@
         pingCount = 0;
 	}
   }
-
+*/
 
 	function escape_control(source){
 		if(source == 0x7E){
@@ -300,6 +298,150 @@
 	/*2 Byte -> 1 Byte 간으로 축약 및 재확장에 따라서 데이터 손실을 해결하기 위해서 함수제작 
 	http://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript 
 	*/
+
+
+
+
+/*
+	function actionMotion(){
+		stored_data.motion[]=rb*255;
+		current_job= actionBranch;	
+	}
+*/
+
+	function actionModule(){
+		rb=inputData[rp++];
+		if(rp==inputData.length) return;
+		if(rb == SCBD_MOTION)
+			stored_data.blocks[port] = motion;		
+	}
+	
+	var current_job = null,		//실행될 함수명을 가지게되는 함수지시자
+		rp,
+		rb,
+		blocks = new Array();
+
+	var	stored_data = {
+		chocoPiVersion : new Array(),
+		blocks[0] : function(port){
+		},
+		blocks[1] : function(port){
+		},
+		blocks[2] : function(port){
+		},
+		blocks[3] : function(port){
+		},
+		blocks[4] : function(port){
+		},
+		blocks[5] : function(port){
+		},
+		blocks[6] : function(port){
+		},
+		blocks[7] : function(port){
+		},
+		blocks[8] : function(port){
+		},
+		blocks[9] : function(port){
+		},
+		blocks[10] : function(port){
+		},
+		blocks[11] : function(port){
+		},
+		blocks[12] : function(port){
+		},
+		blocks[13] : function(port){
+		},
+		blocks[14] : function(port){
+		},
+		blocks[15] : function(port){
+		}
+	};
+	
+	var status={packet_index, 0};
+	function actionChocopi(){
+		rb = inputData[rp++];
+
+		if(rb == CPC_VERSION){
+			current_job=get_CPCv;
+			status.packet_index = 0;
+			return;
+		}
+		return;
+	}
+
+	function get_CPCv(){
+		if(rp==inputData.length) return;
+		
+		rb = inputData[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
+		stored_data.chocoPiVersion[status.packet_index++] = rb;
+		if(status.packet_index==9){
+			//fs
+			current_job = actionBranch;
+			return;
+		}
+	}
+
+
+	function actionBranch(){		//Header Distributor
+		var detail = 0,
+			port = 0;
+
+		rb=inputData[rp++];
+		detail = rb & 0xF0;
+		port = rb & 0xFF;
+
+		if(rb < E0){
+			current_job=stored_data.blocks[port]();
+		}else{
+			// SYSTEM BYTE Processing
+			if(rb === SCBD_CHOCOPI_USB) {
+				//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
+				if (!connected) {
+				  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
+				  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
+				  clearTimeout(watchdog);
+				  watchdog = null;				//감시견을 옆집 개나줘버림
+				  connected = true;
+
+				  setTimeout(init, 200);
+				  //sysexBytesRead = 0;	
+				}
+				current_job= actionChocopi;
+				pinging = false;
+				pingCount = 0;
+			}else if (rb === SCBD_CHOCOPI_USB_PING){
+				if (!connected) {
+				  clearInterval(poller);		
+				  poller = null;				
+				  clearTimeout(watchdog);
+				  watchdog = null;				
+				  connected = true;
+
+				  setTimeout(init, 200);			
+				  //sysexBytesRead = 0;		
+				}
+				current_job = actionPing;
+				pinging = false;
+				pingCount = 0;
+			}	
+		}	
+	}
+	//action 에 대해서 분류를 진행함
+
+	function processInput(inputData) {
+	  //입력 데이터 처리용도의 함수
+		rp=0;
+		if(current_job==null){
+			current_job=actionBranch;
+		}
+
+		while(rp<inputData.length){
+			current_job();	
+		}	
+	}
+
+
+/*
 
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
@@ -457,6 +599,8 @@
       }
     }
   }
+*/
+
 
 	function connectHW (hw, pin) {
 		hwList.add(hw, pin);
