@@ -404,7 +404,7 @@
 
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
-	  console.log('inputData' + inputData);
+	  console.log('inputData' + inputData[0]);
 		rp=0;
 		inputDataGlobal[rp++] = inputData[rp++];	
 		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
