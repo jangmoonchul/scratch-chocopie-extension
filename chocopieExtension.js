@@ -208,7 +208,7 @@
   //Patched BY Remoted 2016.04.15
 
 	function checkSum(detailnport, data){
-		var sum = ~detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
+		var sum = 0xFF ^ detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
 		sum ^= data;
 		
 		return sum;
