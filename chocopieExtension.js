@@ -417,7 +417,7 @@
 	}
  
 	if (parsingSysex) {
-		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 10 && storedInputData[1] === CPC_VERSION){
 			console.log('I am comming parsingSysex chocopie init starter');				
 			current_job = processSysexMessage;
@@ -452,7 +452,7 @@
 			else															//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
 				current_job	= null;											//i가 먼저 끝나면서 데이터를 놓칠 수 있음
         }
-		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 		
 
 	} else if (waitForData > 0 && inputData[i] <= 0xCF) {	
