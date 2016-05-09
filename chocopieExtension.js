@@ -420,11 +420,11 @@
 		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 10 && storedInputData[1] === CPC_VERSION){
 			console.log('I am comming parsingSysex chocopie init starter');				
-			current_job = processSysexMessage;
+			processSysexMessage();
 			if (rp < last_index) current_job = actionBranch;
 
         } else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
-			current_job = processSysexMessage;
+			processSysexMessage();
 			if (rp < last_index) current_job = actionBranch;
 
         } else if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){				
