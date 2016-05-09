@@ -404,7 +404,6 @@
 
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
-	  console.log('inputData' + inputData[0]);
 		rp=0;
 		inputDataGlobal[rp++] = inputData[rp++];	
 		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
@@ -659,6 +658,10 @@
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
       var inputData = new Int8Array(data);
+	  for (var i=0;i < inputData.length; i++){
+		  console.log('inputData' + inputData);
+	  }
+	  
       processInput(inputData);
     });
 	//첫째로 processInput 핸들러를 가동시키고 나서
