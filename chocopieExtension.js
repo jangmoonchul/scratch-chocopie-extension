@@ -322,10 +322,12 @@
 		
 
 	var	stored_data = {
-		chocoPiVersion : new Array(),
+		chocoPiVersion : new Array();
+		/*
 		blocks : new Array(function(port){
 		},function(port){
 		});
+		*/
 	};
 	
 	var status={packet_index, 0};
@@ -362,7 +364,7 @@
 		port = rb & 0xFF;
 
 		if(rb < E0){
-			current_job=stored_data.blocks[port]();
+			//current_job=stored_data.blocks[port]();
 		}else{
 			// SYSTEM BYTE Processing
 			if(rb === SCBD_CHOCOPI_USB) {
