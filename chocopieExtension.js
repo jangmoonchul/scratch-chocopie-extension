@@ -75,6 +75,7 @@
   var majorVersion = 0,
     minorVersion = 0;
 
+  var detail = 0;
   var connected = false;
   var notifyConnection = false;
   var device = null;
@@ -302,53 +303,36 @@
 	*/
 
   var rp = 0;
-  function processInput(inputData) {
-	  //입력 데이터 처리용도의 함수
-    for (var i=0; i < inputData.length; i++) {	
-
-		console.log('inputData [' + i + '] = ' + inputData[i]);
-		console.log('rp is' + rp);
-      if (parsingSysex) {
-		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
-		  console.log('I am comming parsingSysex chocopie init starter');				
-          parsingSysex = false;		
-		 
-          processSysexMessage();
-		  setVersion(storedInputData[8], storedInputData[9]);		//0xE0, CPC_VERSION, “CHOCOPI”,1,0
-		  break;
-		  //detail/port + Data ( 10 Byte) = 11 Byte 초과이면 강제로 반복문을 끊어버림   예상값) storedInputData[0] = 0xE0 혹은 0xF0
-		  
-        } else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
-		  parsingSysex = false;
-          processSysexMessage();
-		  break;
-        } else if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
-		  parsingSysex = false;				//											     0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
-											// 0xE0, CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
-		  for (var i=3; i<19; i++){			
-			if(storedInputData[i] != 0){
-				connectHW(storedInputData[i], i-3);
-			}
+  var current_job = null;
+  var last_index = 0;
+  
+  var action_system = {
+		all_getBlock : function(){
+		  parsingSysex = false;		
+		  for (var i=3; i<19; i++){			//											 0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
+			if(storedInputData[i] != 0)	// 0xE0, CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
+				connectHW(storedInputData[i], i-3);	
+				//connectHW(block_type, port);
 		  }
-		  break;
-        } else if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
+		},
+		cpc_connect : function(){
 			parsingSysex = false;
-			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
-			
-			if(storedInputData[3] << 7 | storedInputData[2] === SCBD_SENSOR){
-				sample_functions.sensor_sender(storedInputData[1]);			//SCBD_SENSOR 에 대한 샘플링 레이트
-			}else if (storedInputData[3] << 7 | storedInputData[2] === SCBD_MOTION){
-				sample_functions.motion_sendor(storedInputData[1]);			//SCBD_MOTION 에 대한 샘플링 레이트
+			var low = storedInputData[2],
+				high = storedInputData[3] << 7,	//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
+				channel = storedInputData[1];	
+
+			connectHW( low | high, channel);		
+			if(low | high === SCBD_SENSOR){
+				sample_functions.sensor_sender(channel);			//SCBD_SENSOR 에 대한 샘플링 레이트 발송
+			}else if (low | high === SCBD_MOTION){
+				sample_functions.motion_sendor(channel);			//SCBD_MOTION 에 대한 샘플링 레이트 발송
 			}
-			
-			break;
-        } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
-			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+		},
+		cpc_remove : function(){
 			parsingSysex = false;
-			removeHW(storedInputData[1]);
-			break;
-        } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
+			removeHW(storedInputData[1]);	//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+		},
+		ble_process : function(){
 			parsingSysex = false;
 			if (storedInputData[1] == 0){ 							//연결해제
 				for (var i=8; i < 16; i++){							//0xF3, STATUS (inputData, storedInputData)
@@ -358,77 +342,27 @@
 			}else if (storedInputData[1] == 1){
 				console.log("BLE is connected");
 			}
-			break;
-        }else if (sysexBytesRead === 10 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
+		},
+		cpc_error : function(){
 			parsingSysex = false;
 			console.log('에러발생 ' + storedInputData[1] + storedInputData[2] + '에서 ' + storedInputData[3] + storedInputData[4] + storedInputData[5] + storedInputData[6] + storedInputData[7] + storedInputData[8] + storedInputData[9] + storedInputData[10]);	
-			break;	//오류코드 (2 Byte), 참고데이터 (8 Byte)
-        }else{
-			if (i < 17 && sysexBytesRead < 16)								//
-				storedInputData[sysexBytesRead++] = inputData[i];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
-			else															//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
-				continue;													//i가 먼저 끝나면서 데이터를 
-        }
-		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
-	
-      } else if (waitForData > 0 && inputData[i] <= 0xCF) {	
-        storedInputData[--waitForData] = inputData[i];						// inputData 를 지속적으로 저장하는 과정에서 0xCF (207) 보다 작은값을 판별한다면,
-        if (executeMultiByteCommand !== 0 && waitForData === 0) {			// inputData 를 기준으로 판별하면 문제가 생길 가능성이 있음. 
-		  if (executeMultiByteCommand === SCBD_SENSOR){						// LOW HIGH 로 나눠서온다면 문제가 없을 것으로 예상
-																									// LOW, HIGH (inputData)
-              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		// HIGH, LOW (storedInputData)
-			   	
-		  }else if (executeMultiByteCommand === SCBD_TOUCH){
-			  
-			  if ( waitForData === 0 ){																// 모든 터치센서 전송인 경우
-																									// LOW, HIGH (inputData)
-				setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
-				
-			  } else {																					// 들어오는 데이터가 1 Byte 인 경우	
-				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + TOUCH_REPOTER);			// Button Number (on, off)	(inputData)
-			  }																							// 0, Button Number 		(storedInputData)
-			  																							// 들어오는 데이터에 대해서 디테일을 확인한 리포터를 보냄
-			 
-		  }else if (executeMultiByteCommand === SCBD_SWITCH){
-			  
-			  if ( waitForData === 0 ){																	//포텐시오미터
-				if (SWITCH_REPOTER === 0x30){															// LOW, HIGH (inputData)
-					setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
-				}else{
-					setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	//조이스틱X, Y는 디지털
-				}																
-			  }else{																					// 예상값 0x10, 0x20, ....	
-				setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + SWITCH_REPOTER);			// 들어오는 데이터가 1 Byte 인 경우
-			  }																							// Button Number (on, off)	(inputData)
-																										// 0, Button Number			(storedInputData)
-		  }else if (executeMultiByteCommand === SCBD_MOTION){												
-																										//1번(LOW, HIGH), 2번(LOW, HIGH), 3번(LOW, HIGH) (inputData)
-			  if (waitForData === 0){																	//3번(HIGH, LOW), 2번(HIGH, LOW), 1번(HIGH, LOW) (storedInputData)
-				  if (MOTION_REPOTER === 0x10){															//적외선
-				   setAnalogInput(multiByteChannel, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
-				  }else{																				//가속도, 각가속도
-				   setSAnalogInput(multiByteChannel, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
-				  }
-			  }else if (waitForData === 2){			
-				   setAnalogInput(multiByteChannel, (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]); 		
-				   //  4 Byte ( L, H, LL, HH ) 모든 MOTION_REPOTER 에 대해서 같은 처리가 이루어짐
-				   //    0, 0, (HH, LL, H, L)
-			  }else if (waitForData === 5){			
-				  setAnalogInput(multiByteChannel, storedInputData[5]); 		
-			  }			  
-		  }																									
-		}	
-      } else {
-        if (inputData[i] >= 0xE0) {							//0xE0 이상의 값을 시스템 메세지용 값으로 분리시킴
-			detail = inputData[i];							//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
-			
-        } else {											//SYSTEM_MESSAGE 가 아닌 0xE0 이상의 값은, DC_MOTOR 와 SERVO의 가능성이 있음			
-		  detail = inputData[i] & 0xF0;						// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xCF 까지이므로 이 부분을 반드시 타게됨
-          multiByteChannel = inputData[i] & 0x0F;			// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
-		  port = hwList.search_bypin(multiByteChannel);		// -> hwList.search_bypin 로 조사해서 처리
-        }
+			//오류코드 (2 Byte), 참고데이터 (8 Byte)
+		}
+  };
 
-		if(detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE || detail === SCBD_CHOCOPI_USB_PING || detail === (SCBD_CHOCOPI_USB | 0x0F)){
+  var action_list = {
+		action_sensor: function(port){
+		},
+		action_touch: function(port){
+		},
+		action_switch : function(port){
+		},
+		action_motion : function(port){
+		}
+  };
+  
+  function actionBranch(){
+	  	if(detail === SCBD_CHOCOPI_USB || detail === SCBD_CHOCOPI_BLE || detail === SCBD_CHOCOPI_USB_PING || detail === (SCBD_CHOCOPI_USB | 0x0F)){
 			parsingSysex = true;		//	시스템 메세지 분류 2016.04.23 확인완료
 			sysexBytesRead = 0
 			storedInputData[sysexBytesRead++] = detail;
@@ -456,6 +390,114 @@
 			executeMultiByteCommand = port.name;
 			MOTION_REPOTER = detail;
 		}
+  }
+
+  function processInput(inputData) {
+	  //입력 데이터 처리용도의 함수
+    for (var i=0; i < inputData.length; i++) {	
+		//console.log('inputData [' + i + '] = ' + inputData[i]);
+
+	rp = i;
+	last_index = inputData.length;	
+
+	if(rp < last_index){
+		if (current_job != null && waitForData === 0)
+			current_job();
+		else{
+			if (inputData[i] >= 0xE0) {							//0xE0 이상의 값을 시스템 메세지용 값으로 분리시킴
+				detail = inputData[i];							//예상 데이터) 0xE0, CPC_VERSION, “CHOCOPI”,1,0...
+				
+			} else {											//SYSTEM_MESSAGE 가 아닌 0xE0 이상의 값은, DC_MOTOR 와 SERVO의 가능성이 있음			
+			  detail = inputData[i] & 0xF0;						// 초반 펌웨어 확정과정 이후에, 나머지 디테일/포트합 최대는 0xCF 까지이므로 이 부분을 반드시 타게됨
+			  multiByteChannel = inputData[i] & 0x0F;			// 1. 문제는 디테일 0~ B 까지 사용하는 것에 대해서 어떤 센서가 사용하는지 확정하기 힘듬
+			  port = hwList.search_bypin(multiByteChannel);		// -> hwList.search_bypin 로 조사해서 처리
+			}
+			current_job = actionBranch;
+		}
+	}
+ 
+	if (parsingSysex) {
+		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		if ( sysexBytesRead === 10 && storedInputData[1] === CPC_VERSION){
+			console.log('I am comming parsingSysex chocopie init starter');				
+			current_job = processSysexMessage;
+			if (rp < last_index) current_job = actionBranch;
+
+        } else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
+			current_job = processSysexMessage;
+			if (rp < last_index) current_job = actionBranch;
+
+        } else if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){				
+			current_job = action_system.all_getBlock;
+			if (rp < last_index) current_job = actionBranch;
+
+        } else if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
+			current_job = action_system.cpc_connect;
+			if (rp < last_index) current_job = actionBranch;
+
+        } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
+			current_job = action_system.cpc_remove;
+			if (rp < last_index) current_job = actionBranch;
+
+        } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
+			current_job = action_system.ble_process;
+			if (rp < last_index) current_job = actionBranch;
+
+        }else if (sysexBytesRead === 10 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
+			current_job = action_system.cpc_error;
+			if (rp < last_index) current_job = actionBranch;	
+        }else{
+			if (i < inputData.length)										
+				storedInputData[sysexBytesRead++] = inputData[i];			// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
+			else															//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
+				current_job	= null;											//i가 먼저 끝나면서 데이터를 놓칠 수 있음
+        }
+		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
+		
+
+	} else if (waitForData > 0 && inputData[i] <= 0xCF) {	
+        storedInputData[--waitForData] = inputData[i];						// inputData 를 지속적으로 저장하는 과정에서 0xCF (207) 보다 작은값을 판별한다면,
+        if (executeMultiByteCommand !== 0 && waitForData === 0) {			// inputData 를 기준으로 판별하면 문제가 생길 가능성이 있음. 
+		  if (executeMultiByteCommand === SCBD_SENSOR){						// LOW HIGH 로 나눠서온다면 문제가 없을 것으로 예상
+																									// LOW, HIGH (inputData)
+              setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);		// HIGH, LOW (storedInputData)
+			   	
+		  }else if (executeMultiByteCommand === SCBD_TOUCH){
+			  if ( waitForData === 0 ){																// 모든 터치센서 전송인 경우
+																									// LOW, HIGH (inputData)
+				setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
+			  } else {																					// 들어오는 데이터가 1 Byte 인 경우	
+				setDigitalInputs(multiByteChannel, storedInputData[1]);									// Button Number (on, off)	(inputData)
+			  }																							// 0, Button Number 		(storedInputData)
+
+		  }else if (executeMultiByteCommand === SCBD_SWITCH){
+			  if ( waitForData === 0 ){																	//포텐시오미터
+				if (SWITCH_REPOTER === 0x30){															// LOW, HIGH (inputData)
+					setAnalogInput(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	// HIGH, LOW (storedInputData)
+				}else{
+					setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);	//조이스틱X, Y는 디지털
+				}																
+			  }else{																					// 예상값 0x10, 0x20, ....	
+				setDigitalInputs(multiByteChannel, storedInputData[1]);									// 들어오는 데이터가 1 Byte 인 경우
+			  }																							// Button Number (on, off)	(inputData)
+																										// 0, Button Number			(storedInputData)
+		  }else if (executeMultiByteCommand === SCBD_MOTION){												
+																										//1번(LOW, HIGH), 2번(LOW, HIGH), 3번(LOW, HIGH) (inputData)
+			  if (waitForData === 0){																	//3번(HIGH, LOW), 2번(HIGH, LOW), 1번(HIGH, LOW) (storedInputData)
+				  if (MOTION_REPOTER === 0x10){															//적외선
+				   setAnalogInput(multiByteChannel, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
+				  }else{																				//가속도, 각가속도
+				   setSAnalogInput(multiByteChannel, (storedInputData[0] << 35) + (storedInputData[1] << 28) + (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]);
+				  }
+			  }else if (waitForData === 2){			
+				   setAnalogInput(multiByteChannel, (storedInputData[2] << 21) + (storedInputData[3] << 14) + (storedInputData[4] << 7) + storedInputData[5]); 		
+				   //  4 Byte ( L, H, LL, HH ) 모든 MOTION_REPOTER 에 대해서 같은 처리가 이루어짐
+				   //    0, 0, (HH, LL, H, L)
+			  }else if (waitForData === 5){			
+				  setAnalogInput(multiByteChannel, storedInputData[5]); 		
+			  }			  
+		  }																									
+		}	
       }
     }
   }
@@ -580,7 +622,7 @@
 			var hw = hwList.search_bypin(port),	
 				sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]);
 			
-			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw_normal.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);
+			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);
 
 			for (var i=0;i < dnp.length ; i++){
 				check_low = checkSum( dnp[i], low_data );
@@ -598,7 +640,7 @@
 			var hw = hwList.search_bypin(port),	
 				sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);	
 
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin, sensor_detail[2] | hw_normal.pin, sensor_detail[3] | hw_normal.pin, sensor_detail[4] | hw_normal.pin ]);	
+			var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin ]);	
 			
 			for (var i=0;i < dnp.length -1; i++){
 				check_low = checkSum( dnp[i], low_data );	
@@ -717,7 +759,7 @@
 			if(!hw_normal) return;
 			else{
 				if (TOUCH_REPOTER === sensor_detail[0] ){
-					var	button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
+					var	button_num = digitalRead(hw_normal.pin);
 					if (btnStates === 0){
 						//꺼짐
 						if (button_num === touch){
@@ -725,14 +767,14 @@
 						}				
 					}
 					
-					/*  0, Button Number, Detail (on, off)/Port	(storedInputData)
-					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
+					/*  0, Button Number	(storedInputData)
+					setDigitalInputs(multiByteChannel, storedInputData[1] );
 					0000 0000 0000 0000
 					0000 0000 1111 0000
 						console.log('networks is ' + networks + ' sended'); 
 					*/				
 				} else if (TOUCH_REPOTER === sensor_detail[1]){
-					var	button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
+					var	button_num = digitalRead(hw_normal.pin);
 					if (btnStates === 1){
 						//켜짐
 						if (button_num === touch){
@@ -745,7 +787,7 @@
 			if(!hw_ble) return;
 			else{
 				if (TOUCH_REPOTER === sensor_detail[0] ){
-					var	button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
+					var	button_num = digitalRead(hw_ble.pin);
 					if (btnStates === 0){
 						//꺼짐
 						if (button_num === touch){
@@ -753,7 +795,7 @@
 						}				
 					}			
 				} else if (TOUCH_REPOTER === sensor_detail[1]){
-					var	button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
+					var	button_num = digitalRead(hw_ble.pin);
 					if (btnStates === 1){
 						//켜짐
 						if (button_num === touch){
@@ -776,7 +818,7 @@
 			if (!hw_normal) return;
 			else{
 				if (SWITCH_REPOTER === sensor_detail[0]){
-					var button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
+					var button_num = digitalRead(hw_normal.pin);
 					if (btnStates === 0){
 						// 버튼 꺼짐
 						for (var i=1; i < 6; i++){
@@ -788,6 +830,7 @@
 						}
 					}
 				}else if (SWITCH_REPOTER === sensor_detail[1]){
+					var button_num = digitalRead(hw_normal.pin);
 					if (btnStates === 1){
 						// 버튼 켜짐
 						for (var i=1; i < 6; i++){
@@ -809,7 +852,7 @@
 			if (!hw_ble) return;
 			else{
 				if (SWITCH_REPOTER === sensor_detail[0]){
-					var button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
+					var button_num = digitalRead(hw_ble.pin);
 					if (btnStates === 0){
 						// 버튼 꺼짐
 						for (var i=1; i < 6; i++){
@@ -821,6 +864,7 @@
 						}
 					}
 				}else if (SWITCH_REPOTER === sensor_detail[1]){
+					var button_num = digitalRead(hw_ble.pin);
 					if (btnStates === 1){
 						// 버튼 켜짐
 						for (var i=1; i < 6; i++){
@@ -848,7 +892,7 @@
 				if (!hw_normal) return;
 				else{
 					if (SWITCH_REPOTER === sensor_detail[0]){
-						var button_num = (digitalRead(hw_normal.pin) & 0x0F00) >> 7;
+						var button_num = digitalRead(hw_normal.pin);
 						
 						// 버튼 꺼짐
 						for (var i=1; i < 6; i++){
@@ -860,6 +904,7 @@
 						}
 					}else if (SWITCH_REPOTER === sensor_detail[1]){
 						// 버튼 켜짐
+						var button_num = digitalRead(hw_normal.pin);
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
 								if (sw === menus[lang]['sw'][i-1]){
@@ -873,7 +918,7 @@
 				if (!hw_ble) return;
 				else{
 					if (SWITCH_REPOTER === sensor_detail[0]){
-						var button_num = (digitalRead(hw_ble.pin) & 0x0F00) >> 7;
+						var button_num = digitalRead(hw_ble.pin);
 						
 						// 버튼 꺼짐
 						for (var i=1; i < 6; i++){
@@ -885,6 +930,7 @@
 						}
 					}else if (SWITCH_REPOTER === sensor_detail[1]){
 						// 버튼 켜짐
+						var button_num = digitalRead(hw_ble.pin);
 						for (var i=1; i < 6; i++){
 							if (button_num === i){
 								if (sw === menus[lang]['sw'][i-1]){
