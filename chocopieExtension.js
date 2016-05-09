@@ -319,42 +319,13 @@
 	var current_job = null,		//실행될 함수명을 가지게되는 함수지시자
 		rp,
 		rb,
-		blocks = new Array();
+		
 
 	var	stored_data = {
 		chocoPiVersion : new Array(),
-		blocks[0] : function(port){
-		},
-		blocks[1] : function(port){
-		},
-		blocks[2] : function(port){
-		},
-		blocks[3] : function(port){
-		},
-		blocks[4] : function(port){
-		},
-		blocks[5] : function(port){
-		},
-		blocks[6] : function(port){
-		},
-		blocks[7] : function(port){
-		},
-		blocks[8] : function(port){
-		},
-		blocks[9] : function(port){
-		},
-		blocks[10] : function(port){
-		},
-		blocks[11] : function(port){
-		},
-		blocks[12] : function(port){
-		},
-		blocks[13] : function(port){
-		},
-		blocks[14] : function(port){
-		},
-		blocks[15] : function(port){
-		}
+		blocks : new Array(function(port){
+		},function(port){
+		});
 	};
 	
 	var status={packet_index, 0};
