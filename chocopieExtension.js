@@ -359,11 +359,10 @@
 		var detail = 0,
 			port = 0;
 
-		rb=inputDataGlobal[rp++];
+		rb = inputDataGlobal[rp++];
 		detail = rb & 0xF0;
 		port = rb & 0xFF;
 
-		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
 		if(rb < 0xE0){
 			//current_job=stored_data.blocks[port]();
 		}else{
@@ -401,13 +400,13 @@
 		}	
 	}
 	//action 에 대해서 분류를 진행함
-	var inputDataGlobal = null;	
+	var inputDataGlobal = new Int8Array();	
 
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
 		rp=0;
 		inputDataGlobal = inputData[rp++];	
-
+		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
 		if(current_job==null){
 			current_job = actionBranch;
 		}
@@ -658,7 +657,7 @@
     device.open({ stopBits: 0, bitRate: 115200, ctsFlowControl: 0 });
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
-      var inputData = new Uint8Array(data);
+      var inputData = new Int8Array(data);
       processInput(inputData);
     });
 	//첫째로 processInput 핸들러를 가동시키고 나서
