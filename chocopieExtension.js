@@ -659,7 +659,7 @@
     device.set_receive_handler(function(data) {
       var inputData = new Int8Array(data);
 	  for (var i=0;i < inputData.length; i++){
-		  console.log('inputData' + inputData);
+		  console.log('inputData[' + i + '] ' + inputData[i]);
 	  }
 	  
       processInput(inputData);
