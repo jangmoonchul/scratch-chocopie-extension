@@ -331,7 +331,7 @@
 
 		//console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
-		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
+		console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
 		if ( sysexBytesRead === 9 && storedInputData[0] === SCBD_CHOCOPI_USB){
 		  console.log('I am comming parsingSysex chocopie init starter');				
           parsingSysex = false;		
