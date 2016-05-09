@@ -364,7 +364,7 @@
 		port = rb & 0xFF;
 
 		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
-		if(rb < E0){
+		if(rb < 0xE0){
 			//current_job=stored_data.blocks[port]();
 		}else{
 			// SYSTEM BYTE Processing
