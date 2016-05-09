@@ -78,8 +78,7 @@
   var connected = false;
   var notifyConnection = false;
   var device = null;
-  var inputData = null;
-  var inputDataGlobal = new Uint8Array();	
+  var inputData = null;	
 
   // TEMPORARY WORKAROUND
   // Since _deviceRemoved is not used with Serial devices
@@ -332,6 +331,7 @@
 	//};
 	var packet_index = 0;
 	var status = [packet_index, 0];
+	var inputDataGlobal = new Array();
 	function actionChocopi(){
 		rb = inputDataGlobal[rp++];
 
