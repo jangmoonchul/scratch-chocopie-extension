@@ -404,8 +404,9 @@
 
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
+	  console.log('inputData' + inputData);
 		rp=0;
-		inputDataGlobal[rp++] = inputData;	
+		inputDataGlobal[rp++] = inputData[rp++];	
 		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
 		if(current_job==null){
 			current_job = actionBranch;
