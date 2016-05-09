@@ -343,7 +343,10 @@
 	}
 
 	function get_CPCv(){
-		if(rp === inputDataGlobal.length) return;
+		if(rp === inputDataGlobal.length){
+			rp=0;
+			return;
+		}
 		
 		rb = inputDataGlobal[rp++];					//이 부분에서 CPC_VERSION(8) -> CHOCOPI 로 점차 진행하게됨
 		chocoPiVersion[status.packet_index++] = rb;
@@ -400,27 +403,26 @@
 		}	
 	}
 	//action 에 대해서 분류를 진행함
-	var inputDataGlobal = new Int8Array();	
+	var inputDataGlobal = new Uint8Array();	
 
 	function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
-		
+
+		/*
 		for (var i=0;i < inputData.length; i++){
 		  console.log('inputData[' + i + '] ' + inputData[i]);
 		}
-	  
-
-		/*
-		rp=0;
-		inputDataGlobal[rp++] = inputData[rp++];	
+		*/	
+		inputDataGlobal[0] = inputData[rp++];	//헤더 확보
 		console.log('inputDataGlobal is ' + inputDataGlobal[rp]);
 		if(current_job==null){
 			current_job = actionBranch;
 		}
 
 		while(rp<inputData.length){
+			inputDataGlobal[rp++] = inputData[rp++];
 			current_job();	
-		}*/
+		}
 	}
 
 
@@ -664,7 +666,7 @@
     device.open({ stopBits: 0, bitRate: 115200, ctsFlowControl: 0 });
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
-      var inputData = new Int8Array(data);
+      var inputData = new Uint8Array(data);		//이곳은 반드시 Uint 형태여야만 헤더가 꺠지지 않고 옴
       processInput(inputData);
     });
 	//첫째로 processInput 핸들러를 가동시키고 나서
