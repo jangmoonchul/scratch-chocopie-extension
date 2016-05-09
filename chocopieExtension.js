@@ -557,7 +557,7 @@
     device.open({ stopBits: 0, bitRate: 115200, ctsFlowControl: 0 });
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
-      var inputData = new Int8Array(data);		//2016.05.08 Uint8Array  -> Int8Array 로 패치
+      var inputData = new Uint8Array(data);		//2016.05.08 Uint8Array  -> Int8Array 로 패치
       processInput(inputData);
     });
 	//첫째로 processInput 핸들러를 가동시키고 나서
