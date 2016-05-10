@@ -410,7 +410,7 @@
 			s.action=actionBranch;
 		}
 		for (var rb=0; rb < inputData.length; rb++){
-			s.action(rb);
+			s.action(inputData[rb]);
 		}
 	}
 //-----------------------------------------------------------------------------------------------------------------	
