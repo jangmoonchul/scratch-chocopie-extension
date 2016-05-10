@@ -319,7 +319,7 @@
 	var action = null;
 	var s = new status();
 
-	function actionBranch(var rb){
+	function actionBranch(rb){
 	}
 
 /*
