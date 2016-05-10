@@ -326,7 +326,7 @@
 	function actionChocopi(rb){
 		s.packet_index=0; //start from 	
 		console.log("rb is " + rb);	
-
+		console.log("s.action " + s.action);
 		if(rb == SCBD_CHOCOPI_USB_PING)
 			s.action=checkPing;
 		if(rb == CPC_VERSION)
@@ -393,7 +393,6 @@
 			s.packet_buffer = new Array(1024);
 		}
 		for (var rb=0; rb < inputData.length; rb++){
-			console.log("s.action " + s.action);
 			console.log("inputData[" + rb + "] " + inputData[rb]);
 			s.action(inputData[rb]);
 		}
