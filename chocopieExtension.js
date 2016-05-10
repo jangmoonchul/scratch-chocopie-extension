@@ -310,14 +310,13 @@
 	var rp = 0;
 	
 	var s= new Array(
-		action:null, packet_index:0, packet_buffer: new Arrray(1024), ping_delay:0, detail:0, port:0 ,
-		blocks: new Array(16)
-	);
-
+		action:null, packet_index:0, packet_buffer: new Arrray(1024), ping_delay:0, detail:0, port:0);
+	
+	var blocks = new Array(16);
 
 	function actionBranch(var rb){
-		if(rb<E0){
-			s.action=storevalue.blocks[port];
+		if(rb<0xE0){
+			//s.action=storevalue.blocks[port];
 		}else{
 			s.action=actionChocopi;
 			s.detail=rb >>4;
@@ -356,6 +355,7 @@
 		}
 	}
 
+/*
 	function actionMotion(var rb){
 		s.motion[]=rb*255;
 		s.packet_index=0; //start from 	
@@ -366,7 +366,7 @@
 		}
 		
 	}
-
+*/
 	function actionMotionGetIrValue(var rb){
 		s.packet_buffer[s.packet_index++]= rb;
 		if(s.packet_index == 6){
