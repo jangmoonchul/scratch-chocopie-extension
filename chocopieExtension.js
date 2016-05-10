@@ -269,8 +269,8 @@
 		s.packet_buffer[s.packet_index++] = rb;
 		//console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
 		//s.packet_index++		
-		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
-		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
+		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
+		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
 		if(s.packet_index === 9){
@@ -283,7 +283,7 @@
 
 			  setTimeout(init, 200);
 			  sysexBytesRead = 0;	
-			  device.send(usb_output.buffer);	
+			  //device.send(usb_output.buffer);	
 			}
 			pinging = false;
 			pingCount = 0;	
@@ -323,10 +323,11 @@
 			s.action = s.blocks[port];
 		}else{
 			s.action = actionChocopi;
-			if(rb === SCBD_CHOCOPI_USB_PING)		//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
+			if(rb === SCBD_CHOCOPI_USB_PING){		//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
 				s.action = checkPing;
-			//if (rb === SCBD_CHOCOPI_USB | 0x01)		//하드웨어 연결시에도 헤더가 도착하지 않음.
-			//	s.action = checkConnect;
+			}else if (rb === SCBD_CHOCOPI_USB | 0x01){		//하드웨어 연결시에도 헤더가 도착하지 않음.
+				s.action = checkConnect;
+			}
 		}
 		//console.log("action is" + s.action );
 		return;
