@@ -433,7 +433,7 @@
 			var hw = hwList.search_bypin(port),	
 				sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);	
 			//var s = {action:null, packet_index: 0, packet_buffer: null, ping_delay: 0, blocks: []};
-			var	dnp = { sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin };	
+			var	dnp = {(sensor_detail[0] | hw.pin), (sensor_detail[1] | hw.pin), (sensor_detail[2] | hw.pin), (sensor_detail[3] | hw.pin), (sensor_detail[4] | hw.pin)};	
 			
 			for (var i=0;i < dnp.length-1; i++){
 				check_low = checkSum( dnp[i], low_data );	
