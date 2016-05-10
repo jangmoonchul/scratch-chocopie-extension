@@ -266,10 +266,9 @@
 	var s = {action:null, packet_index: 0, packet_buffer: null, ping_delay: 0, blocks: []};
 	
 	function checkVersion(rb){
-		s.packet_buffer[s.packet_index] = rb;
+		s.packet_buffer[s.packet_index++] = rb;
 		//console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
-		s.packet_index++;
-		
+		//s.packet_index++		
 		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
 		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
@@ -335,9 +334,9 @@
 		s.packet_index=0; //start from 	
 		console.log("rb is " + rb);	
 		console.log("s.action " + s.action);
-		if(rb == CPC_VERSION)
+		if(rb === CPC_VERSION)
 			s.action=checkVersion;
-		if(rb == CPC_GET_BLOCK)
+		if(rb === CPC_GET_BLOCK)
 			s.action=actionGetBlock;
 		return;
 	}
@@ -350,10 +349,16 @@
 		if(s.packet_index === 32){
 			for (var i=0;i < s.packet_index; i++){
 				if( i%2 === 1 ){
-					var data = s.packet_buffer[i-1];
+					var data = s.packet_buffer[i-1],
+						connected_port = Math.floor(i/2); 
 					if (data !== 0){
-						connectHW(data, Math.floor(i/2));	//현재는 이렇게 연결되지만, 추후에는 패치필요.
-						console.log("Port["+ Math.floor(i/2) + "] " + data );
+						connectHW(data, connected_port);	//현재는 이렇게 연결되지만, 추후에는 패치필요.
+						if(data === SCBD_SENSOR)
+							sample_functions.sensor_sender(connected_port);			//SCBD_SENSOR 에 대한 샘플링 레이트
+						if (data === SCBD_MOTION)
+							sample_functions.motion_sendor(connected_port);			//SCBD_MOTION 에 대한 샘플링 레이트
+						
+						//console.log("Port["+ Math.floor(i/2) + "] " + data );
 					}
 				}
 			}
