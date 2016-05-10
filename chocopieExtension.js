@@ -305,6 +305,102 @@
 	http://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript 
 	*/
 
+//---------------------------------------------------------------------------------------------------------------
+	var action = null;
+	var rp = 0;
+	
+	var s=[
+		action:null, packet_index:0, packet_buffer: new Arrray(1024), ping_delay:0, detail:0, port:0 ,
+		blocks: new Array(16),
+		];
+
+
+	function actionBranch(var rb){
+		if(rb<E0){
+			s.action=storevalue.blocks[port];
+		}else{
+			s.action=actionChocopi;
+			s.detail=rb >>4;
+			s.port= rb & 0x0F;
+			return;
+		}
+		
+	}
+
+	function actionChocopi(var rb){
+		s.packet_index=0; //start from 	
+		if(rb == CPC_PING)
+			s.action=checkPing;
+		if(rb == CPC_GET_VERSION)
+			s.action=checkVersion;
+		if(rb == CPC_GET_BLOCK)
+			s.action=actionGetBlock;
+		
+	}
+
+	function checkPing(var rb){
+		if(rb == 0xFF^ CPC_PING){
+			//ping OK set ping delay to zero
+			s.ping_delay=0; 
+		}
+	}
+	f
+	function actionGetBlock(var rb){	
+		s.package[s.packet_index++]=rb;
+		if(s.packet_index == 9){
+			action = actionBranch;			
+			//send block list commoan
+			
+			s.package[s.packet_index++]=rb;
+			return;
+		}
+	}
+
+	function actionMotion(var rb){
+		s.motion[]=rb*255;
+		s.packet_index=0; //start from 	
+		if(s.detail == MOTION_IR_VALUE){
+			action = actionMotionGetIrValue;			
+			s.package[s.packet_index++]=rb;
+			return;
+		}
+		
+	}
+
+	function actionMotionGetIrValue(var rb){
+		s.packet_buffer[s.packet_index++]= rb;
+		if(s.packet_index == 6){
+			s.motion[0].ir_1 = s.packet_buffer[0] + s.packet_buffer[1] << 8;		
+			s.motion[0].ir_2 = s.packet_buffer[2] + s.packet_buffer[3] << 8;		
+			s.motion[0].ir_3 = s.packet_buffer[4] + s.packet_buffer[5] << 8;		
+			action= actionBranch;	
+		}
+	}
+
+	/*
+	function actionModule(){
+		rb=inputData[rp++];
+		if(rp==inputData.length) return;
+		if(rb == )
+			s.blocks[port] = motion;
+		
+	}
+	*/
+
+	function processInput(inputData) {
+		  //입력 데이터 처리용도의 함수
+		
+		if(action==null){
+			//inittialize all values		
+			s.action=actionBranch;
+		}
+		foreach( rb in inputData)
+			s.action(rb);	
+		}
+		
+	}
+//-----------------------------------------------------------------------------------------------------------------	
+/*
   function processInput(inputData) {
 	  //입력 데이터 처리용도의 함수
     for (var i=0; i < inputData.length; i++) {	
@@ -364,8 +460,8 @@
 			console.log('에러발생 ' + storedInputData[1] + storedInputData[2] + '에서 ' + storedInputData[3] + storedInputData[4] + storedInputData[5] + storedInputData[6] + storedInputData[7] + storedInputData[8] + storedInputData[9] + storedInputData[10]);	
 			//오류코드 (2 Byte), 참고데이터 (8 Byte)
         }else{
-				storedInputData[sysexBytesRead++] = inputData[i];		// 0 부터 도는 for 문에 대해서 port/detail 을 놓치지 않기 위한 조치				
-																		//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임
+				storedInputData[sysexBytesRead++] = inputData[i];		
+				//i는 0부터 시작하지만, 결국적으로 1이 되서야  inputData[i] 를 storedInputData 에 담기 시작할 것임														
         }
 		//console.log('storedInputData [' + sysexBytesRead + '] ' + storedInputData[sysexBytesRead]);
 	
@@ -457,7 +553,7 @@
       }
     }
   }
-
+*/
 	function connectHW (hw, pin) {
 		hwList.add(hw, pin);
 	}
@@ -1566,7 +1662,7 @@
 	  ['h', 'when %m.networks touch sensor %m.touch is %m.btnStates', 'whenTouchButtonChandged', 'normal', 1, 0],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
       ['-'],
       ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', 0],	//sw block (button 1, .. )		function_name :
-      [' ', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Joystick X'],			//buttons ( button 1, 2, 3, 4)	whenButton
+      ['r', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Joystick X'],			//buttons ( button 1, 2, 3, 4)	whenButton
 	  ['b', '%m.networks sw block %m.sw of value', 'isSwButtonPressed', 'normal','Button 1'],					//Joystick and Potencyometer	isButtonPressed
 	  ['-'],																									
 	  ['r', '%m.networks motion-block %m.motionb of value', 'motionbRead', 'normal','infrared 1'],								//Motion block is infrared, acceler and so on
@@ -1591,7 +1687,7 @@
 	  ['h', '%m.networks 터치센서 %m.touch 가 %m.btnStates 가 될 때', 'whenTouchButtonChandged', '일반', 1, 0],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
 	  ['-'],																											//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', 0],				//sw block (button 1, .. )
-      [' ', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','조이스틱 X'],							//buttons ( button 1, 2, 3, 4, J)				
+      ['r', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','조이스틱 X'],							//buttons ( button 1, 2, 3, 4, J)				
 	  ['b', '%m.networks 스위치블록 %m.sw 의 값', 'isSwButtonPressed', '일반','버튼 1'],							//Joystick and Potencyometer function is combined.
 	  ['-'],																										//function_name :  isButtonPressed	whenButton
 	  ['r', '%m.networks 모션블록 %m.motionb 의 값', 'motionbRead', '일반','적외선 감지 1'],								//Motion block is infrared, acceler and so on
