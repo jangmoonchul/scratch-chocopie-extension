@@ -306,7 +306,7 @@
 	*/
 
 //---------------------------------------------------------------------------------------------------------------
-	var s = {action:null, packet_index: 0, packet_buffer: [], ping_delay: 0, blocks: []};
+	var s = {action:null, packet_index: 0, packet_buffer: null, ping_delay: 0, blocks: []};
 
 	function actionBranch(rb){
 		//console.log("Data " + rb);
@@ -402,6 +402,7 @@
 		if(s.action==null){
 			//inittialize all values		
 			s.action=actionBranch;
+			s.packet_buffer = new Array(1024);
 		}
 		for (var rb=0; rb < inputData.length; rb++){
 			s.action(inputData[rb]);
