@@ -338,7 +338,7 @@
 	}
 	function checkVersion(rb){
 		s.packet_buffer[s.packet_index++]=rb;
-
+		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
 		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
 		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
@@ -453,6 +453,7 @@
 		}
 		for (var rb=0; rb < inputData.length; rb++){
 			s.action(inputData[rb]);
+			console.log("inputData[" + rb + "] " + inputData[rb]);
 		}
 	}
 //-----------------------------------------------------------------------------------------------------------------	
