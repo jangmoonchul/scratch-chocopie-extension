@@ -311,7 +311,7 @@
 	
 	var s=[
 		action:null, packet_index:0, packet_buffer: new Arrray(1024), ping_delay:0, detail:0, port:0 ,
-		blocks: new Array(16),
+		blocks: new Array(16)
 		];
 
 
