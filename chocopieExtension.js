@@ -439,7 +439,7 @@
 				check_low = checkSum( dnp[i], low_data );	
 				check_high = checkSum( dnp[i], high_data );
 				console.log("dnp[i] " + dnp[i]);
-				console.log("dnp.length -1" + dnp.length);
+				console.log("dnp.length " + dnp.length);
 				//console.log("Hw name is " + hw.name);										//확인완료
 				//console.log("check_low " + check_low + "and check_high " + check_high);
 					
