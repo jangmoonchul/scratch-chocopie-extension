@@ -307,17 +307,10 @@
 
 //---------------------------------------------------------------------------------------------------------------
 
-	function status(){
-		var action = null,
-			packet_index = 0,
-			packet_buffer = new Array(1024),
-			ping_delay = 0,
-			blocks = new Array(16);
-	}
-
 	var rp = 0;
 	var action = null;
-	var s = new status();
+	var s = {action:null, packet_index: 0, packet_buffer: [1024], ping_delay: 0, blocks: [16]};
+
 
 	function actionBranch(rb){
 	}
@@ -411,7 +404,7 @@
 	function processInput(inputData) {
 		  //입력 데이터 처리용도의 함수
 		
-		if(action==null){
+		if(s.action==null){
 			//inittialize all values		
 			s.action=actionBranch;
 		}
