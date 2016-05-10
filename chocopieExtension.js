@@ -438,9 +438,9 @@
 			for (var i=0;i < dnp.length -1; i++){
 				check_low = checkSum( dnp[i], low_data );	
 				check_high = checkSum( dnp[i], high_data );
-				console.log("Hw name is " + hw.name);
-				console.log("check_low is " + check_low);
-				console.log("check_low is " + check_low);
+				console.log("dnp[i] " + dnp[i]);
+				//console.log("Hw name is " + hw.name);										//확인완료
+				//console.log("check_low " + check_low + "and check_high " + check_high);
 					
 				var motion_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low, END_SYSEX]),
 					motion_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high, END_SYSEX]);
