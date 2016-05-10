@@ -306,32 +306,35 @@
 	*/
 
 //---------------------------------------------------------------------------------------------------------------
-	var action = null;
-	var rp = 0;
-	var packet_buffer = new Array(1024);
-	var blocks = new Array(16);
-	
-	var s= [
-		action:null, packet_index:0, packet_buffer , ping_delay:0, detail:0, port:0, blocks];
 
+	function status{
+		var action = null,
+			packet_index = 0,
+			packet_buffer = new Array(1024),
+			ping_delay = 0,
+			blocks = new Array(16);
+	}
+
+	var rp = 0;
+	var action = null;
+	var s = new status();
 
 	function actionBranch(var rb){
 		if(rb < 0xE0){
-			//s.action=storevalue.blocks[port];
+			//s.action = storevalue.blocks[port];
 		}else{
-			s.action=actionChocopi;
-			s.detail=rb >>4;
-			s.port= rb & 0x0F;
+			s.action = actionChocopi;
+			s.detail = rb >> 4;
+			s.port = rb & 0x0F;
 			return;
 		}
-		
 	}
 
 	function actionChocopi(var rb){
 		s.packet_index=0; //start from 	
-		if(rb == CPC_PING)
+		if(rb == SCBD_CHOCOPI_USB_PING)
 			s.action=checkPing;
-		if(rb == CPC_GET_VERSION)
+		if(rb == CPC_VERSION)
 			s.action=checkVersion;
 		if(rb == CPC_GET_BLOCK)
 			s.action=actionGetBlock;
@@ -339,12 +342,23 @@
 	}
 
 	function checkPing(var rb){
-		if(rb == 0xFF^ CPC_PING){
-			//ping OK set ping delay to zero
-			s.ping_delay=0; 
+		if(rb === 0){
+			if (!connected) {
+			  clearInterval(poller);		
+			  poller = null;				
+			  clearTimeout(watchdog);
+			  watchdog = null;				
+			  connected = true;
+
+			  setTimeout(init, 200);			
+			  sysexBytesRead = 0;		
+			}
+			pinging = false;
+			pingCount = 0;
+			s.action = actionBranch;
 		}
 	}
-	f
+/*
 	function actionGetBlock(var rb){	
 		s.package[s.packet_index++]=rb;
 		if(s.packet_index == 9){
@@ -355,7 +369,7 @@
 			return;
 		}
 	}
-
+*/
 /*
 	function actionMotion(var rb){
 		s.motion[]=rb*255;
@@ -368,6 +382,7 @@
 		
 	}
 */
+/*
 	function actionMotionGetIrValue(var rb){
 		s.packet_buffer[s.packet_index++]= rb;
 		if(s.packet_index == 6){
@@ -377,7 +392,7 @@
 			action= actionBranch;	
 		}
 	}
-
+*/
 	/*
 	function actionModule(){
 		rb=inputData[rp++];
