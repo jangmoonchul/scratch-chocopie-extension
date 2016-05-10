@@ -341,12 +341,15 @@
 	}
 	function checkVersion(rb){
 		var received_rb = rb;
-		s.packet_buffer[s.packet_index++] = received_rb;
+
+		s.packet_buffer[s.packet_index] = received_rb;
+		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
+		s.packet_index++;
 
 		console.log("rb is " + rb);
 		//storedInputData[s.packet_index++] = rb;
 		//s.packet_buffer[s.packet_index++]=rb;
-		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
+		
 		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
 		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
@@ -399,7 +402,6 @@
 		if(s.action==null){
 			//inittialize all values		
 			s.action=actionBranch;
-			s.packet_buffer = new Array(1024);
 		}
 		for (var rb=0; rb < inputData.length; rb++){
 			s.action(inputData[rb]);
