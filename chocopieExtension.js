@@ -342,8 +342,8 @@
 		
 	}
 	function checkVersion(rb){
-		storedInputData[s.packet_index] = rb;
-		s.packet_index++;
+		var received_rb = rb;
+		storedInputData[s.packet_index++;] = received_rb;
 
 		console.log("rb is " + rb);
 		//storedInputData[s.packet_index++] = rb;
