@@ -310,10 +310,77 @@
 	var rp = 0;
 	var s = {action:null, packet_index: 0, packet_buffer: [1024], ping_delay: 0, blocks: [16]};
 
-
 	function actionBranch(rb){
-		console.log("Data " + rb);
-		console.log("action is" + s.action + 'packet_buffer ' + s.packet_buffer);
+		//console.log("Data " + rb);
+		//console.log("action is" + s.action + 'packet_buffer ' + s.packet_buffer);
+		if (rb < 0xE0){
+			detail = rb & 0xF0;
+			multiByteChannel = rb & 0xFF;
+			port = hwList.search_bypin(multiByteChannel);
+
+			s.action = s.blocks[port];
+		}else{
+			s.action = actionChocopi;
+		}
+		return;
+	}
+
+	function actionChocopi(rb){
+		s.packet_index=0; //start from 	
+
+		if(rb == SCBD_CHOCOPI_USB_PING)
+			s.action=checkPing;
+		if(rb == CPC_VERSION)
+			s.action=checkVersion;
+		if(rb == CPC_GET_BLOCK)
+			s.action=actionGetBlock;
+		
+	}
+	function checkVersion(rb){
+		s.packet_buffer[s.packet_index++]=rb;
+
+		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
+		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
+			
+		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
+		if(s.packet_index === 9){
+			if (!connected) {
+			  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
+			  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
+			  clearTimeout(watchdog);
+			  watchdog = null;				//감시견을 옆집 개나줘버림
+			  connected = true;
+
+			  setTimeout(init, 200);
+			  sysexBytesRead = 0;	
+			  device.send(usb_output.buffer);	
+			}
+			pinging = false;
+			pingCount = 0;	
+			s.action = actionBranch;
+			return;
+		}
+	}
+	
+	function checkPing(rb){
+		s.packet_buffer[s.packet_index]=rb;
+		console.log("rb is " + rb);
+		if(s.packet_index == 0){
+			if (!connected) {
+			  clearInterval(poller);		
+			  poller = null;				
+			  clearTimeout(watchdog);
+			  watchdog = null;				
+			  connected = true;
+
+			  setTimeout(init, 200);			
+			  sysexBytesRead = 0;		
+			}
+			pinging = false;
+			pingCount = 0;
+			s.action = actionBranch;
+			return;
+		}
 	}
 
 /*
@@ -328,34 +395,9 @@
 		}
 	}
 
-	function actionChocopi(var rb){
-		s.packet_index=0; //start from 	
-		if(rb == SCBD_CHOCOPI_USB_PING)
-			s.action=checkPing;
-		if(rb == CPC_VERSION)
-			s.action=checkVersion;
-		if(rb == CPC_GET_BLOCK)
-			s.action=actionGetBlock;
-		
-	}
 
-	function checkPing(var rb){
-		if(rb === 0){
-			if (!connected) {
-			  clearInterval(poller);		
-			  poller = null;				
-			  clearTimeout(watchdog);
-			  watchdog = null;				
-			  connected = true;
 
-			  setTimeout(init, 200);			
-			  sysexBytesRead = 0;		
-			}
-			pinging = false;
-			pingCount = 0;
-			s.action = actionBranch;
-		}
-	}
+
 */
 /*
 	function actionGetBlock(var rb){	
