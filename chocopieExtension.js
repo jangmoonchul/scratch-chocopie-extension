@@ -233,49 +233,6 @@
     minorVersion = minor;
   }
 
-	/* tryNextDevice -> processInput (Handler) -> processSysexMessage -> init -> QUERY_FIRMWARE(PING) 순으로 진행됨
-					 -> QUERY_FIRWWARE 발송 
-		init 에서 QUERY_FIRMWARE 에서 device 를 찾지 못할시 다시 부름으로써 핑이 형성됨								*/
-
-  function processSysexMessage() {
-	  // 시스템 처리 추가메세지
-	console.log('I am comming processSysexMessage and storedInputData[0] is' + storedInputData[0]);
-
-    if(storedInputData[0] === SCBD_CHOCOPI_USB) {
-		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
-		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
-			
-		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
-        if (!connected) {
-          clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
-          poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
-          clearTimeout(watchdog);
-          watchdog = null;				//감시견을 옆집 개나줘버림
-          connected = true;
-
-          setTimeout(init, 200);
-		  sysexBytesRead = 0;	
-		  device.send(usb_output.buffer);	
-        }
-        pinging = false;
-        pingCount = 0;
-	}else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
-        if (!connected) {
-          clearInterval(poller);		
-          poller = null;				
-          clearTimeout(watchdog);
-          watchdog = null;				
-          connected = true;
-
-          setTimeout(init, 200);			
-		  sysexBytesRead = 0;		
-        }
-        pinging = false;
-        pingCount = 0;
-	}
-  }
-
-
 	function escape_control(source){
 		if(source == 0x7E){
 			var msg = new Uint8Array([0x7D, 0x7E ^ 0x20]);
@@ -307,6 +264,55 @@
 
 //---------------------------------------------------------------------------------------------------------------
 	var s = {action:null, packet_index: 0, packet_buffer: null, ping_delay: 0, blocks: []};
+	
+	function checkVersion(rb){
+		s.packet_buffer[s.packet_index] = rb;
+		//console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
+		s.packet_index++;
+		
+		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
+		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
+			
+		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
+		if(s.packet_index === 9){
+			if (!connected) {
+			  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
+			  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
+			  clearTimeout(watchdog);
+			  watchdog = null;				//감시견을 옆집 개나줘버림
+			  connected = true;
+
+			  setTimeout(init, 200);
+			  sysexBytesRead = 0;	
+			  device.send(usb_output.buffer);	
+			}
+			pinging = false;
+			pingCount = 0;	
+			setVersion(s.packet_buffer[7], s.packet_buffer[8]);
+			s.action = actionBranch;
+			return;
+		}
+	}
+	
+	function checkPing(rb){
+		console.log("ping received");
+		if(rb == 0){
+			if (!connected) {
+			  clearInterval(poller);		
+			  poller = null;				
+			  clearTimeout(watchdog);
+			  watchdog = null;				
+			  connected = true;
+
+			  setTimeout(init, 200);			
+			  sysexBytesRead = 0;		
+			}
+			pinging = false;
+			pingCount = 0;
+			s.action = actionBranch;
+			return;
+		}
+	}
 
 	function actionBranch(rb){
 		console.log("ActionBranch Header Data " + rb);
@@ -335,53 +341,24 @@
 			s.action=actionGetBlock;
 		return;
 	}
-	function checkVersion(rb){
-		s.packet_buffer[s.packet_index] = rb;
-		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
-		s.packet_index++;
-		
-		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
-		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
-			
-		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
-		if(s.packet_index === 9){
-			if (!connected) {
-			  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
-			  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
-			  clearTimeout(watchdog);
-			  watchdog = null;				//감시견을 옆집 개나줘버림
-			  connected = true;
 
-			  setTimeout(init, 200);
-			  sysexBytesRead = 0;	
-			  //device.send(usb_output.buffer);	
+	function actionGetBlock(rb){
+		// detail/port, CPC_GET_BLOCK 를 제외한 포트가 LOW 8 Bit, HIGH 8 Bit 순으로 등장함
+		s.packet_buffer[s.packet_index] = rb;
+		s.packet_index++;
+
+		if(s.packet_index === 32){
+			for (var i=0;i < s.packet_index; i++){
+				if( i%2 === 1 )
+					connectHW(s.packet_buffer[i-1] << 8 | s.packet_buffer[i], i/2);
+				console.log("i%2 is " + i%2 + "i/2 is " + i/2);
 			}
-			pinging = false;
-			pingCount = 0;	
 			s.action = actionBranch;
 			return;
 		}
 	}
 	
-	function checkPing(rb){
-		console.log("ping received");
-		if(rb == 0){
-			if (!connected) {
-			  clearInterval(poller);		
-			  poller = null;				
-			  clearTimeout(watchdog);
-			  watchdog = null;				
-			  connected = true;
 
-			  setTimeout(init, 200);			
-			  sysexBytesRead = 0;		
-			}
-			pinging = false;
-			pingCount = 0;
-			s.action = actionBranch;
-			return;
-		}
-	}
 	
 	
 	function processInput(inputData) {
@@ -398,22 +375,6 @@
 		}
 	}
 
-/*
-	function actionBranch(var rb){
-		if(rb < 0xE0){
-			//s.action = storevalue.blocks[port];
-		}else{
-			s.action = actionChocopi;
-			s.detail = rb >> 4;
-			s.port = rb & 0x0F;
-			return;
-		}
-	}
-
-
-
-
-*/
 /*
 	function actionGetBlock(var rb){	
 		s.package[s.packet_index++]=rb;
@@ -469,17 +430,7 @@
 		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		if ( sysexBytesRead === 10 && storedInputData[0] === SCBD_CHOCOPI_USB){
-		  console.log('I am comming parsingSysex chocopie init starter');				
-          parsingSysex = false;		
-		 
-          processSysexMessage();
-		  setVersion(storedInputData[9], storedInputData[10]);		//0xE0, CPC_VERSION, “CHOCOPI”,1,0
-		  
-        } else if (storedInputData[0] === SCBD_CHOCOPI_USB_PING){
-		  parsingSysex = false;
-          processSysexMessage();
-        } else if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
+		if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
 		  parsingSysex = false;				//											     0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
 											// 0xE0, CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
 		  for (var i=3; i<19; i++){			
