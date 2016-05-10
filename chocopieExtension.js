@@ -313,6 +313,10 @@
 	function actionBranch(rb){
 		//console.log("Data " + rb);
 		//console.log("action is" + s.action + 'packet_buffer ' + s.packet_buffer);
+
+		var received_rb = rb;
+		console.log("received_rb is " + received_rb);
+
 		if (rb < 0xE0){
 			detail = rb & 0xF0;
 			multiByteChannel = rb & 0xFF;
