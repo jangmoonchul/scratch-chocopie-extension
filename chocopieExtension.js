@@ -307,7 +307,7 @@
 
 //---------------------------------------------------------------------------------------------------------------
 
-	function status{
+	function status(){
 		var action = null,
 			packet_index = 0,
 			packet_buffer = new Array(1024),
