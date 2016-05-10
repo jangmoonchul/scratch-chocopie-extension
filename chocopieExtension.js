@@ -323,10 +323,14 @@
 			s.action = s.blocks[port];
 		}else{
 			s.action = actionChocopi;
-			if(rb === SCBD_CHOCOPI_USB_PING)		//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
-				s.action = checkPing;
-			if (rb === (SCBD_CHOCOPI_USB | 0x01))		//하드웨어 연결시에도 헤더가 도착하지 않음.
-				s.action = checkConnect;
+			if(rb === SCBD_CHOCOPI_USB_PING) s.action = checkPing;	//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
+			if (rb === (SCBD_CHOCOPI_USB | 0x01)){
+				s.packet_index=0;
+				s.action = checkConnect;	//하드웨어 연결시에도 헤더가 도착하지 않음.
+			}else if (rb === (SCBD_CHOCOPI_USB | 0x02)){
+				s.packet_index=0;
+				s.action = checkRemove;
+			}
 		}
 		//console.log("action is" + s.action );
 		return;
@@ -341,6 +345,10 @@
 		if(rb === CPC_GET_BLOCK)
 			s.action=actionGetBlock;
 		return;
+	}
+
+	function checkRemove(rb){
+		removeHW(rb);	// PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 	}
 	
 	function checkConnect(rb){
@@ -505,17 +513,7 @@
 		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
-			parsingSysex = false;
-			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
-			
-			if(storedInputData[3] << 7 | storedInputData[2] === SCBD_SENSOR){
-				sample_functions.sensor_sender(storedInputData[1]);			//SCBD_SENSOR 에 대한 샘플링 레이트
-			}else if (storedInputData[3] << 7 | storedInputData[2] === SCBD_MOTION){
-				sample_functions.motion_sendor(storedInputData[1]);			//SCBD_MOTION 에 대한 샘플링 레이트
-			}
-
-        } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
+		if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
 			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 			parsingSysex = false;
 			removeHW(storedInputData[1]);
