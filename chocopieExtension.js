@@ -350,8 +350,9 @@
 		if(s.packet_index === 32){
 			for (var i=0;i < s.packet_index; i++){
 				if( i%2 === 1 ){
+					var data = s.packet_buffer[i-1] << 8 | s.packet_buffer[i];
 					connectHW(s.packet_buffer[i-1] << 8 | s.packet_buffer[i], Math.floor(i/2));
-					console.log("Port["+ Math.floor(i/2) + "] " + s.packet_buffer[i-1] << 8 | s.packet_buffer[i] );
+					console.log("Port["+ Math.floor(i/2) + "] " + data );
 				}
 			}
 			s.action = actionBranch;
