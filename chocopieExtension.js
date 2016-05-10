@@ -327,6 +327,7 @@
 
 	function actionChocopi(rb){
 		s.packet_index=0; //start from 	
+		console.log("rb is " + rb);	
 
 		if(rb == SCBD_CHOCOPI_USB_PING)
 			s.action=checkPing;
@@ -386,6 +387,21 @@
 			pingCount = 0;
 			s.action = actionBranch;
 			return;
+		}
+	}
+	
+	
+	function processInput(inputData) {
+		  //입력 데이터 처리용도의 함수
+		
+		if(s.action==null){
+			//inittialize all values		
+			s.action=actionBranch;
+		}
+		for (var rb=0; rb < inputData.length; rb++){
+			s.action(inputData[rb]);
+			console.log("inputData[" + rb + "] " + inputData[rb]);
+			console.log("s.action " + s.action);
 		}
 	}
 
@@ -450,19 +466,7 @@
 	}
 	*/
 
-	function processInput(inputData) {
-		  //입력 데이터 처리용도의 함수
-		
-		if(s.action==null){
-			//inittialize all values		
-			s.action=actionBranch;
-		}
-		for (var rb=0; rb < inputData.length; rb++){
-			s.action(inputData[rb]);
-			console.log("inputData[" + rb + "] " + inputData[rb]);
-			console.log("s.action " + s.action);
-		}
-	}
+
 //-----------------------------------------------------------------------------------------------------------------	
 /*
   function processInput(inputData) {
