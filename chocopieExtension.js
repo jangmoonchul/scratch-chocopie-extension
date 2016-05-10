@@ -313,6 +313,7 @@
 
 
 	function actionBranch(rb){
+		console.log("action is" + s.action + 'packet_buffer ' + s.packet_buffer);
 	}
 
 /*
