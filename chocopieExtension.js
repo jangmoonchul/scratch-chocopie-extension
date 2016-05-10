@@ -415,10 +415,9 @@
 			//inittialize all values		
 			s.action=actionBranch;
 		}
-		foreach( rb in inputData)
+		for each(var rb in inputData){
 			s.action(rb);	
 		}
-		
 	}
 //-----------------------------------------------------------------------------------------------------------------	
 /*
