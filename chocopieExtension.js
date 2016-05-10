@@ -318,6 +318,8 @@
 			s.action = s.blocks[port];
 		}else{
 			s.action = actionChocopi;
+			if(rb == SCBD_CHOCOPI_USB_PING)		//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
+				s.action=checkPing;
 		}
 		//console.log("action is" + s.action );
 		return;
@@ -327,8 +329,6 @@
 		s.packet_index=0; //start from 	
 		console.log("rb is " + rb);	
 		console.log("s.action " + s.action);
-		if(rb == SCBD_CHOCOPI_USB_PING)
-			s.action=checkPing;
 		if(rb == CPC_VERSION)
 			s.action=checkVersion;
 		if(rb == CPC_GET_BLOCK)
