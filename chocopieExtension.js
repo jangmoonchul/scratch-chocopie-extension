@@ -435,11 +435,11 @@
 
 			var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin ]);	
 			
-			for (var i=0;i < dnp.length -1; i++){
+			for (var i=0;i < dnp.length-1; i++){
 				check_low = checkSum( dnp[i], low_data );	
 				check_high = checkSum( dnp[i], high_data );
 				console.log("dnp[i] " + dnp[i]);
-				console.log("dnp.length -1" + dnp.length -1);
+				console.log("dnp.length -1" + dnp.length);
 				//console.log("Hw name is " + hw.name);										//확인완료
 				//console.log("check_low " + check_low + "and check_high " + check_high);
 					
