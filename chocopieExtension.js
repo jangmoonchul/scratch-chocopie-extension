@@ -327,7 +327,8 @@
 			if (rb === (SCBD_CHOCOPI_USB | 0x01)){
 				s.packet_index=0;
 				s.action = checkConnect;	//하드웨어 연결시에도 헤더가 도착하지 않음.
-			}else if (rb === (SCBD_CHOCOPI_USB | 0x02)){
+			}
+			if (rb === (SCBD_CHOCOPI_USB | 0x02)){
 				s.packet_index=0;
 				s.action = checkRemove;
 			}
