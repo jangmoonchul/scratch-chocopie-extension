@@ -309,21 +309,17 @@
 	var s = {action:null, packet_index: 0, packet_buffer: null, ping_delay: 0, blocks: []};
 
 	function actionBranch(rb){
-		//console.log("Data " + rb);
-		//console.log("action is" + s.action + 'packet_buffer ' + s.packet_buffer);
-
-		var received_rb = rb;
-		console.log("received_rb is " + received_rb);
-
+		console.log("ActionBranch Header Data " + rb);
 		if (rb < 0xE0){
 			detail = rb & 0xF0;
-			multiByteChannel = rb & 0xFF;
+			multiByteChannel = rb & 0x0F;
 			port = hwList.search_bypin(multiByteChannel);
 
 			s.action = s.blocks[port];
 		}else{
 			s.action = actionChocopi;
 		}
+		//console.log("action is" + s.action );
 		return;
 	}
 
@@ -343,9 +339,6 @@
 		s.packet_buffer[s.packet_index] = rb;
 		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
 		s.packet_index++;
-
-		//storedInputData[s.packet_index++] = rb;
-		//s.packet_buffer[s.packet_index++]=rb;
 		
 		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
 		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
@@ -400,9 +393,9 @@
 			s.packet_buffer = new Array(1024);
 		}
 		for (var rb=0; rb < inputData.length; rb++){
-			s.action(inputData[rb]);
-			console.log("inputData[" + rb + "] " + inputData[rb]);
 			console.log("s.action " + s.action);
+			console.log("inputData[" + rb + "] " + inputData[rb]);
+			s.action(inputData[rb]);
 		}
 	}
 
