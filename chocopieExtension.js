@@ -340,8 +340,8 @@
 		storedInputData[s.packet_index++] = rb;
 		//s.packet_buffer[s.packet_index++]=rb;
 		console.log("storedInputData[" + s.packet_index + "] " + storedInputData[s.packet_index]);
-		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
-		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
+		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
+		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
 		if(s.packet_index === 10){
