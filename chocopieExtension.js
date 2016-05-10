@@ -337,7 +337,9 @@
 		
 	}
 	function checkVersion(rb){
-		storedInputData[s.packet_index++] = rb;
+		s.packet_index++;
+		console.log("rb is " + rb);
+		//storedInputData[s.packet_index++] = rb;
 		//s.packet_buffer[s.packet_index++]=rb;
 		console.log("storedInputData[" + s.packet_index + "] " + storedInputData[s.packet_index]);
 		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
@@ -354,7 +356,7 @@
 
 			  setTimeout(init, 200);
 			  sysexBytesRead = 0;	
-			  device.send(usb_output.buffer);	
+			  //device.send(usb_output.buffer);	
 			}
 			pinging = false;
 			pingCount = 0;	
@@ -364,7 +366,8 @@
 	}
 	
 	function checkPing(rb){
-		s.packet_buffer[s.packet_index]=rb;
+		s.packet_index++;
+		//s.packet_buffer[s.packet_index++]=rb;
 		console.log("rb is " + rb);
 		if(s.packet_index == 1){
 			if (!connected) {
