@@ -308,11 +308,11 @@
 //---------------------------------------------------------------------------------------------------------------
 
 	var rp = 0;
-	var action = null;
 	var s = {action:null, packet_index: 0, packet_buffer: [1024], ping_delay: 0, blocks: [16]};
 
 
 	function actionBranch(rb){
+		console.log("Data " + rb);
 		console.log("action is" + s.action + 'packet_buffer ' + s.packet_buffer);
 	}
 
