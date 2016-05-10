@@ -358,7 +358,7 @@
 			}
 			pinging = false;
 			pingCount = 0;	
-			s.action = actionBranch;
+			s.action = null;
 			return;
 		}
 	}
@@ -378,7 +378,7 @@
 			}
 			pinging = false;
 			pingCount = 0;
-			s.action = actionBranch;
+			s.action = null;
 			return;
 		}
 	}
