@@ -310,7 +310,7 @@
 
 	function actionBranch(rb){
 		//console.log("Data " + rb);
-		//console.log("action is" + s.action + 'packet_buffer ' + ext.s.packet_buffer);
+		//console.log("action is" + ext.s.action + 'packet_buffer ' + ext.s.packet_buffer);
 
 		var received_rb = rb;
 		console.log("received_rb is " + received_rb);
@@ -320,9 +320,9 @@
 			multiByteChannel = rb & 0xFF;
 			port = hwList.search_bypin(multiByteChannel);
 
-			s.action =ext.s.blocks[port];
+			ext.s.action =ext.s.blocks[port];
 		}else{
-			s.action = actionChocopi;
+			ext.s.action = actionChocopi;
 		}
 		return;
 	}
@@ -332,11 +332,11 @@
 		console.log("rb is " + rb);	
 
 		if(rb == SCBD_CHOCOPI_USB_PING)
-			s.action=checkPing;
+			ext.s.action=checkPing;
 		if(rb == CPC_VERSION)
-			s.action=checkVersion;
+			ext.s.action=checkVersion;
 		if(rb == CPC_GET_BLOCK)
-			s.action=actionGetBlock;
+			ext.s.action=actionGetBlock;
 		
 	}
 	function checkVersion(rb){
@@ -365,7 +365,7 @@
 			}
 			pinging = false;
 			pingCount = 0;	
-			s.action = actionBranch;
+			ext.s.action = actionBranch;
 			return;
 		}
 	}
@@ -387,7 +387,7 @@
 			}
 			pinging = false;
 			pingCount = 0;
-			s.action = actionBranch;
+			ext.s.action = actionBranch;
 			return;
 		}
 	}
@@ -396,24 +396,24 @@
 	function processInput(inputData) {
 		  //입력 데이터 처리용도의 함수
 		
-		if(s.action==null){
+		if(ext.s.action==null){
 			//inittialize all values		
 			ext.s.action=actionBranch;
 			ext.s.packet_buffer.length = 1024;
 		}
 		for (var rb=0; rb < inputData.length; rb++){
-			s.action(inputData[rb]);
+			ext.s.action(inputData[rb]);
 			console.log("inputData[" + rb + "] " + inputData[rb]);
-			console.log("s.action " +ext.s.action);
+			console.log("ext.s.action " +ext.s.action);
 		}
 	}
 
 /*
 	function actionBranch(var rb){
 		if(rb < 0xE0){
-			//s.action = storevalue.blocks[port];
+			//ext.s.action = storevalue.blocks[port];
 		}else{
-			s.action = actionChocopi;
+			ext.s.action = actionChocopi;
 			s.detail = rb >> 4;
 			s.port = rb & 0x0F;
 			return;
