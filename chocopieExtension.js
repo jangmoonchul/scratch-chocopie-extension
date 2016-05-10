@@ -323,8 +323,10 @@
 			s.action = s.blocks[port];
 		}else{
 			s.action = actionChocopi;
-			if(rb == SCBD_CHOCOPI_USB_PING)		//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
-				s.action=checkPing;
+			if(rb === SCBD_CHOCOPI_USB_PING)		//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
+				s.action = checkPing;
+			if (rb === SCBD_CHOCOPI_USB | 0x01)		//하드웨어 연결시에도 헤더가 도착하지 않음.
+				s.action = cpcConnect;
 		}
 		//console.log("action is" + s.action );
 		return;
@@ -341,21 +343,38 @@
 		return;
 	}
 
-	function actionGetBlock(rb){
-		// detail/port, CPC_GET_BLOCK 를 제외한 포트가 LOW 8 Bit, HIGH 8 Bit 순으로 등장함
+	function cpcConnect(rb){
 		s.packet_buffer[s.packet_index] = rb;
 		s.packet_index++;
+		
+		if (s.packet_index === 3){
+			var block_type = s.packet_buffer[1],
+				connected_port = s.packet_buffer[0];
+			console.log("block_type is" + block_type + " connected into port " + connected_port);
+			connectHW(block_type, connected_port);		//PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData)
+			if(block_type === SCBD_SENSOR){
+				sample_functions.sensor_sender(connected_port);			//SCBD_SENSOR 에 대한 샘플링 레이트
+			}else if (block_type === SCBD_MOTION){
+				sample_functions.motion_sendor(connected_port);			//SCBD_MOTION 에 대한 샘플링 레이트
+			}		
+		}
+		return;
+	}
 
+	function actionGetBlock(rb){
+		// detail/port, CPC_GET_BLOCK 를 제외한 포트가 LOW 8 Bit, HIGH 8 Bit 순으로 등장함
+		s.packet_buffer[s.packet_index++] = rb;
+		
 		if(s.packet_index === 32){
 			for (var i=0;i < s.packet_index; i++){
 				if( i%2 === 1 ){
-					var data = s.packet_buffer[i-1],
+					var block_type = s.packet_buffer[i-1],	//현재는 이렇게 연결되지만, 추후에는 패치필요.
 						connected_port = Math.floor(i/2); 
 					if (data !== 0){
-						connectHW(data, connected_port);	//현재는 이렇게 연결되지만, 추후에는 패치필요.
-						if(data === SCBD_SENSOR)
-							sample_functions.sensor_sender(connected_port);			//SCBD_SENSOR 에 대한 샘플링 레이트
-						if (data === SCBD_MOTION)
+						connectHW(block_type, connected_port);	
+						if(block_type === SCBD_SENSOR)
+							sample_functions.sensor_sender(connected_port);			//SCBD_SENSOR 에 대한 샘플링 레이트 -> 클리어
+						if (block_type === SCBD_MOTION)
 							sample_functions.motion_sendor(connected_port);			//SCBD_MOTION 에 대한 샘플링 레이트
 						
 						//console.log("Port["+ Math.floor(i/2) + "] " + data );
@@ -366,9 +385,6 @@
 			return;
 		}
 	}
-	
-
-	
 	
 	function processInput(inputData) {
 		  //입력 데이터 처리용도의 함수
@@ -384,18 +400,59 @@
 		}
 	}
 
-/*
-	function actionGetBlock(var rb){	
-		s.package[s.packet_index++]=rb;
-		if(s.packet_index == 9){
-			action = actionBranch;			
-			//send block list commoan
+
+//-------------------------------------------------------------------SAMPLING FUNCTION START
+
+	var low_data = escape_control(SAMPLING_RATE & LOW),
+		high_data = escape_control(SAMPLING_RATE & HIGH);
+	
+	var	check_low = 0,
+		check_high = 0;
+
+	var sample_functions = {
+		sensor_sender: function(port) {
+			var hw = hwList.search_bypin(port),	
+				sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]);
 			
-			s.package[s.packet_index++]=rb;
-			return;
+			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);
+
+			for (var i=0;i < dnp.length ; i++){
+				check_low = checkSum( dnp[i], low_data );
+				check_high = checkSum( dnp[i], high_data );
+		
+				var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low, END_SYSEX]),
+					sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high, END_SYSEX]);
+
+				device.send(sensor_output_low.buffer);
+				device.send(sensor_output_high.buffer);				
+			}
+		},
+		// 리포터 센더 정의 완료. 터치는 센더가 없음.
+		motion_sendor: function(port) {
+			var hw = hwList.search_bypin(port),	
+				sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);	
+
+			var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin ]);	
+			
+			for (var i=0;i < dnp.length -1; i++){
+				check_low = checkSum( dnp[i], low_data );	
+				check_high = checkSum( dnp[i], high_data );
+					
+				var motion_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low, END_SYSEX]),
+					motion_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high, END_SYSEX]);
+					
+				device.send(motion_output_low.buffer);
+				device.send(motion_output_high.buffer);
+			}
+			var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4], END_SYSEX]);
+				device.send(motion_output.buffer);
+				//포토게이트의 경우 보내는 데이터가 없기 때문에, detail/port 이후에 checkSum 을 예상하여 dnp를 그대로 보낸다.
+				//check_low = checkSum( dnp[4], low_data );		//포토게이트류 -> 데이터가 없기 때문에, XOR 과정을 거쳐도 체크섬은 그대로 유지됨
+				//check_high = checkSum( dnp[4], high_data );	//데이터를 보내지 않기 때문에 dnp를 그대로전송
 		}
-	}
-*/
+	};
+//------------------------------------------------------------------------------------------------------------------------
+
 /*
 	function actionMotion(var rb){
 		s.motion[]=rb*255;
@@ -439,20 +496,7 @@
 		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		if (sysexBytesRead === 17 && (storedInputData[1] === CPC_GET_BLOCK & LOW) && (storedInputData[2] === CPC_GET_BLOCK & HIGH)){
-		  parsingSysex = false;				//											     0 1 2 3 4 5 6  7 8 9 10 11 12 13 14 15	(Port)
-											// 0xE0, CPC_GET_BLOCK(LOW), CPC_GET_BLOCK(HIGH),8,0,9,0,0,0,12,0,0,0,0, 0, 0, 0, 0, 0	(inputData, storedInputData)
-		  for (var i=3; i<19; i++){			
-			if(storedInputData[i] != 0){
-				connectHW(storedInputData[i], i-3);
-				if(storedInputData[i] === SCBD_SENSOR){
-					sample_functions.sensor_sender(i-3);			//SCBD_SENSOR 에 대한 샘플링 레이트
-				}else if (storedInputData[i] === SCBD_MOTION){
-					sample_functions.motion_sendor(i-3);			//SCBD_MOTION 에 대한 샘플링 레이트
-				}
-			}
-		  }
-        } else if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
+		if (sysexBytesRead === 3 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x01)){
 			parsingSysex = false;
 			connectHW(storedInputData[3] << 7 | storedInputData[2], storedInputData[1]);		//0xE1(0xF1), PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData, storedInputData)
 			
@@ -680,59 +724,7 @@
     if (device) device.close();
     if (poller) clearInterval(poller);
     device = null;
-  };
-
-//-------------------------------------------------------------------SAMPLING FUNCTION START
-
-	var low_data = escape_control(SAMPLING_RATE & LOW),
-		high_data = escape_control(SAMPLING_RATE & HIGH);
-	
-	var	check_low = 0,
-		check_high = 0;
-
-	var sample_functions = {
-		sensor_sender: function(port) {
-			var hw = hwList.search_bypin(port),	
-				sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]);
-			
-			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);
-
-			for (var i=0;i < dnp.length ; i++){
-				check_low = checkSum( dnp[i], low_data );
-				check_high = checkSum( dnp[i], high_data );
-		
-				var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low, END_SYSEX]),
-					sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high, END_SYSEX]);
-
-				device.send(sensor_output_low.buffer);
-				device.send(sensor_output_high.buffer);				
-			}
-		},
-		// 리포터 센더 정의 완료. 터치는 센더가 없음.
-		motion_sendor: function(port) {
-			var hw = hwList.search_bypin(port),	
-				sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);	
-
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin ]);	
-			
-			for (var i=0;i < dnp.length -1; i++){
-				check_low = checkSum( dnp[i], low_data );	
-				check_high = checkSum( dnp[i], high_data );
-					
-				var motion_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low, END_SYSEX]),
-					motion_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high, END_SYSEX]);
-					
-				device.send(motion_output_low.buffer);
-				device.send(motion_output_high.buffer);
-			}
-			var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4], END_SYSEX]);
-				device.send(motion_output.buffer);
-				//포토게이트의 경우 보내는 데이터가 없기 때문에, detail/port 이후에 checkSum 을 예상하여 dnp를 그대로 보낸다.
-				//check_low = checkSum( dnp[4], low_data );		//포토게이트류 -> 데이터가 없기 때문에, XOR 과정을 거쳐도 체크섬은 그대로 유지됨
-				//check_high = checkSum( dnp[4], high_data );	//데이터를 보내지 않기 때문에 dnp를 그대로전송
-		}
-	};
-	
+  };	
 	//Function added Line -----------------------------------------------------------------------------	
 
 	//reportSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
