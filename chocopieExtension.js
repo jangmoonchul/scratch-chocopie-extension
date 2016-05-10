@@ -415,8 +415,8 @@
 			//inittialize all values		
 			s.action=actionBranch;
 		}
-		for each(var rb in inputData){
-			s.action(rb);	
+		for (var rb=0; rb < inputData.length; rb++){
+			s.action(rb);
 		}
 	}
 //-----------------------------------------------------------------------------------------------------------------	
