@@ -354,7 +354,7 @@
 	}
 	
 	function checkConnect(rb){
-		s.packet_buffer[s.packet_index++;] = rb;
+		s.packet_buffer[s.packet_index++] = rb;
 
 		if (s.packet_index === 3){
 			var block_type = s.packet_buffer[1],
