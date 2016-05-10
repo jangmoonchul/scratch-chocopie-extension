@@ -326,7 +326,7 @@
 			if(rb === SCBD_CHOCOPI_USB_PING)		//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
 				s.action = checkPing;
 			if (rb === SCBD_CHOCOPI_USB | 0x01)		//하드웨어 연결시에도 헤더가 도착하지 않음.
-				s.action = cpcConnect;
+				s.action = checkConnect;
 		}
 		//console.log("action is" + s.action );
 		return;
@@ -343,7 +343,7 @@
 		return;
 	}
 	
-	function cpcConnect(rb){
+	function checkConnect(rb){
 		s.packet_buffer[s.packet_index] = rb;
 		s.packet_index++;
 		
