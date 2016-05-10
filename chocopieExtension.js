@@ -399,6 +399,7 @@
 		if(s.action==null){
 			//inittialize all values		
 			s.action=actionBranch;
+			s.packet_buffer.length = 1024
 		}
 		for (var rb=0; rb < inputData.length; rb++){
 			s.action(inputData[rb]);
