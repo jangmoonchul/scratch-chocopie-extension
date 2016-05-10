@@ -308,13 +308,15 @@
 //---------------------------------------------------------------------------------------------------------------
 	var action = null;
 	var rp = 0;
+	var packet_buffer = new Array(1024);
+	var blocks = new Array(16);
 	
-	var s= new Array([
-		action:null, packet_index:0, packet_buffer: new Array(1024), ping_delay:0, detail:0, port:0, blocks : new Array(16)]);
+	var s= [
+		action:null, packet_index:0, packet_buffer , ping_delay:0, detail:0, port:0, blocks];
 
 
 	function actionBranch(var rb){
-		if(rb<0xE0){
+		if(rb < 0xE0){
 			//s.action=storevalue.blocks[port];
 		}else{
 			s.action=actionChocopi;
