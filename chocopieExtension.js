@@ -310,7 +310,7 @@
 
 	function actionBranch(rb){
 		//console.log("Data " + rb);
-		//console.log("action is" + ext.s.action + 'packet_buffer ' + ext.s.packet_buffer);
+		//console.log("action is" + this.s.action + 'packet_buffer ' + this.s.packet_buffer);
 
 		var received_rb = rb;
 		console.log("received_rb is " + received_rb);
@@ -320,38 +320,38 @@
 			multiByteChannel = rb & 0xFF;
 			port = hwList.search_bypin(multiByteChannel);
 
-			ext.s.action =ext.s.blocks[port];
+			this.s.action =this.s.blocks[port];
 		}else{
-			ext.s.action = actionChocopi;
+			this.s.action = actionChocopi;
 		}
 		return;
 	}
 
 	function actionChocopi(rb){
-		ext.s.packet_index=0; //start from 	
+		this.s.packet_index=0; //start from 	
 		console.log("rb is " + rb);	
 
 		if(rb == SCBD_CHOCOPI_USB_PING)
-			ext.s.action=checkPing;
+			this.s.action=checkPing;
 		if(rb == CPC_VERSION)
-			ext.s.action=checkVersion;
+			this.s.action=checkVersion;
 		if(rb == CPC_GET_BLOCK)
-			ext.s.action=actionGetBlock;
+			this.s.action=actionGetBlock;
 		
 	}
 	function checkVersion(rb){
 		var received_rb = rb;
-		ext.s.packet_buffer[ext.s.packet_index++] = received_rb;
+		this.s.packet_buffer[this.s.packet_index++] = received_rb;
 
 		console.log("rb is " + rb);
-		//storedInputData[ext.s.packet_index++] = rb;
-		//ext.s.packet_buffer[ext.s.packet_index++]=rb;
-		console.log("ext.s.packet_buffer[" +ext.s.packet_index + "] " +ext.s.packet_buffer[ext.s.packet_index]);
+		//storedInputData[this.s.packet_index++] = rb;
+		//this.s.packet_buffer[this.s.packet_index++]=rb;
+		console.log("this.s.packet_buffer[" +this.s.packet_index + "] " +this.s.packet_buffer[this.s.packet_index]);
 		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
 		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
-		if(ext.s.packet_index === 10){
+		if(this.s.packet_index === 10){
 			if (!connected) {
 			  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
 			  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
@@ -365,16 +365,16 @@
 			}
 			pinging = false;
 			pingCount = 0;	
-			ext.s.action = actionBranch;
+			this.s.action = actionBranch;
 			return;
 		}
 	}
 	
 	function checkPing(rb){
-		ext.s.packet_index++;
-		//ext.s.packet_buffer[ext.s.packet_index++]=rb;
+		this.s.packet_index++;
+		//this.s.packet_buffer[this.s.packet_index++]=rb;
 		console.log("rb is " + rb);
-		if(ext.s.packet_index == 1){
+		if(this.s.packet_index == 1){
 			if (!connected) {
 			  clearInterval(poller);		
 			  poller = null;				
@@ -387,7 +387,7 @@
 			}
 			pinging = false;
 			pingCount = 0;
-			ext.s.action = actionBranch;
+			this.s.action = actionBranch;
 			return;
 		}
 	}
@@ -396,24 +396,24 @@
 	function processInput(inputData) {
 		  //입력 데이터 처리용도의 함수
 		
-		if(ext.s.action==null){
+		if(this.s.action==null){
 			//inittialize all values		
-			ext.s.action=actionBranch;
-			ext.s.packet_buffer.length = 1024;
+			this.s.action=actionBranch;
+			this.s.packet_buffer.length = 1024;
 		}
 		for (var rb=0; rb < inputData.length; rb++){
-			ext.s.action(inputData[rb]);
+			this.s.action(inputData[rb]);
 			console.log("inputData[" + rb + "] " + inputData[rb]);
-			console.log("ext.s.action " +ext.s.action);
+			console.log("this.s.action " +this.s.action);
 		}
 	}
 
 /*
 	function actionBranch(var rb){
 		if(rb < 0xE0){
-			//ext.s.action = storevalue.blocks[port];
+			//this.s.action = storevalue.blocks[port];
 		}else{
-			ext.s.action = actionChocopi;
+			this.s.action = actionChocopi;
 			s.detail = rb >> 4;
 			s.port = rb & 0x0F;
 			return;
@@ -426,12 +426,12 @@
 */
 /*
 	function actionGetBlock(var rb){	
-		s.package[ext.s.packet_index++]=rb;
-		if(ext.s.packet_index == 9){
+		s.package[this.s.packet_index++]=rb;
+		if(this.s.packet_index == 9){
 			action = actionBranch;			
 			//send block list commoan
 			
-			s.package[ext.s.packet_index++]=rb;
+			s.package[this.s.packet_index++]=rb;
 			return;
 		}
 	}
@@ -439,10 +439,10 @@
 /*
 	function actionMotion(var rb){
 		s.motion[]=rb*255;
-		ext.s.packet_index=0; //start from 	
+		this.s.packet_index=0; //start from 	
 		if(s.detail == MOTION_IR_VALUE){
 			action = actionMotionGetIrValue;			
-			s.package[ext.s.packet_index++]=rb;
+			s.package[this.s.packet_index++]=rb;
 			return;
 		}
 		
@@ -450,11 +450,11 @@
 */
 /*
 	function actionMotionGetIrValue(var rb){
-		ext.s.packet_buffer[ext.s.packet_index++]= rb;
-		if(ext.s.packet_index == 6){
-			s.motion[0].ir_1 = ext.s.packet_buffer[0] + ext.s.packet_buffer[1] << 8;		
-			s.motion[0].ir_2 = ext.s.packet_buffer[2] + ext.s.packet_buffer[3] << 8;		
-			s.motion[0].ir_3 = ext.s.packet_buffer[4] + ext.s.packet_buffer[5] << 8;		
+		this.s.packet_buffer[this.s.packet_index++]= rb;
+		if(this.s.packet_index == 6){
+			s.motion[0].ir_1 = this.s.packet_buffer[0] + this.s.packet_buffer[1] << 8;		
+			s.motion[0].ir_2 = this.s.packet_buffer[2] + this.s.packet_buffer[3] << 8;		
+			s.motion[0].ir_3 = this.s.packet_buffer[4] + this.s.packet_buffer[5] << 8;		
 			action= actionBranch;	
 		}
 	}
@@ -675,20 +675,20 @@
 //------------------------------------------------------------------------------Above, Successed Line 
 
 //----------------------------------------------------------------------------------- SYSTEM FUNCTION LINE 
-  	ext._getStatus = function() {
+  	this._getStatus = function() {
 			if(!connected) return {status: 1, msg: 'ChocopieBoard disconnected'};
 			else return {status: 2, msg: 'ChocopieBoard connected'};	
 			if(watchdog) return {status: 1, msg: 'Probing for ChocopieBoard'};
 	};
 			
 
-  ext._deviceRemoved = function(dev) {
+  this._deviceRemoved = function(dev) {
     console.log('Device removed');
     // Not currently implemented with serial devices
   };
 
   var potentialDevices = [];
-  ext._deviceConnected = function(dev) {
+  this._deviceConnected = function(dev) {
     potentialDevices.push(dev);
     if (!device)
       tryNextDevice();
@@ -725,7 +725,7 @@
 	// 5초마다 지속적으로 tryNextDevice 를 실행해줌으로써, 연결될때까지 무한루프를 가동하게됨
   }
 
-  ext._shutdown = function() {
+  this._shutdown = function() {
     // TODO: Bring all pins down
     if (device) device.close();
     if (poller) clearInterval(poller);
@@ -786,7 +786,7 @@
 	//Function added Line -----------------------------------------------------------------------------	
 
 	//reportSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
-	ext.reportSensor = function(networks, hwIn){
+	this.reportSensor = function(networks, hwIn){
     
 	var hw_normal = hwList.search_normal(SCBD_SENSOR),	
 		hw_ble = hwList.search_ble(SCBD_SENSOR),
@@ -823,7 +823,7 @@
 	};
 	//REPOTER PATCH CLEAR --2016.05.08 간소화 패치 완료
 
-	ext.isTouchButtonPressed = function(networks, touch){
+	this.isTouchButtonPressed = function(networks, touch){
 		var hw_normal = hwList.search_normal(SCBD_TOUCH),
 			hw_ble = hwList.search_ble(SCBD_TOUCH),
 			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
@@ -872,7 +872,7 @@
 	};
 	//REPOTER PATCH CLEAR	--2016.05.08 간소화 패치 완료
 
-	ext.whenTouchButtonChandged = function(networks, touch, btnStates){
+	this.whenTouchButtonChandged = function(networks, touch, btnStates){
 		var hw_normal = hwList.search_normal(SCBD_TOUCH),
 			hw_ble = hwList.search_ble(SCBD_TOUCH),
 			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
@@ -931,7 +931,7 @@
 	};
 	//REPOTER PATCH CLEAR
 
-	ext.whenButton = function(networks, sw, btnStates) {
+	this.whenButton = function(networks, sw, btnStates) {
 		//스위치 hat 블록에 대한 함수
 		var hw_normal = hwList.search_normal(SCBD_SWITCH),
 			hw_ble = hwList.search_ble(SCBD_SWITCH),
@@ -1005,7 +1005,7 @@
 	};
 	//REPOTER PATCH CLEAR
 
-	ext.isSwButtonPressed = function(networks, sw){
+	this.isSwButtonPressed = function(networks, sw){
 		//Boolean Block
 		var hw_normal = hwList.search_normal(SCBD_SWITCH),
 			hw_ble = hwList.search_ble(SCBD_SWITCH),
@@ -1067,7 +1067,7 @@
 	};
 	//2016.05.01 스위치 블록 boolean 패치에 따라서 생겨난 함수
 	
-	ext.isButtonPressed = function(networks, buttons){
+	this.isButtonPressed = function(networks, buttons){
 		// 조이스틱X, 조이스틱Y, 포텐시오미터
 		var hw_normal = hwList.search_normal(SCBD_SWITCH),
 			hw_ble = hwList.search_ble(SCBD_SWITCH),
@@ -1126,7 +1126,7 @@
 	};
 	//REPOTER PATCH CLEAR
 
-	ext.motionbRead = function(networks, motionb){
+	this.motionbRead = function(networks, motionb){
 		//console.log('motionbRead is run');
 		var hw_normal = hwList.search_normal(SCBD_MOTION),
 			hw_ble = hwList.search_ble(SCBD_MOTION),
@@ -1240,7 +1240,7 @@
 	};
 	//REPOTER PATCH SUCCESS -- 2016.05.08 간소화 패치 완료
 
-	ext.photoGateRead = function(networks, photoGate ,gateState){
+	this.photoGateRead = function(networks, photoGate ,gateState){
 		//console.log('photoGateRead is run');
 		var hw_normal = hwList.search_normal(SCBD_MOTION),
 			hw_ble = hwList.search_ble(SCBD_MOTION),
@@ -1284,7 +1284,7 @@
 	};
 	//REPOTER PATCH SUCCESS -- 2016.05.08 간소화 패치 완료
 
-	ext.passLEDrgb = function(networks, ledPosition, r, g, b){
+	this.passLEDrgb = function(networks, ledPosition, r, g, b){
 		//console.log('passLEDrgb is run');
 		var hw_normal = hwList.search_normal(SCBD_LED), 
 			hw_ble = hwList.search_ble(SCBD_LED),
@@ -1324,7 +1324,7 @@
 	};
 	//LED는 수신데이터가 없음.. 오로지 설정뿐
 
-	ext.passBUZEER = function(networks, pitch, playtime){
+	this.passBUZEER = function(networks, pitch, playtime){
 		
 		var hw_normal = hwList.search_normal(SCBD_LED),	//SCBD_LED 
 			hw_ble = hwList.search_ble(SCBD_LED),
@@ -1361,7 +1361,7 @@
 		}
 	};
 
-	ext.passSteppingAD = function(networks, steppingMotor, speed, stepDirection){
+	this.passSteppingAD = function(networks, steppingMotor, speed, stepDirection){
 		//console.log('passSteppingAD is run');
 		var hw_normal = hwList.search_normal(SCBD_STEPPER),
 			hw_ble = hwList.search_ble(SCBD_STEPPER),
@@ -1437,7 +1437,7 @@
 		}
 	};
 
-	ext.passSteppingADA = function(networks, steppingMotor, speed, stepDirection, rotation_amount){
+	this.passSteppingADA = function(networks, steppingMotor, speed, stepDirection, rotation_amount){
 		//console.log('passSteppingADA is run');
 		var hw_normal = hwList.search_normal(SCBD_STEPPER),
 			hw_ble = hwList.search_ble(SCBD_STEPPER),
@@ -1532,7 +1532,7 @@
 		}
 	};
 
-	ext.passDCAD = function(networks, dcMotor, speed, stepDirection){
+	this.passDCAD = function(networks, dcMotor, speed, stepDirection){
 		//console.log('passDCAD is run');
 		var hw_normal = hwList.search_normal(SCBD_DC_MOTOR),
 			hw_ble = hwList.search_ble(SCBD_DC_MOTOR),
@@ -1601,7 +1601,7 @@
 		
 	};
 
-	ext.rotateServo = function(networks, servosport, servos, degree) {
+	this.rotateServo = function(networks, servosport, servos, degree) {
 		//console.log('rotateServo is run');
 		var hw = hwList.search(SCBD_SERVO),
 			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
