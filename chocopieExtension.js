@@ -325,8 +325,8 @@
 			s.action = actionChocopi;
 			if(rb === SCBD_CHOCOPI_USB_PING)		//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
 				s.action = checkPing;
-			//if (rb === SCBD_CHOCOPI_USB | 0x01)		//하드웨어 연결시에도 헤더가 도착하지 않음.
-			//	s.action = cpcConnect;
+			if (rb === SCBD_CHOCOPI_USB | 0x01)		//하드웨어 연결시에도 헤더가 도착하지 않음.
+				s.action = cpcConnect;
 		}
 		//console.log("action is" + s.action );
 		return;
@@ -342,7 +342,7 @@
 			s.action=actionGetBlock;
 		return;
 	}
-	/*
+	
 	function cpcConnect(rb){
 		s.packet_buffer[s.packet_index] = rb;
 		s.packet_index++;
@@ -357,10 +357,11 @@
 			}else if (block_type === SCBD_MOTION){
 				sample_functions.motion_sendor(connected_port);			//SCBD_MOTION 에 대한 샘플링 레이트
 			}		
+			s.action = actionBranch;
 		}
 		return;
 	}
-	*/
+	
 	function actionGetBlock(rb){
 		// detail/port, CPC_GET_BLOCK 를 제외한 포트가 LOW 8 Bit, HIGH 8 Bit 순으로 등장함
 		s.packet_buffer[s.packet_index++] = rb;
