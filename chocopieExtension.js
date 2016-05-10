@@ -310,7 +310,7 @@
 
 	function actionBranch(rb){
 		//console.log("Data " + rb);
-		//console.log("action is" + s.action + 'packet_buffer ' + s.packet_buffer);
+		//console.log("action is" + s.action + 'packet_buffer ' + ext.s.packet_buffer);
 
 		var received_rb = rb;
 		console.log("received_rb is " + received_rb);
@@ -320,7 +320,7 @@
 			multiByteChannel = rb & 0xFF;
 			port = hwList.search_bypin(multiByteChannel);
 
-			s.action = s.blocks[port];
+			s.action =ext.s.blocks[port];
 		}else{
 			s.action = actionChocopi;
 		}
@@ -328,7 +328,7 @@
 	}
 
 	function actionChocopi(rb){
-		s.packet_index=0; //start from 	
+		ext.s.packet_index=0; //start from 	
 		console.log("rb is " + rb);	
 
 		if(rb == SCBD_CHOCOPI_USB_PING)
@@ -341,17 +341,17 @@
 	}
 	function checkVersion(rb){
 		var received_rb = rb;
-		s.packet_buffer[s.packet_index++] = received_rb;
+		ext.s.packet_buffer[ext.s.packet_index++] = received_rb;
 
 		console.log("rb is " + rb);
-		//storedInputData[s.packet_index++] = rb;
-		//s.packet_buffer[s.packet_index++]=rb;
-		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
+		//storedInputData[ext.s.packet_index++] = rb;
+		//ext.s.packet_buffer[ext.s.packet_index++]=rb;
+		console.log("ext.s.packet_buffer[" +ext.s.packet_index + "] " +ext.s.packet_buffer[ext.s.packet_index]);
 		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
 		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
-		if(s.packet_index === 10){
+		if(ext.s.packet_index === 10){
 			if (!connected) {
 			  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
 			  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
@@ -371,10 +371,10 @@
 	}
 	
 	function checkPing(rb){
-		s.packet_index++;
-		//s.packet_buffer[s.packet_index++]=rb;
+		ext.s.packet_index++;
+		//ext.s.packet_buffer[ext.s.packet_index++]=rb;
 		console.log("rb is " + rb);
-		if(s.packet_index == 1){
+		if(ext.s.packet_index == 1){
 			if (!connected) {
 			  clearInterval(poller);		
 			  poller = null;				
@@ -398,13 +398,13 @@
 		
 		if(s.action==null){
 			//inittialize all values		
-			s.action=actionBranch;
-			s.packet_buffer.length = 1024
+			ext.s.action=actionBranch;
+			ext.s.packet_buffer.length = 1024;
 		}
 		for (var rb=0; rb < inputData.length; rb++){
 			s.action(inputData[rb]);
 			console.log("inputData[" + rb + "] " + inputData[rb]);
-			console.log("s.action " + s.action);
+			console.log("s.action " +ext.s.action);
 		}
 	}
 
@@ -426,12 +426,12 @@
 */
 /*
 	function actionGetBlock(var rb){	
-		s.package[s.packet_index++]=rb;
-		if(s.packet_index == 9){
+		s.package[ext.s.packet_index++]=rb;
+		if(ext.s.packet_index == 9){
 			action = actionBranch;			
 			//send block list commoan
 			
-			s.package[s.packet_index++]=rb;
+			s.package[ext.s.packet_index++]=rb;
 			return;
 		}
 	}
@@ -439,10 +439,10 @@
 /*
 	function actionMotion(var rb){
 		s.motion[]=rb*255;
-		s.packet_index=0; //start from 	
+		ext.s.packet_index=0; //start from 	
 		if(s.detail == MOTION_IR_VALUE){
 			action = actionMotionGetIrValue;			
-			s.package[s.packet_index++]=rb;
+			s.package[ext.s.packet_index++]=rb;
 			return;
 		}
 		
@@ -450,11 +450,11 @@
 */
 /*
 	function actionMotionGetIrValue(var rb){
-		s.packet_buffer[s.packet_index++]= rb;
-		if(s.packet_index == 6){
-			s.motion[0].ir_1 = s.packet_buffer[0] + s.packet_buffer[1] << 8;		
-			s.motion[0].ir_2 = s.packet_buffer[2] + s.packet_buffer[3] << 8;		
-			s.motion[0].ir_3 = s.packet_buffer[4] + s.packet_buffer[5] << 8;		
+		ext.s.packet_buffer[ext.s.packet_index++]= rb;
+		if(ext.s.packet_index == 6){
+			s.motion[0].ir_1 = ext.s.packet_buffer[0] + ext.s.packet_buffer[1] << 8;		
+			s.motion[0].ir_2 = ext.s.packet_buffer[2] + ext.s.packet_buffer[3] << 8;		
+			s.motion[0].ir_3 = ext.s.packet_buffer[4] + ext.s.packet_buffer[5] << 8;		
 			action= actionBranch;	
 		}
 	}
