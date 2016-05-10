@@ -349,6 +349,7 @@
 
 	function checkRemove(rb){
 		removeHW(rb);	// PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+		s.action = actionBranch;
 	}
 	
 	function checkConnect(rb){
