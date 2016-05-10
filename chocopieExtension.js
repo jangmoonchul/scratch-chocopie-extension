@@ -320,6 +320,10 @@
 	var s = new status();
 
 	function actionBranch(var rb){
+	}
+
+/*
+	function actionBranch(var rb){
 		if(rb < 0xE0){
 			//s.action = storevalue.blocks[port];
 		}else{
@@ -358,6 +362,7 @@
 			s.action = actionBranch;
 		}
 	}
+*/
 /*
 	function actionGetBlock(var rb){	
 		s.package[s.packet_index++]=rb;
