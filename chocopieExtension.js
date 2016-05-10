@@ -340,13 +340,10 @@
 		
 	}
 	function checkVersion(rb){
-		var received_rb = rb;
-
-		s.packet_buffer[s.packet_index] = received_rb;
+		s.packet_buffer[s.packet_index] = rb;
 		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
 		s.packet_index++;
 
-		console.log("rb is " + rb);
 		//storedInputData[s.packet_index++] = rb;
 		//s.packet_buffer[s.packet_index++]=rb;
 		
@@ -354,7 +351,7 @@
 		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
-		if(s.packet_index === 10){
+		if(s.packet_index === 9){
 			if (!connected) {
 			  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
 			  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
@@ -374,10 +371,8 @@
 	}
 	
 	function checkPing(rb){
-		s.packet_index++;
-		//s.packet_buffer[s.packet_index++]=rb;
-		console.log("rb is " + rb);
-		if(s.packet_index == 1){
+		console.log("ping received");
+		if(rb == 0){
 			if (!connected) {
 			  clearInterval(poller);		
 			  poller = null;				
