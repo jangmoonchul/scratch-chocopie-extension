@@ -306,9 +306,7 @@
 	*/
 
 //---------------------------------------------------------------------------------------------------------------
-
-	var rp = 0;
-	var s = {action:null, packet_index: 0, packet_buffer: [1024], ping_delay: 0, blocks: [16]};
+	var s = {action:null, packet_index: 0, packet_buffer: [], ping_delay: 0, blocks: []};
 
 	function actionBranch(rb){
 		//console.log("Data " + rb);
@@ -343,12 +341,12 @@
 	}
 	function checkVersion(rb){
 		var received_rb = rb;
-		storedInputData[s.packet_index++] = received_rb;
+		s.packet_buffer[s.packet_index++] = received_rb;
 
 		console.log("rb is " + rb);
 		//storedInputData[s.packet_index++] = rb;
 		//s.packet_buffer[s.packet_index++]=rb;
-		console.log("storedInputData[" + s.packet_index + "] " + storedInputData[s.packet_index]);
+		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
 		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
 		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
@@ -462,7 +460,7 @@
 */
 	/*
 	function actionModule(){
-		rb=inputData[rp++];
+		//rb=inputData[rp++];
 		if(rp==inputData.length) return;
 		if(rb == )
 			s.blocks[port] = motion;
