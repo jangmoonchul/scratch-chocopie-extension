@@ -337,7 +337,9 @@
 		
 	}
 	function checkVersion(rb){
+		storedInputData[s.packet_index] = rb;
 		s.packet_index++;
+
 		console.log("rb is " + rb);
 		//storedInputData[s.packet_index++] = rb;
 		//s.packet_buffer[s.packet_index++]=rb;
@@ -458,6 +460,7 @@
 		for (var rb=0; rb < inputData.length; rb++){
 			s.action(inputData[rb]);
 			console.log("inputData[" + rb + "] " + inputData[rb]);
+			console.log("s.action " + s.action);
 		}
 	}
 //-----------------------------------------------------------------------------------------------------------------	
