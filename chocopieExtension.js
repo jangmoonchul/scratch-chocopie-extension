@@ -351,7 +351,7 @@
 			for (var i=0;i < s.packet_index; i++){
 				if( i%2 === 1 ){
 					connectHW(s.packet_buffer[i-1] << 8 | s.packet_buffer[i], Math.floor(i/2));
-					console.log("i%2 is " + i%2 + "i/2 is " + Math.floor(i/2));
+					console.log("Port["+ Math.floor(i/2) + "] " + s.packet_buffer[i-1] << 8 | s.packet_buffer[i] );
 				}
 			}
 			s.action = actionBranch;
