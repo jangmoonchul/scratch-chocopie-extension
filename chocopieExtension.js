@@ -295,7 +295,7 @@
 	
 	function checkPing(rb){
 		console.log("ping received");
-		if(rb == 0){
+		if(rb === 0){
 			if (!connected) {
 			  clearInterval(poller);		
 			  poller = null;				
@@ -349,13 +349,13 @@
 
 	function checkRemove(rb){
 		removeHW(rb);	// PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
+		console.log("Removed block port " + rb);
 		s.action = actionBranch;
 	}
 	
 	function checkConnect(rb){
-		s.packet_buffer[s.packet_index] = rb;
-		s.packet_index++;
-		
+		s.packet_buffer[s.packet_index++;] = rb;
+
 		if (s.packet_index === 3){
 			var block_type = s.packet_buffer[1],
 				connected_port = s.packet_buffer[0];
