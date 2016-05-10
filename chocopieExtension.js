@@ -415,8 +415,10 @@
 			var hw = hwList.search_bypin(port),	
 				sensor_detail = new Uint8Array([0x40, 0x50, 0x60, 0x00, 0x10, 0x20, 0x30, 0x80]);
 			
-			var	dnp = new Uint8Array([sensor_detail[0] | hw.pin, sensor_detail[1] | hw.pin, sensor_detail[2] | hw.pin, sensor_detail[3] | hw.pin, sensor_detail[4] | hw.pin, sensor_detail[5] | hw.pin, sensor_detail[6]| hw.pin]);
-
+			var	dnp = [];
+			for (var i=0; i < sensor_detail.length; i++){
+				dnp[i] = (sensor_detail[i] | hw.pin);
+			}
 			for (var i=0;i < dnp.length ; i++){
 				check_low = checkSum( dnp[i], low_data );
 				check_high = checkSum( dnp[i], high_data );
@@ -442,8 +444,6 @@
 			for (var i=0;i < dnp.length-1; i++){
 				check_low = checkSum( dnp[i], low_data );	
 				check_high = checkSum( dnp[i], high_data );
-				console.log("dnp[i] " + dnp[i]);
-				console.log("dnp.length " + dnp.length);
 				//console.log("Hw name is " + hw.name);										//확인완료
 				//console.log("check_low " + check_low + "and check_high " + check_high);
 					
