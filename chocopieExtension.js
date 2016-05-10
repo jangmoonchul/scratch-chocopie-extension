@@ -333,7 +333,7 @@
 			s.action=checkVersion;
 		if(rb == CPC_GET_BLOCK)
 			s.action=actionGetBlock;
-		
+		return;
 	}
 	function checkVersion(rb){
 		s.packet_buffer[s.packet_index] = rb;
