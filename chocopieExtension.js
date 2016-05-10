@@ -370,7 +370,7 @@
 				if( i%2 === 1 ){
 					var block_type = s.packet_buffer[i-1],	//현재는 이렇게 연결되지만, 추후에는 패치필요.
 						connected_port = Math.floor(i/2); 
-					if (data !== 0){
+					if (block_type !== 0){
 						connectHW(block_type, connected_port);	
 						if(block_type === SCBD_SENSOR)
 							sample_functions.sensor_sender(connected_port);			//SCBD_SENSOR 에 대한 샘플링 레이트 -> 클리어
