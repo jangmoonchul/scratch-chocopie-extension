@@ -310,7 +310,7 @@
 
 	function actionBranch(rb){
 		//console.log("Data " + rb);
-		//console.log("action is" + this.s.action + 'packet_buffer ' + this.s.packet_buffer);
+		//console.log("action is" + s.action + 'packet_buffer ' + s.packet_buffer);
 
 		var received_rb = rb;
 		console.log("received_rb is " + received_rb);
@@ -320,38 +320,38 @@
 			multiByteChannel = rb & 0xFF;
 			port = hwList.search_bypin(multiByteChannel);
 
-			this.s.action =this.s.blocks[port];
+			s.action = s.blocks[port];
 		}else{
-			this.s.action = actionChocopi;
+			s.action = actionChocopi;
 		}
 		return;
 	}
 
 	function actionChocopi(rb){
-		this.s.packet_index=0; //start from 	
+		s.packet_index=0; //start from 	
 		console.log("rb is " + rb);	
 
 		if(rb == SCBD_CHOCOPI_USB_PING)
-			this.s.action=checkPing;
+			s.action=checkPing;
 		if(rb == CPC_VERSION)
-			this.s.action=checkVersion;
+			s.action=checkVersion;
 		if(rb == CPC_GET_BLOCK)
-			this.s.action=actionGetBlock;
+			s.action=actionGetBlock;
 		
 	}
 	function checkVersion(rb){
 		var received_rb = rb;
-		this.s.packet_buffer[this.s.packet_index++] = received_rb;
+		s.packet_buffer[s.packet_index++] = received_rb;
 
 		console.log("rb is " + rb);
-		//storedInputData[this.s.packet_index++] = rb;
-		//this.s.packet_buffer[this.s.packet_index++]=rb;
-		console.log("this.s.packet_buffer[" +this.s.packet_index + "] " +this.s.packet_buffer[this.s.packet_index]);
+		//storedInputData[s.packet_index++] = rb;
+		//s.packet_buffer[s.packet_index++]=rb;
+		console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
 		//var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
 		//var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
 			
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
-		if(this.s.packet_index === 10){
+		if(s.packet_index === 10){
 			if (!connected) {
 			  clearInterval(poller);		//setInterval 함수는 특정 시간마다 해당 함수를 실행
 			  poller = null;				//clearInterval 함수는 특정 시간마다 해당 함수를 실행하는 것을 해제시킴
@@ -365,16 +365,16 @@
 			}
 			pinging = false;
 			pingCount = 0;	
-			this.s.action = actionBranch;
+			s.action = actionBranch;
 			return;
 		}
 	}
 	
 	function checkPing(rb){
-		this.s.packet_index++;
-		//this.s.packet_buffer[this.s.packet_index++]=rb;
+		s.packet_index++;
+		//s.packet_buffer[s.packet_index++]=rb;
 		console.log("rb is " + rb);
-		if(this.s.packet_index == 1){
+		if(s.packet_index == 1){
 			if (!connected) {
 			  clearInterval(poller);		
 			  poller = null;				
@@ -387,7 +387,7 @@
 			}
 			pinging = false;
 			pingCount = 0;
-			this.s.action = actionBranch;
+			s.action = actionBranch;
 			return;
 		}
 	}
@@ -396,24 +396,24 @@
 	function processInput(inputData) {
 		  //입력 데이터 처리용도의 함수
 		
-		if(this.s.action==null){
+		if(s.action==null){
 			//inittialize all values		
-			this.s.action=actionBranch;
-			this.s.packet_buffer.length = 1024;
+			s.action=actionBranch;
+			s.packet_buffer = new Array(1024);
 		}
 		for (var rb=0; rb < inputData.length; rb++){
-			this.s.action(inputData[rb]);
+			s.action(inputData[rb]);
 			console.log("inputData[" + rb + "] " + inputData[rb]);
-			console.log("this.s.action " +this.s.action);
+			console.log("s.action " + s.action);
 		}
 	}
 
 /*
 	function actionBranch(var rb){
 		if(rb < 0xE0){
-			//this.s.action = storevalue.blocks[port];
+			//s.action = storevalue.blocks[port];
 		}else{
-			this.s.action = actionChocopi;
+			s.action = actionChocopi;
 			s.detail = rb >> 4;
 			s.port = rb & 0x0F;
 			return;
@@ -426,12 +426,12 @@
 */
 /*
 	function actionGetBlock(var rb){	
-		s.package[this.s.packet_index++]=rb;
-		if(this.s.packet_index == 9){
+		s.package[s.packet_index++]=rb;
+		if(s.packet_index == 9){
 			action = actionBranch;			
 			//send block list commoan
 			
-			s.package[this.s.packet_index++]=rb;
+			s.package[s.packet_index++]=rb;
 			return;
 		}
 	}
@@ -439,10 +439,10 @@
 /*
 	function actionMotion(var rb){
 		s.motion[]=rb*255;
-		this.s.packet_index=0; //start from 	
+		s.packet_index=0; //start from 	
 		if(s.detail == MOTION_IR_VALUE){
 			action = actionMotionGetIrValue;			
-			s.package[this.s.packet_index++]=rb;
+			s.package[s.packet_index++]=rb;
 			return;
 		}
 		
@@ -450,11 +450,11 @@
 */
 /*
 	function actionMotionGetIrValue(var rb){
-		this.s.packet_buffer[this.s.packet_index++]= rb;
-		if(this.s.packet_index == 6){
-			s.motion[0].ir_1 = this.s.packet_buffer[0] + this.s.packet_buffer[1] << 8;		
-			s.motion[0].ir_2 = this.s.packet_buffer[2] + this.s.packet_buffer[3] << 8;		
-			s.motion[0].ir_3 = this.s.packet_buffer[4] + this.s.packet_buffer[5] << 8;		
+		s.packet_buffer[s.packet_index++]= rb;
+		if(s.packet_index == 6){
+			s.motion[0].ir_1 = s.packet_buffer[0] + s.packet_buffer[1] << 8;		
+			s.motion[0].ir_2 = s.packet_buffer[2] + s.packet_buffer[3] << 8;		
+			s.motion[0].ir_3 = s.packet_buffer[4] + s.packet_buffer[5] << 8;		
 			action= actionBranch;	
 		}
 	}
@@ -675,20 +675,20 @@
 //------------------------------------------------------------------------------Above, Successed Line 
 
 //----------------------------------------------------------------------------------- SYSTEM FUNCTION LINE 
-  	this._getStatus = function() {
+  	ext._getStatus = function() {
 			if(!connected) return {status: 1, msg: 'ChocopieBoard disconnected'};
 			else return {status: 2, msg: 'ChocopieBoard connected'};	
 			if(watchdog) return {status: 1, msg: 'Probing for ChocopieBoard'};
 	};
 			
 
-  this._deviceRemoved = function(dev) {
+  ext._deviceRemoved = function(dev) {
     console.log('Device removed');
     // Not currently implemented with serial devices
   };
 
   var potentialDevices = [];
-  this._deviceConnected = function(dev) {
+  ext._deviceConnected = function(dev) {
     potentialDevices.push(dev);
     if (!device)
       tryNextDevice();
@@ -725,7 +725,7 @@
 	// 5초마다 지속적으로 tryNextDevice 를 실행해줌으로써, 연결될때까지 무한루프를 가동하게됨
   }
 
-  this._shutdown = function() {
+  ext._shutdown = function() {
     // TODO: Bring all pins down
     if (device) device.close();
     if (poller) clearInterval(poller);
@@ -786,7 +786,7 @@
 	//Function added Line -----------------------------------------------------------------------------	
 
 	//reportSensor 에 대하여 검증필요->내용 확인 완료 (light Sensor 또한 Analog) -- Changed By Remoted 2016.04.14
-	this.reportSensor = function(networks, hwIn){
+	ext.reportSensor = function(networks, hwIn){
     
 	var hw_normal = hwList.search_normal(SCBD_SENSOR),	
 		hw_ble = hwList.search_ble(SCBD_SENSOR),
@@ -823,7 +823,7 @@
 	};
 	//REPOTER PATCH CLEAR --2016.05.08 간소화 패치 완료
 
-	this.isTouchButtonPressed = function(networks, touch){
+	ext.isTouchButtonPressed = function(networks, touch){
 		var hw_normal = hwList.search_normal(SCBD_TOUCH),
 			hw_ble = hwList.search_ble(SCBD_TOUCH),
 			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
@@ -872,7 +872,7 @@
 	};
 	//REPOTER PATCH CLEAR	--2016.05.08 간소화 패치 완료
 
-	this.whenTouchButtonChandged = function(networks, touch, btnStates){
+	ext.whenTouchButtonChandged = function(networks, touch, btnStates){
 		var hw_normal = hwList.search_normal(SCBD_TOUCH),
 			hw_ble = hwList.search_ble(SCBD_TOUCH),
 			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
@@ -931,7 +931,7 @@
 	};
 	//REPOTER PATCH CLEAR
 
-	this.whenButton = function(networks, sw, btnStates) {
+	ext.whenButton = function(networks, sw, btnStates) {
 		//스위치 hat 블록에 대한 함수
 		var hw_normal = hwList.search_normal(SCBD_SWITCH),
 			hw_ble = hwList.search_ble(SCBD_SWITCH),
@@ -1005,7 +1005,7 @@
 	};
 	//REPOTER PATCH CLEAR
 
-	this.isSwButtonPressed = function(networks, sw){
+	ext.isSwButtonPressed = function(networks, sw){
 		//Boolean Block
 		var hw_normal = hwList.search_normal(SCBD_SWITCH),
 			hw_ble = hwList.search_ble(SCBD_SWITCH),
@@ -1067,7 +1067,7 @@
 	};
 	//2016.05.01 스위치 블록 boolean 패치에 따라서 생겨난 함수
 	
-	this.isButtonPressed = function(networks, buttons){
+	ext.isButtonPressed = function(networks, buttons){
 		// 조이스틱X, 조이스틱Y, 포텐시오미터
 		var hw_normal = hwList.search_normal(SCBD_SWITCH),
 			hw_ble = hwList.search_ble(SCBD_SWITCH),
@@ -1126,7 +1126,7 @@
 	};
 	//REPOTER PATCH CLEAR
 
-	this.motionbRead = function(networks, motionb){
+	ext.motionbRead = function(networks, motionb){
 		//console.log('motionbRead is run');
 		var hw_normal = hwList.search_normal(SCBD_MOTION),
 			hw_ble = hwList.search_ble(SCBD_MOTION),
@@ -1240,7 +1240,7 @@
 	};
 	//REPOTER PATCH SUCCESS -- 2016.05.08 간소화 패치 완료
 
-	this.photoGateRead = function(networks, photoGate ,gateState){
+	ext.photoGateRead = function(networks, photoGate ,gateState){
 		//console.log('photoGateRead is run');
 		var hw_normal = hwList.search_normal(SCBD_MOTION),
 			hw_ble = hwList.search_ble(SCBD_MOTION),
@@ -1284,7 +1284,7 @@
 	};
 	//REPOTER PATCH SUCCESS -- 2016.05.08 간소화 패치 완료
 
-	this.passLEDrgb = function(networks, ledPosition, r, g, b){
+	ext.passLEDrgb = function(networks, ledPosition, r, g, b){
 		//console.log('passLEDrgb is run');
 		var hw_normal = hwList.search_normal(SCBD_LED), 
 			hw_ble = hwList.search_ble(SCBD_LED),
@@ -1324,7 +1324,7 @@
 	};
 	//LED는 수신데이터가 없음.. 오로지 설정뿐
 
-	this.passBUZEER = function(networks, pitch, playtime){
+	ext.passBUZEER = function(networks, pitch, playtime){
 		
 		var hw_normal = hwList.search_normal(SCBD_LED),	//SCBD_LED 
 			hw_ble = hwList.search_ble(SCBD_LED),
@@ -1361,7 +1361,7 @@
 		}
 	};
 
-	this.passSteppingAD = function(networks, steppingMotor, speed, stepDirection){
+	ext.passSteppingAD = function(networks, steppingMotor, speed, stepDirection){
 		//console.log('passSteppingAD is run');
 		var hw_normal = hwList.search_normal(SCBD_STEPPER),
 			hw_ble = hwList.search_ble(SCBD_STEPPER),
@@ -1437,7 +1437,7 @@
 		}
 	};
 
-	this.passSteppingADA = function(networks, steppingMotor, speed, stepDirection, rotation_amount){
+	ext.passSteppingADA = function(networks, steppingMotor, speed, stepDirection, rotation_amount){
 		//console.log('passSteppingADA is run');
 		var hw_normal = hwList.search_normal(SCBD_STEPPER),
 			hw_ble = hwList.search_ble(SCBD_STEPPER),
@@ -1532,7 +1532,7 @@
 		}
 	};
 
-	this.passDCAD = function(networks, dcMotor, speed, stepDirection){
+	ext.passDCAD = function(networks, dcMotor, speed, stepDirection){
 		//console.log('passDCAD is run');
 		var hw_normal = hwList.search_normal(SCBD_DC_MOTOR),
 			hw_ble = hwList.search_ble(SCBD_DC_MOTOR),
@@ -1601,7 +1601,7 @@
 		
 	};
 
-	this.rotateServo = function(networks, servosport, servos, degree) {
+	ext.rotateServo = function(networks, servosport, servos, degree) {
 		//console.log('rotateServo is run');
 		var hw = hwList.search(SCBD_SERVO),
 			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
