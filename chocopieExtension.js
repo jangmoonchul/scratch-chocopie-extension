@@ -351,7 +351,7 @@
 			for (var i=0;i < s.packet_index; i++){
 				if( i%2 === 1 ){
 					var data = s.packet_buffer[i-1];
-					connectHW(s.packet_buffer[i-1] << 8 | s.packet_buffer[i], Math.floor(i/2));
+					connectHW(data, Math.floor(i/2));	//현재는 이렇게 연결되지만, 추후에는 패치필요.
 					console.log("Port["+ Math.floor(i/2) + "] " + data );
 				}
 			}
