@@ -215,6 +215,12 @@
 	}
 	//Port/detail, data를 XOR 시킨 후, checksum 하여 return 시킴	--> check Sum Success 2016.04.21
 	
+	function checkSum2data(detailnport, data1, data2){
+		var sum = 0xFF ^ detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
+		sum ^= data1;
+		sum ^= data2;
+		return sum;
+	}
 
   function setDigitalInputs(portNum, portData) {
     digitalInputData[portNum] = portData;
@@ -327,13 +333,29 @@
 			if (rb === (SCBD_CHOCOPI_USB | 0x01)){
 				s.packet_index=0;
 				s.action = checkConnect;	//하드웨어 연결시에도 헤더가 도착하지 않음.
-			}
-			if (rb === (SCBD_CHOCOPI_USB | 0x02)){
-				s.packet_index=0;
+			}else if (rb === (SCBD_CHOCOPI_USB | 0x02)){
+				s.packet_index=0;			//하드웨어 제거시에도 헤더가 도착하지 않음.
 				s.action = checkRemove;
+			}else if (rb === (SCBD_CHOCOPI_BLE | 0x03)){	//BLE 연결 상태에 대한 정의
+				s.packet_index=0;
+				s.action = bleChanged;
+			}else if(rb === (SCBD_CHOCOPI_USB | 0x0F)){
+				s.packet_index=0;
+				s.action = reportError;
 			}
 		}
 		//console.log("action is" + s.action );
+		return;
+	}
+	
+	function reportError(rb){
+		s.packet_buffer[s.packet_index++] = rb;
+		if (s.packet_index === 10){
+			console.log("에러발생 오류코드 : " + s.packet_buffer[0] + s.packet_buffer[1] );	
+			console.log("데이터 : " + s.packet_buffer[2] + s.packet_buffer[3] + s.packet_buffer[4] + s.packet_buffer[5] + s.packet_buffer[6] + s.packet_buffer[7] + s.packet_buffer[8] + s.packet_buffer[9]);
+			//오류코드 (2 Byte), 참고데이터 (8 Byte)
+			s.action = actionBranch;
+		}
 		return;
 	}
 
@@ -348,10 +370,24 @@
 		return;
 	}
 
+	function bleChanged(rb){
+		if (rb === 0){	//연결해제
+			for (var i=8; i < 16; i++){							//STATUS (inputData, storedInputData)
+				removeHW(i);									//2016.04.30 재패치
+			}
+			console.log("BLE is disconnected");
+		}else if (rb === 1){
+			console.log("BLE is connected");
+		}	
+		s.action = actionBranch;	
+		return;
+	}
+
 	function checkRemove(rb){
 		removeHW(rb);	// PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
 		console.log("Removed block port " + rb);
 		s.action = actionBranch;
+		return;
 	}
 	
 	function checkConnect(rb){
@@ -399,14 +435,15 @@
 	
 	function processInput(inputData) {
 		  //입력 데이터 처리용도의 함수
-		
+		var i = 0;
 		if(s.action==null){
 			//inittialize all values		
 			s.action=actionBranch;
 			s.packet_buffer = new Array(1024);
 		}
-		for (var rb=0; rb < inputData.length; rb++){
-			console.log("inputData[" + rb + "] " + inputData[rb]);
+		for (var rb in  inputData){
+			//console.log("inputData[" + rb + "] " + inputData[rb]);
+			console.log("inputData[" + i++ + "] " + rb);
 			s.action(inputData[rb]);
 		}
 	}
@@ -429,22 +466,19 @@
 			for (var i=0; i < sensor_detail.length; i++){
 				dnp[i] = (sensor_detail[i] | hw.pin);
 			}
-			for (var i=0;i < dnp.length ; i++){
-				check_low = checkSum( dnp[i], low_data );
-				check_high = checkSum( dnp[i], high_data );
-		
-				var sensor_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low, END_SYSEX]),
-					sensor_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high, END_SYSEX]);
 
-				device.send(sensor_output_low.buffer);
-				device.send(sensor_output_high.buffer);				
+			for (var i=0;i < dnp.length ; i++){
+				check = checkSum2data( dnp[i], low_data, high_data );
+				var sensor_output = new Uint8Array([START_SYSEX, dnp[i], low_data, high_data, check, END_SYSEX]);
+
+				device.send(sensor_output.buffer);
+
 			}
 		},
 		// 리포터 센더 정의 완료. 터치는 센더가 없음.
 		motion_sendor: function(port) {
 			var hw = hwList.search_bypin(port),	
 				sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);	
-			//var s = {action:null, packet_index: 0, packet_buffer: null, ping_delay: 0, blocks: []};
 			var	dnp = [];
 			
 			for (var i=0; i < sensor_detail.length; i++){
@@ -452,18 +486,13 @@
 			}
 
 			for (var i=0;i < dnp.length-1; i++){
-				check_low = checkSum( dnp[i], low_data );	
-				check_high = checkSum( dnp[i], high_data );
+				check = checkSum2data( dnp[i], low_data, high_data );	
 				//console.log("Hw name is " + hw.name);										//확인완료
 				//console.log("check_low " + check_low + "and check_high " + check_high);
-					
-				var motion_output_low = new Uint8Array([START_SYSEX, dnp[i], low_data, check_low, END_SYSEX]);
-				var	motion_output_high = new Uint8Array([START_SYSEX, dnp[i], high_data, check_high, END_SYSEX]);
-					
-				device.send(motion_output_low.buffer);
-				device.send(motion_output_high.buffer);
+				var motion_output = new Uint8Array([START_SYSEX, dnp[i], low_data, high_data, check, END_SYSEX]);
+				device.send(motion_output.buffer);
 			}
-			var motion_output = new Uint8Array([START_SYSEX, dnp[4],  dnp[4], END_SYSEX]);
+			var motion_output = new Uint8Array([START_SYSEX, dnp[4],  0xFF ^ dnp[4], END_SYSEX]);
 				device.send(motion_output.buffer);
 				//포토게이트의 경우 보내는 데이터가 없기 때문에, detail/port 이후에 checkSum 을 예상하여 dnp를 그대로 보낸다.
 				//check_low = checkSum( dnp[4], low_data );		//포토게이트류 -> 데이터가 없기 때문에, XOR 과정을 거쳐도 체크섬은 그대로 유지됨
@@ -515,21 +544,7 @@
 		console.log('inputData [' + i + '] = ' + inputData[i]);
       if (parsingSysex) {
 		//console.log('i =' + i + ' sysexBytesRead = ' + sysexBytesRead);
-		if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x02)){
-			//0xE2(0xF2), PORT	(inputData, storedInputData)		inputData[0] 번이 0xE2 인 경우, 이어서 포트(1 Byte) 가 전송됨
-			parsingSysex = false;
-			removeHW(storedInputData[1]);
-        } else if (sysexBytesRead === 1 && storedInputData[0] === (SCBD_CHOCOPI_BLE | 0x03)){
-			parsingSysex = false;
-			if (storedInputData[1] == 0){ 							//연결해제
-				for (var i=8; i < 16; i++){							//0xF3, STATUS (inputData, storedInputData)
-					removeHW(i);									//2016.04.30 재패치
-				}
-				console.log("BLE is disconnected");
-			}else if (storedInputData[1] == 1){
-				console.log("BLE is connected");
-			}
-        }else if (sysexBytesRead === 10 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
+		if (sysexBytesRead === 10 && storedInputData[0] === (SCBD_CHOCOPI_USB | 0x0F)){
 			parsingSysex = false;
 			console.log('에러발생 ' + storedInputData[1] + storedInputData[2] + '에서 ' + storedInputData[3] + storedInputData[4] + storedInputData[5] + storedInputData[6] + storedInputData[7] + storedInputData[8] + storedInputData[9] + storedInputData[10]);	
 			//오류코드 (2 Byte), 참고데이터 (8 Byte)
@@ -704,7 +719,7 @@
     device = potentialDevices.shift();
     if (!device) return;
 
-    device.open({ stopBits: 0, bitRate: 57600, ctsFlowControl: 0 });
+    device.open({ stopBits: 0, bitRate: 115200, ctsFlowControl: 0 });
     console.log('Attempting connection with ' + device.id);
     device.set_receive_handler(function(data) {
       var inputData = new Uint8Array(data);
