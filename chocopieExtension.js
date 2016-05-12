@@ -203,6 +203,9 @@
 		SENSOR_TEMP_VALUE : 0x40, SENSOR_HUMD_VALUE : 0x50, SENSOR_LIGHT_VALUE : 0x60, SENSOR_AN1_VALUE : 0x00, SENSOR_AN2_VALUE : 0x10, SENSOR_AN3_VALUE : 0x20, SENSOR_AN4_VALUE : 0x30,
 		MOTION_IR_VALUE : 0x10, MOTION_ACCEL_VALUE : 0x20, MOTION_PACCEL_VALUE : 0x30, MOTION_PHOTO1_ON : 0x80, MOTION_PHOTO1_OFF : 0x90,
 		MOTION_PHOTO2_ON : 0xA0, MOTION_PHOTO2_OFF : 0xB0, MOTION_ALLPHOTO_STATUS : 0xC0};
+		
+		
+		
 	
 	 function sensor_block() {
 		this.analog_sensor1 = 0;
@@ -579,6 +582,11 @@
 			s.action = actionBranch;
 		};
 	}
+	
+	for(var i=0; i < 16; i++){
+			s.blockList[i] = new nullBlock();
+	}
+	
 	//예) s.block_port_usb["sensor"] 에는 연결된 포트들이 담기게됨.
 	function disconectBlock(port){
 		console.log("port " + port);
@@ -597,7 +605,7 @@
 		}else{
 			s.block_port_usb[block_name] = -1;
 			for (var i=0; i < 8; i++){
-				if (s.blockList[i].name ===block_name){
+				if (s.blockList[i].name === block_name){
 					if (i !== port){
 						s.block_port_usb[block_name] = i;
 					}
