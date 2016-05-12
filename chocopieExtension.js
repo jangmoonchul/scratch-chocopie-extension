@@ -263,13 +263,14 @@
 			console.log("motion started");
 			s.packet_buffer[s.packet_index++] = rb;	
 			
-			console.log("s.detail " + s.detail);
+			//console.log("s.detail " + s.detail);
 		  if (s.detail === s.MOTION_IR_VALUE){
 			  if (s.packet_index < 6) return;
 			  
 			  this.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  this.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  this.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
+			  console.log("this.infrared1 " +  this.infrared1);
 			  console.log("IR finshed");
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ACCEL_VALUE){
