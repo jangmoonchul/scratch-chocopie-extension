@@ -870,7 +870,7 @@
 		var switch_functions = {
 			switchOn: function() {
 				for(var i=0; i < 5; i++){
-					if(object.switchon_btn === i){}
+					if(object.switchon_btn === i){
 						if(sw === menus[lang]['sw'][i])
 							return true;
 					}
