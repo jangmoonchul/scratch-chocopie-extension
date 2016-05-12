@@ -1182,7 +1182,7 @@
 	};
 
 	ext.rotateServo = function(networks, servosport, servos, degree) {
-		//console.log('rotateServo is run');
+		console.log('rotateServo is run');
 		
 		//if (port < 8) s.servo_block_usb[s.servo_count_usb++] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
 		//else s.servo_block_ble[s.servo_count_ble++] = port;				//패치 완료
@@ -1192,10 +1192,12 @@
 		if (networks === menus[lang]['networks'][0]){		//일반
 			for(var i=0; i < s.servo_count_usb; i++){
 				port.push(s.servo_block_usb[i]);
+				console.log("s.servo_block_usb " + s.servo_block_usb[i]);
 			}
 		}else{		
 			for(var i=0; i < servo_count_ble; i++){						//무선
 				port.push(s.servo_block_ble[i]);
+				console.log("s.servo_block_ble " + s.servo_block_ble[i]);
 			}		
 		}
 
@@ -1252,7 +1254,7 @@
       ['-'],
       ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', 0],	//sw block (button 1, .. )		function_name :
       ['r', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Joystick X'],			//buttons ( button 1, 2, 3, 4)	whenButton
-	  ['b', '%m.networks sw block %m.sw of value', 'isSwButtonPressed', 'normal','Button 1'],					//Joystick and Potencyometer	isButtonPressed
+	  ['r', '%m.networks sw block %m.sw of value', 'isSwButtonPressed', 'normal','Button 1'],					//Joystick and Potencyometer	isButtonPressed
 	  ['-'],																									
 	  ['r', '%m.networks motion-block %m.motionb of value', 'motionbRead', 'normal','infrared 1'],								//Motion block is infrared, acceler and so on
 	  ['h', 'when %m.networks motion-block %m.photoGate is %m.gateState', 'photoGateRead', 'normal', 'photoGate 1', 'blocked'],	//function_name : motionbRead	photoGateRead	
@@ -1277,7 +1279,7 @@
 	  ['-'],																											//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', 0],				//sw block (button 1, .. )
       ['r', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','조이스틱 X'],							//buttons ( button 1, 2, 3, 4, J)				
-	  ['b', '%m.networks 스위치블록 %m.sw 의 값', 'isSwButtonPressed', '일반','버튼 1'],							//Joystick and Potencyometer function is combined.
+	  ['r', '%m.networks 스위치블록 %m.sw 의 값', 'isSwButtonPressed', '일반','버튼 1'],							//Joystick and Potencyometer function is combined.
 	  ['-'],																										//function_name :  isButtonPressed	whenButton
 	  ['r', '%m.networks 모션블록 %m.motionb 의 값', 'motionbRead', '일반','적외선 감지 1'],								//Motion block is infrared, acceler and so on
 	  ['h', '%m.networks 모션블록 %m.photoGate 가 %m.gateState', 'photoGateRead', '일반', '포토게이트 1', '막힐때'],	//function_name : motionbRead	photoGateRead	
