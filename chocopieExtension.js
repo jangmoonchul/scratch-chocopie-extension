@@ -59,9 +59,7 @@
 	//LOW, HIGH 를 연산하기 위해서 패치함 -- 2016.04.20 
   var MAX_DATA_BYTES = 4096;
 
-  var waitForData = 0,
-    executeMultiByteCommand = 0,
-    storedInputData = new Uint8Array(MAX_DATA_BYTES);
+  var storedInputData = new Uint8Array(MAX_DATA_BYTES);
 
   var digitalOutputData = new Uint8Array(16),
     digitalInputData = new Uint8Array(16),
@@ -257,6 +255,7 @@
 		this.photoStatus2 = 0;
 
 		this.name = "motion";
+
 		this.parser = function(rb) {
 		s.packet_buffer[s.packet_index++] = rb;
 		
@@ -553,10 +552,11 @@
 		}
 	}
 	function nullBlock(){
+		this.name = "null";
 		this.parser = function(rb){
 			console.log("X!");
 			s.action = actionBranch;
-		}
+		};
 	}
 	//예) s.block_port_usb["sensor"] 에는 연결된 포트들이 담기게됨.
 	function disconectBlock(port){
