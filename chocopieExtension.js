@@ -266,6 +266,7 @@
 			console.log("s.detail " + s.detail);
 		  if (s.detail === s.MOTION_IR_VALUE){
 			  if (s.packet_index < 6) return;
+			  
 			  this.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  this.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  this.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
@@ -363,6 +364,7 @@
 	function actionBranch(rb){
 		console.log("ActionBranch Header Data " + rb);
 		if (rb < 0xE0){
+			s.packet_index = 0;
 			s.detail = rb & 0xF0;
 			s.port = rb & 0x0F;
 
