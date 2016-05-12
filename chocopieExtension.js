@@ -261,27 +261,29 @@
 
 		this.parser = function(rb) {
 			console.log("motion started");
-			s.packet_buffer[s.packet_index++] = rb;		
+			s.packet_buffer[s.packet_index++] = rb;	
+			
+			console.log("s.detail " + s.detail);
 		  if (s.detail === s.MOTION_IR_VALUE){
 			  if (s.packet_index < 6) return;
 			  this.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  this.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  this.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  console("IR finshed");
+			  console.log("IR finshed");
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ACCEL_VALUE){
 			  if (s.packet_index < 6) return;
 			  this.accelerX = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  this.accelerY = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  this.accelerZ = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  console("ACCEL finshed");
+			  console.log("ACCEL finshed");
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_PACCEL_VALUE){
 			  if (s.packet_index < 6) return;
 			  this.paccelerU = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  this.paccelerV = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  this.paccelerW = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  console("PACCEL finshed");
+			  console.log("PACCEL finshed");
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO1_ON)){
 			  if (s.packet_index < 4) return;
