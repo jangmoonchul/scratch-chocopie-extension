@@ -258,7 +258,6 @@
 		this.photoStatus2 = 0;
 
 		this.name = "motion";
-
 		this.parser = function(rb) {
 			console.log("motion started");
 			s.packet_buffer[s.packet_index++] = rb;		
