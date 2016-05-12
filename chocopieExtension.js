@@ -879,14 +879,14 @@
 			},
 			switchOff: function(){
 				for(var i=0; i < 5; i++){
-					if(object.switchoff_btn === i){}
+					if(object.switchoff_btn === i){
 						if(sw === menus[lang]['sw'][i])
 							return false;
 					}
 				}				
 			}
 		};
-
+		
 		if(btnStates === 1)	
 			switch_functions.switchOn();
 		else 
