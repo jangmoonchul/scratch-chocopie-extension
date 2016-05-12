@@ -472,6 +472,10 @@
 			s.action=actionBranch;
 			s.packet_buffer = new Array(1024);
 			s.blockList = new Array(16);
+			
+			for(var i=0; i < 16; i++){
+				s.blockList[i] = new nullBlock();
+			}
 		}
 		for (var rb in  inputData){
 			console.log("inputData[" + rb + "] " + inputData[rb]);
@@ -581,10 +585,6 @@
 			console.log("X!");
 			s.action = actionBranch;
 		};
-	}
-	
-	for(var i=0; i < 16; i++){
-			s.blockList[i] = new nullBlock();
 	}
 	
 	//예) s.block_port_usb["sensor"] 에는 연결된 포트들이 담기게됨.
