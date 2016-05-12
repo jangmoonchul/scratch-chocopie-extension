@@ -259,7 +259,7 @@
 		  }else if (s.detail === s.TOUCH_BUTTON_ON){
 			 if (s.packet_index < 1) return;
 			 parent.touchon_btn = s.packet_buffer[0];
-		  }else if (s.detail === TOUCH_ALLBUTTON_STATUS){
+		  }else if (s.detail === s.TOUCH_ALLBUTTON_STATUS){
 			 if (s.packet_index < 2) return;
 			 for(var i=0; i < 12; i++){
 				parent.touchStatus[i] = ((s.packet_buffer[0] + s.packet_buffer[1] * 256) & 0x0001) >> i;
