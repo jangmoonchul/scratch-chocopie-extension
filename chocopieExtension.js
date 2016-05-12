@@ -1189,7 +1189,7 @@
 		//if (port < 8) s.servo_block_usb[s.servo_count_usb++] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
 		//else s.servo_block_ble[s.servo_count_ble++] = port;				//패치 완료
 		
-		var port = new Array(16);
+		var port = [];
 		
 		if (networks === menus[lang]['networks'][0]){		//일반
 			for(var i=0; i < s.servo_count_usb; i++){
