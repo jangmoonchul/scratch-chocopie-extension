@@ -300,7 +300,7 @@
 			  parent.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  parent.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  parent.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  //console.log("IR finshed");
+			  console.log("IR finshed and " + parent.infrared1);
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ACCEL_VALUE){
 			  if (s.packet_index < 6) return;
