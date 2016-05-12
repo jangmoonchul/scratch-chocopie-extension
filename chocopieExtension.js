@@ -1039,7 +1039,9 @@
 
 		if (port === -1) return;
 		var object = s.blockList[port];
-
+		
+		console.log("object.infrared1 " + object.infrared1);
+		
 		if (motionb === menus[lang]['motionb'][0]) return object.infrared1;
 		if (motionb === menus[lang]['motionb'][1]) return object.infrared2;
 		if (motionb === menus[lang]['motionb'][2]) return object.infrared3;
