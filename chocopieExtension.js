@@ -202,8 +202,9 @@
 	var s = {action:null, packet_index: 0, packet_buffer: null, block_port_usb : {}, block_port_ble : {}, port : 0, detail : 0, blockList : null,
 		SENSOR_TEMP_VALUE : 0x40, SENSOR_HUMD_VALUE : 0x50, SENSOR_LIGHT_VALUE : 0x60, SENSOR_AN1_VALUE : 0x00, SENSOR_AN2_VALUE : 0x10, SENSOR_AN3_VALUE : 0x20, SENSOR_AN4_VALUE : 0x30,
 		MOTION_IR_VALUE : 0x10, MOTION_ACCEL_VALUE : 0x20, MOTION_PACCEL_VALUE : 0x30, MOTION_PHOTO1_ON : 0x80, MOTION_PHOTO1_OFF : 0x90,
-		MOTION_PHOTO2_ON : 0xA0, MOTION_PHOTO2_OFF : 0xB0, MOTION_ALLPHOTO_STATUS : 0xC0, TOUCH_BUTTON_OFF : 0x00, TOUCH_BUTTON_ON : 0x10, TOUCH_ALLBUTTON_STATUS : 0x20};
-		
+		MOTION_PHOTO2_ON : 0xA0, MOTION_PHOTO2_OFF : 0xB0, MOTION_ALLPHOTO_STATUS : 0xC0, TOUCH_BUTTON_OFF : 0x00, TOUCH_BUTTON_ON : 0x10, TOUCH_ALLBUTTON_STATUS : 0x20,
+		SWITCH_BUTTON_ON : 0x10, SWITCH_BUTTON_OFF : 0x00, SWITCH_POTENCY_VALUE : 0x30, SWITCH_JOYX_VALUE : 0x40, SWITCH_JOYY_VALUE : 0x50, SWITCH_ALLBUTTON_STATUS : 0x60};
+
 	 function sensor_block() {
 		this.analog_sensor1 = 0;
 		this.analog_sensor2 = 0;
@@ -237,14 +238,56 @@
 		  s.action = actionBranch;
 		};		
 	 }
-
+	function switch_block(){
+		this.switchon_btn = 0;
+		this.switchoff_btn = 0;
+		this.potencyometer = 0;
+		this.joyX = 0;
+		this.joyY = 0;
+		this.switchStatus = new Array(16);
+		
+		for(var i=0; i < 16; i++){
+			switchStatus[i] = 0;
+		}
+		
+		this.name = "switch";
+		
+		var parent = this;
+		this.parser = function(rb) {
+		s.packet_buffer[s.packet_index++] = rb;
+		
+		  if (s.detail === s.SWITCH_BUTTON_ON){
+			 if (s.packet_index < 1) return;
+			 parent.switchon_btn = s.packet_buffer[0];
+		  }else if (s.detail === s.SWITCH_BUTTON_OFF){
+			 if (s.packet_index < 1) return;
+			 parent.switchoff_btn = s.packet_buffer[0];
+		  }else if (s.detail === s.SWITCH_POTENCY_VALUE){
+			 if (s.packet_index < 2) return;
+			 parent.potencyometer = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SWITCH_JOYX_VALUE){
+			 if (s.packet_index < 2) return; 
+			 parent.joyX = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SWITCH_JOYY_VALUE){
+			 if (s.packet_index < 2) return; 
+			 parent.joyY = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SWITCH_ALLBUTTON_STATUS){
+			 if (s.packet_index < 1) return;
+			 for(var i=0; i < 5; i++){
+				parent.switchStatus[i] = (s.packet_buffer[0] & 0x01) >> i;
+			 }
+		  }
+		  s.action = actionBranch;
+		};		
+	}
+	 
 	function touch_block(){
 		this.touchon_btn = 0;
 		this.touchoff_btn = 0;
 		this.touchStatus = new Array(16);
 		
 		for(var i=0; i < 16; i++){
-			touchStatus[i] = 0;
+			touchStatus[i] = 0;		//기본값으로 모든 터치센서가 꺼진 것으로 배열을 채움
 		}
 		
 		this.name = "touch";
@@ -300,7 +343,7 @@
 			  parent.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  parent.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  parent.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  console.log("IR finshed and " + parent.infrared1);
+			  //console.log("IR finshed and " + parent.infrared1);
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ACCEL_VALUE){
 			  if (s.packet_index < 6) return;
@@ -554,8 +597,8 @@
 			var	dnp = [];
 			dnp[0] = (sensor_detail[0] | port);
 
-			var check = checkSum3data( dnp[0], 0x0F, low_data, high_data ),
-				sw_output = new Uint8Array([START_SYSEX, dnp[0], 0x0F, low_data, high_data, check, END_SYSEX]);
+			var check = checkSum3data( dnp[0], 0x05, low_data, high_data ),
+				sw_output = new Uint8Array([START_SYSEX, dnp[0], 0x05, low_data, high_data, check, END_SYSEX]);
 
 			device.send(sw_output.buffer);
 		}
@@ -570,7 +613,7 @@
 
 			sample_functions.sensor_sender(port);		//SCBD_SENSOR 에 대한 샘플링 레이트 --> 2016.05.11 작성완료
 			s.blockList[port] = new sensor_block();		//sensor_block 을 s.blockList[port] 에 대해서 객체선언하기 때문에 s.blockList[port].name 과 같이 접근가능
-			console.log("s.blockList[" + port + "] " + s.blockList[port].name);
+			//console.log("s.blockList[" + port + "] " + s.blockList[port].name);
 		}else if (block_id === SCBD_TOUCH){				//s.blockList[port] 의 위치에는 실행가능한 함수들이 담기게됨. (parser 를 통함)
 			if (port < 8) s.block_port_usb["touch"] = port;
 			else s.block_port_ble["touch"] = port;
@@ -582,6 +625,7 @@
 			else s.block_port_ble["switch"] = port;
 
 			sample_functions.sw_sender(port);			//SCBD_SWITCH 에 대한 샘플링 레이트
+			s.blockList[port] = new switch_block();
 		}else if (block_id === SCBD_MOTION){
 			if (port < 8) s.block_port_usb["motion"] = port;
 			else s.block_port_ble["motion"] = port;
@@ -777,7 +821,7 @@
 		var object = s.blockList[port];
 
 		for(var i=0; i < 12; i++){
-			if (hwIn === menus[lang]['hwIn'][i]) return object.touchStatus[i];	//1번부터 12번 터치센서까지 순서대로 다다다다다
+			if (hwIn === menus[lang]['touch'][i]) return object.touchStatus[i];	//1번부터 12번 터치센서까지 순서대로 다다다다다
 		}	
 	};
 	//2016.05.11 재구성에 따른 간소화패치 완료
@@ -796,11 +840,11 @@
 		
 		var touch_functions = {
 			touchOn: function() {
-				if(object.touchOn === touch)
+				if(object.touchon_btn === touch)
 					return true;
 			},
-			touchOff: function(port){
-				if(object.touchOff === touch)
+			touchOff: function(){
+				if(object.touchoff_btn === touch)
 					return false;
 			}
 		};
@@ -812,196 +856,77 @@
 
 	ext.whenButton = function(networks, sw, btnStates) {
 		//스위치 hat 블록에 대한 함수
-		var hw_normal = blockList.search_normal(SCBD_SWITCH),
-			hw_ble = blockList.search_ble(SCBD_SWITCH),
-			sensor_detail = new Uint8Array([0x00, 0x10]);
-
-		if (networks === menus[lang]['networks'][0]){
-			if (!hw_normal) return;
-			else{
-				if (SWITCH_REPOTER === sensor_detail[0]){
-					var button_num = digitalRead(hw_normal.pin);
-					if (btnStates === 0){
-						// 버튼 꺼짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){
-									return false;
-								}
-							}
-						}
-					}
-				}else if (SWITCH_REPOTER === sensor_detail[1]){
-					var button_num = digitalRead(hw_normal.pin);
-					if (btnStates === 1){
-						// 버튼 켜짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){
-									return true;
-								}
-							}
-						}
-					}
-				}
-					/*  0, Button Number, Detail (on, off)/Port	(storedInputData)
-					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
-					0000 0000 0000 0000
-					0000 0000 1111 0000
-					*/
-			}
-		}else if (networks === menus[lang]['networks'][1]){
-			if (!hw_ble) return;
-			else{
-				if (SWITCH_REPOTER === sensor_detail[0]){
-					var button_num = digitalRead(hw_ble.pin);
-					if (btnStates === 0){
-						// 버튼 꺼짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){
-									return false;
-								}
-							}
-						}
-					}
-				}else if (SWITCH_REPOTER === sensor_detail[1]){
-					var button_num = digitalRead(hw_ble.pin);
-					if (btnStates === 1){
-						// 버튼 켜짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){
-									return true;
-								}
-							}
-						}
-					}
-				}
-			}
+		var port = 0;
+		
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["switch"];
+		}else{
+			port = s.block_port_ble["switch"];		//무선
 		}
 		
+		if (port === -1) return;
+		var object = s.blockList[port];	
+		
+		var switch_functions = {
+			switchOn: function() {
+				for(var i=0; i < 5; i++){
+					if(object.switchon_btn === i){}
+						if(sw === menus[lang]['sw'][i])
+							return true;
+					}
+				}
+			},
+			switchOff: function(){
+				for(var i=0; i < 5; i++){
+					if(object.switchoff_btn === i){}
+						if(sw === menus[lang]['sw'][i])
+							return false;
+					}
+				}				
+			}
+		};
+
+		if(btnStates === 1)	switch_functions.switchOn();
+		else switch_functions.switchOff();		
 	};
 	//REPOTER PATCH CLEAR
 
 	ext.isSwButtonPressed = function(networks, sw){
-		//Boolean Block
-		var hw_normal = blockList.search_normal(SCBD_SWITCH),
-			hw_ble = blockList.search_ble(SCBD_SWITCH),
-			sensor_detail = new Uint8Array([0x00, 0x10]);
+		//Boolean Block		
+		var port = 0;
 		
-			if (networks === menus[lang]['networks'][0] ){
-				if (!hw_normal) return;
-				else{
-					if (SWITCH_REPOTER === sensor_detail[0]){
-						var button_num = digitalRead(hw_normal.pin);
-						
-						// 버튼 꺼짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){
-									return false;
-								}
-							}
-						}
-					}else if (SWITCH_REPOTER === sensor_detail[1]){
-						var button_num = digitalRead(hw_normal.pin);
-						// 버튼 켜짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){
-									return true;
-								}
-							}
-						}
-					}
-				}
-			}else if (networks === menus[lang]['networks'][1]){
-				if (!hw_ble) return;
-				else{
-					if (SWITCH_REPOTER === sensor_detail[0]){
-						var button_num = digitalRead(hw_ble.pin);
-						
-						// 버튼 꺼짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){
-									return false;
-								}
-							}
-						}
-					}else if (SWITCH_REPOTER === sensor_detail[1]){
-						var button_num = digitalRead(hw_ble.pin);
-						// 버튼 켜짐
-						for (var i=1; i < 6; i++){
-							if (button_num === i){
-								if (sw === menus[lang]['sw'][i-1]){
-									return true;
-								}
-							}
-						}
-					}
-				}
-			}
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["switch"];
+		}else{
+			port = s.block_port_ble["switch"];		//무선
+		}
+		
+		if (port === -1) return;
+		var object = s.blockList[port];
+		
+		for(var i=0; i < 5; i++){
+			if(sw === menus[lang]['sw'][i])
+				return object.switchStatus[i];
+		}
 	};
 	//2016.05.01 스위치 블록 boolean 패치에 따라서 생겨난 함수
 	
 	ext.isButtonPressed = function(networks, buttons){
 		// 조이스틱X, 조이스틱Y, 포텐시오미터
-		var hw_normal = blockList.search_normal(SCBD_SWITCH),
-			hw_ble = blockList.search_ble(SCBD_SWITCH),
-			sensor_detail = new Uint8Array([0x00, 0x10, 0x30, 0x40, 0x50]);
-
+		var port = 0;
 		
-			if (networks === menus[lang]['networks'][0] ){
-				if (!hw_normal) return;
-				else{
-					if (SWITCH_REPOTER === sensor_detail[2]){
-						// 포텐시오미터를 REPOTER 값에 따라서 처리함	--> 아날로그로
-						if (buttons === menus[lang]['buttons'][2]){
-							return analogRead(hw_normal.pin);
-						}
-						/*
-						setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);  
-						HIGH, LOW, Detail/Port->multiByteChannel (storedInputData)
-						*/
-					}else if (SWITCH_REPOTER === sensor_detail[3]){
-						// 조이스틱X
-						if (buttons === menus[lang]['buttons'][0]){
-							return digitalRead(hw_normal.pin);
-						}
-					}else if (SWITCH_REPOTER === sensor_detail[4]){
-						// 조이스틱 Y
-						if (buttons === menus[lang]['buttons'][1]){
-							return digitalRead(hw_normal.pin);
-						}
-					}
-				}
-			}else if (networks === menus[lang]['networks'][1]){
-				if (!hw_ble) return;
-				else{
-					if (SWITCH_REPOTER === sensor_detail[2]){
-						// 포텐시오미터를 REPOTER 값에 따라서 처리함	--> 아날로그로
-						if (buttons === menus[lang]['buttons'][2]){
-							return analogRead(hw_ble.pin);
-						}
-						/*
-						setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);  
-						HIGH, LOW, Detail/Port->multiByteChannel (storedInputData)
-						*/
-					}else if (SWITCH_REPOTER === sensor_detail[3]){
-						// 조이스틱X
-						if (buttons === menus[lang]['buttons'][0]){
-							return digitalRead(hw_ble.pin);
-						}
-					}else if (SWITCH_REPOTER === sensor_detail[4]){
-						// 조이스틱 Y
-						if (buttons === menus[lang]['buttons'][1]){
-							return digitalRead(hw_ble.pin);
-						}
-					}
-				}
-			}
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["switch"];
+		}else{
+			port = s.block_port_ble["switch"];		//무선
+		}
+		
+		if (port === -1) return;
+		var object = s.blockList[port];	
+		
+		if( menus[lang]['buttons'][0] ) return object.joyX;
+		if( menus[lang]['buttons'][1] ) return object.joyY;
+		if( menus[lang]['buttons'][2] ) return object.potencyometer;
 	};
 	//REPOTER PATCH CLEAR
 
@@ -1017,11 +942,12 @@
 		if (port === -1) return;
 		var object = s.blockList[port];
 		
+		/*
 		console.log("object name " + object.name);
 		console.log("object.infrared1 " + object.infrared1);
 		console.log("object.infrared2 " + object.infrared2);
 		console.log("object.infrared3 " + object.infrared3);
-		
+		*/
 		if (motionb === menus[lang]['motionb'][0]) return object.infrared1;
 		if (motionb === menus[lang]['motionb'][1]) return object.infrared2;
 		if (motionb === menus[lang]['motionb'][2]) return object.infrared3;
@@ -1557,7 +1483,7 @@
 		networks: ['normal', 'remote'],
 		buttons: ['Joystick X', 'Joystick Y', 'Potencyometer'],
 		sw: ['Button 1', 'Button 2', 'Button 3', 'Button 4', 'Button J'],
-		//Buttons, Joystick sensor and potencyomer sensor listing
+		//Buttons, Joystick sensor and potencyometer sensor listing
 
 		btnStates: [0, 1],
 		//0 : pressed  1: released
@@ -1595,7 +1521,7 @@
 		networks: ['일반', '무선'],
 		buttons: ['조이스틱 X', '조이스틱 Y', '포텐시오미터'],
 		sw : ['버튼 1', '버튼 2', '버튼 3', '버튼 4', '버튼 J'],
-		//Joystick sensor and potencyomer sensor listing
+		//Joystick sensor and potencyometer sensor listing
 
 		btnStates: [0, 1],
 		// 0 : 눌림  1 : 떼짐
