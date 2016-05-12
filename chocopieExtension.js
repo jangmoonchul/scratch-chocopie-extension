@@ -1219,13 +1219,11 @@
 					dnp[j] = (sensor_detail[j] | port[i]);		//dnp 배열에는 디테과 연결된 서보블록들에 대한 것이 저장됨
 					
 					if (servos === menus[lang]['servos'][j]){
-					var check_deg_low = checkSum( dnp[j], servo_deg_low ),
-						check_deg_high = checkSum( dnp[j], servo_deg_high ),
-						servo_output_low = new Uint8Array([START_SYSEX, dnp[j], servo_deg_low, check_deg_low, END_SYSEX]),
-						servo_output_high = new Uint8Array([START_SYSEX, dnp[j], servo_deg_high, check_deg_high, END_SYSEX]);
-					
-					device.send(servo_output_low.buffer);
-					device.send(servo_output_high.buffer);
+					var check_deg = checkSum2data( dnp[j], servo_deg_low, servo_deg_high),
+						servo_output = new Uint8Array([START_SYSEX, dnp[j], servo_deg_low, servo_deg_high, check_deg, END_SYSEX]);
+						
+					device.send(servo_output.buffer);
+					console.log("Servo Port " + port[i] + "is querySend!");
 					}
 				}
 			}			
