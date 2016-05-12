@@ -241,7 +241,6 @@
 	}
 
 	function motion_block(){
-		console.log("motion started");
 		this.infrared1 = 0;
 		this.infrared2 = 0;
 		this.infrared3 = 0;
@@ -261,41 +260,49 @@
 		this.name = "motion";
 
 		this.parser = function(rb) {
-		s.packet_buffer[s.packet_index++] = rb;
-		
+			console.log("motion started");
+			s.packet_buffer[s.packet_index++] = rb;		
 		  if (s.detail === s.MOTION_IR_VALUE){
 			  if (s.packet_index < 6) return;
 			  this.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  this.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  this.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
+			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ACCEL_VALUE){
 			  if (s.packet_index < 6) return;
 			  this.accelerX = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  this.accelerY = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  this.accelerZ = s.packet_buffer[4] + s.packet_buffer[5] * 256;
+			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_PACCEL_VALUE){
 			  if (s.packet_index < 6) return;
 			  this.paccelerU = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  this.paccelerV = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  this.paccelerW = s.packet_buffer[4] + s.packet_buffer[5] * 256;
+			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO1_ON)){
 			  if (s.packet_index < 4) return;
 			  this.photo1_on = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO1_OFF)){
 			  if (s.packet_index < 4) return;
 			  this.photo1_off = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO2_ON)){
 			  if (s.packet_index < 4) return;
 			  this.photo2_on = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO2_OFF)){
 			  if (s.packet_index < 4) return;
 			  this.photo2_off = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ALLPHOTO_STATUS){
 			 if (s.packet_index < 1) return;
 			 this.photoStatus1 = (s.packet_buffer[0] & 0x01);
 			 this.photoStatus2 = (s.packet_buffer[0] & 0x01) >> 1;
+			 s.action = actionBranch;
 		  }
-		  s.action = actionBranch;
+		  
 		};
 	}
 
@@ -420,13 +427,11 @@
 	
 	function checkConnect(rb){
 		s.packet_buffer[s.packet_index++] = rb;
-
 		if (s.packet_index === 3){
 			var block_type = s.packet_buffer[1],
 				connected_port = s.packet_buffer[0];
 			console.log("block_type is" + block_type + " connected into port " + connected_port);
 			connectBlock(block_type, connected_port);		//PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData)
-
 			s.action = actionBranch;
 		}
 		return;
@@ -435,15 +440,12 @@
 	function actionGetBlock(rb){
 		// detail/port, CPC_GET_BLOCK 를 제외한 포트가 LOW 8 Bit, HIGH 8 Bit 순으로 등장함
 		s.packet_buffer[s.packet_index++] = rb;
-		
+		var rp = 0;
 		if(s.packet_index === 32){
-			for (var i=0;i < s.packet_index; i++){
-				if( i%2 === 1 ){
-					var block_type = s.packet_buffer[i-1],	//현재는 이렇게 연결되지만, 추후에는 패치필요.
-						connected_port = Math.floor(i/2); 
-
-					connectBlock(block_type, connected_port);	
-					//console.log("Port["+ Math.floor(i/2) + "] " + data );
+			for (var port=0;port < 16; port++){
+					var block_type = s.packet_buffer[rp++];
+					block_type += s.packet_buffer[rp++]*256;						
+					connectBlock(block_type, port);	
 				}
 			}
 			s.action = actionBranch;
