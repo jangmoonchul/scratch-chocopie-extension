@@ -241,6 +241,7 @@
 	}
 
 	function motion_block(){
+		console.log("motion started");
 		this.infrared1 = 0;
 		this.infrared2 = 0;
 		this.infrared3 = 0;
