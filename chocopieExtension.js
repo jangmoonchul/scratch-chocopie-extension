@@ -237,6 +237,9 @@
 		};		
 	 }
 
+	function touch_block(){
+	}
+
 	function motion_block(){
 		this.infrared1 = 0;
 		this.infrared2 = 0;
@@ -350,7 +353,7 @@
 			s.detail = rb & 0xF0;
 			s.port = rb & 0x0F;
 
-			s.action = s.blockList[port].parser;	//각 블록의 해당함수 파서에게 뒷일을 맡김.
+			s.action = s.blockList[s.port].parser;	//각 블록의 해당함수 파서에게 뒷일을 맡김.
 		}else{
 			s.action = actionChocopi;
 			if(rb === SCBD_CHOCOPI_USB_PING) s.action = checkPing;	//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
@@ -525,7 +528,9 @@
 		}else if (block_id === SCBD_TOUCH){				//s.blockList[port] 의 위치에는 실행가능한 함수들이 담기게됨. (parser 를 통함)
 			if (port < 8) s.block_port_usb["touch"] = port;
 			else s.block_port_ble["touch"] = port;
-			//sample_functions.motion_sender(port);			//SCBD_TOUCH 에 대한 샘플링 레이트
+			//sample_functions.touch_sender(port);			//SCBD_TOUCH 에 대한 샘플링 레이트
+			
+			s.blockList[port] = new touch_block();
 		}else if (block_id === SCBD_SWITCH){
 			if (port < 8) s.block_port_usb["switch"] = port;
 			else s.block_port_ble["switch"] = port;
