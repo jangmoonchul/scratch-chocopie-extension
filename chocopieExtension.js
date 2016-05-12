@@ -444,7 +444,7 @@
 		if(s.packet_index === 32){
 			for (var port = 0 ; port < 16; port++){
 				var block_type = s.packet_buffer[rp++];
-					block_type += s.packet_buffer[rp++]*256;						
+					block_type += s.packet_buffer[rp++] * 256;						
 				connectBlock(block_type, port);	
 			}
 			s.action = actionBranch;
