@@ -1202,7 +1202,7 @@
 				console.log("s.servo_block_ble " + s.servo_block_ble[i]);
 			}		
 		}
-
+		console.log("port.length " + port.length);
 		if (port.length === 0) return;		//일반일때도, 무선일때도, servo 의 갯수가 하나도 없다면 되돌림
 		var sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
 		
@@ -1271,7 +1271,7 @@
 	  ['-'],
 	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', 1, 0, 'clockwise'],
 	  ['-'],
-	  [' ', '%m.networks %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180]
+	  [' ', '%m.networks Port %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180]
     ],
     ko: [																						
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'reportSensor', '일반', '온도'],										// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
@@ -1296,7 +1296,7 @@
 	  ['-'],																											//DC motor is defined
 	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', 1, 0, '시계'],		//function_name : passDCDA passRDCDA	
 	  ['-'],
-	  [' ', '%m.networks %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
+	  [' ', '%m.networks 포트 %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
     ]
   };
 
@@ -1317,7 +1317,7 @@
 		ops: ['>', '=', '<'],
 		servos: ['Servo 1', 'Servo 2', 'Servo 3', 'Servo 4'],
 
-		servosport: [ 'Port 1', 'Port 2', 'Port 3', 'Port 4', 'Port 5', 'Port 6', 'Port 7', 'Port 8'],
+		servosport: [1, 2, 3, 4, 5, 6, 7, 8],
 
 		touch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
 		// Touch sensor and Remoted touch sensor listing
@@ -1354,7 +1354,7 @@
 		outputs: ['켜기', '끄기'],
 		ops: ['>', '=', '<'],
 		servos: ['서보모터 1', '서보모터 2', '서보모터 3', '서보모터 4'],
-		servosport: [ '포트 1', '포트 2', '포트 3', '포트 4', '포트 5', '포트 6', '포트 7', '포트 8'],
+		servosport: [1, 2, 3, 4, 5, 6, 7, 8],
 
 		touch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
 		// Touch sensor listing
