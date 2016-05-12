@@ -854,6 +854,7 @@
 	};
 	//2016.05.11 재구성에 따른 간소화패치 완료
 
+	
 	ext.whenButton = function(networks, sw, btnStates) {
 		//스위치 hat 블록에 대한 함수
 		var port = 0;
@@ -886,11 +887,12 @@
 			}
 		};
 
-		if(btnStates === 1)	switch_functions.switchOn();
-		else switch_functions.switchOff();		
+		if(btnStates === 1)	
+			switch_functions.switchOn();
+		else 
+			switch_functions.switchOff();		
 	};
-	//REPOTER PATCH CLEAR
-
+	
 	ext.isSwButtonPressed = function(networks, sw){
 		//Boolean Block		
 		var port = 0;
