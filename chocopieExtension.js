@@ -525,6 +525,7 @@
 
 			sample_functions.sensor_sender(port);		//SCBD_SENSOR 에 대한 샘플링 레이트 --> 2016.05.11 작성완료
 			s.blockList[port] = new sensor_block();		//sensor_block 을 s.blockList[port] 에 대해서 객체선언하기 때문에 s.blockList[port].name 과 같이 접근가능
+			console.log("s.blockList[" + port + "] " + s.blockList[port]);
 		}else if (block_id === SCBD_TOUCH){				//s.blockList[port] 의 위치에는 실행가능한 함수들이 담기게됨. (parser 를 통함)
 			if (port < 8) s.block_port_usb["touch"] = port;
 			else s.block_port_ble["touch"] = port;
@@ -542,6 +543,7 @@
 
 			sample_functions.motion_sender(port);			
 			s.blockList[port] = new motion_block();		//SCBD_MOTION 에 대한 샘플링 레이트	--> 2016.05.11 작성완료
+			console.log("s.blockList[" + port + "] " + s.blockList[port]);
 		}else if (block_id === SCBD_LED){
 			if (port < 8) s.block_port_usb["led"] = port;
 			else s.block_port_ble["led"] = port;
