@@ -1038,10 +1038,16 @@
 			port = s.block_port_ble["motion"];		//무선
 		}
 
+		console.log("port " + port);
+		
 		if (port === -1) return;
 		var object = s.blockList[port];
 		
+		console.log("object name " + object.name);
+		
 		console.log("object.infrared1 " + object.infrared1);
+		console.log("object.infrared2 " + object.infrared2);
+		console.log("object.infrared3 " + object.infrared3);
 		
 		if (motionb === menus[lang]['motionb'][0]) return object.infrared1;
 		if (motionb === menus[lang]['motionb'][1]) return object.infrared2;
