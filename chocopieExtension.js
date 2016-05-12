@@ -259,7 +259,7 @@
 
 		this.name = "motion";
 
-		this.super = this;
+		var parent = this;
 		
 		this.parser = function(rb) {
 			console.log("motion started");
@@ -269,46 +269,46 @@
 			//console.log("s.detail " + s.detail);
 		  if (s.detail === s.MOTION_IR_VALUE){
 			  if (s.packet_index < 6) return;
-			  super.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-			  super.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
-			  super.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
+			  parent.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+			  parent.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
+			  parent.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
 			  console.log("this.infrared1 " +  this.infrared1);
 			  console.log("IR finshed");
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ACCEL_VALUE){
 			  if (s.packet_index < 6) return;
-			  super.accelerX = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-			  super.accelerY = s.packet_buffer[2] + s.packet_buffer[3] * 256;
-			  super.accelerZ = s.packet_buffer[4] + s.packet_buffer[5] * 256;
+			  parent.accelerX = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+			  parent.accelerY = s.packet_buffer[2] + s.packet_buffer[3] * 256;
+			  parent.accelerZ = s.packet_buffer[4] + s.packet_buffer[5] * 256;
 			  console.log("ACCEL finshed");
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_PACCEL_VALUE){
 			  if (s.packet_index < 6) return;
-			  super.paccelerU = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-			  super.paccelerV = s.packet_buffer[2] + s.packet_buffer[3] * 256;
-			  super.paccelerW = s.packet_buffer[4] + s.packet_buffer[5] * 256;
+			  parent.paccelerU = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+			  parent.paccelerV = s.packet_buffer[2] + s.packet_buffer[3] * 256;
+			  parent.paccelerW = s.packet_buffer[4] + s.packet_buffer[5] * 256;
 			  console.log("PACCEL finshed");
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO1_ON)){
 			  if (s.packet_index < 4) return;
-			  super.photo1_on = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  parent.photo1_on = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO1_OFF)){
 			  if (s.packet_index < 4) return;
-			  super.photo1_off = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  parent.photo1_off = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO2_ON)){
 			  if (s.packet_index < 4) return;
-			  super.photo2_on = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  parent.photo2_on = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO2_OFF)){
 			  if (s.packet_index < 4) return;
-			  super.photo2_off = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  parent.photo2_off = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ALLPHOTO_STATUS){
 			 if (s.packet_index < 1) return;
-			 super.photoStatus1 = (s.packet_buffer[0] & 0x01);
-			 super.photoStatus2 = (s.packet_buffer[0] & 0x01) >> 1;
+			 parent.photoStatus1 = (s.packet_buffer[0] & 0x01);
+			 parent.photoStatus2 = (s.packet_buffer[0] & 0x01) >> 1;
 			 s.action = actionBranch;
 		  }
 		  
