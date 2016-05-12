@@ -199,7 +199,7 @@
 	*/
 
 //---------------------------------------------------------------------------------------------------------------
-	var s = {action:null, packet_index: 0, packet_buffer: null, block_port_usb : {}, block_port_ble : {}, port : 0, detail : 0, blockList : null,
+	var s = {action:null, packet_index: 0, packet_buffer: null, block_port_usb : {}, block_port_ble : {}, servo_block_usb : {}, servo_block_ble : {}, servo_count_usb : 0, servo_count_ble :0, port : 0, detail : 0, blockList : null,
 		SENSOR_TEMP_VALUE : 0x40, SENSOR_HUMD_VALUE : 0x50, SENSOR_LIGHT_VALUE : 0x60, SENSOR_AN1_VALUE : 0x00, SENSOR_AN2_VALUE : 0x10, SENSOR_AN3_VALUE : 0x20, SENSOR_AN4_VALUE : 0x30,
 		MOTION_IR_VALUE : 0x10, MOTION_ACCEL_VALUE : 0x20, MOTION_PACCEL_VALUE : 0x30, MOTION_PHOTO1_ON : 0x80, MOTION_PHOTO1_OFF : 0x90,
 		MOTION_PHOTO2_ON : 0xA0, MOTION_PHOTO2_OFF : 0xB0, MOTION_ALLPHOTO_STATUS : 0xC0, TOUCH_BUTTON_OFF : 0x00, TOUCH_BUTTON_ON : 0x10, TOUCH_ALLBUTTON_STATUS : 0x20,
@@ -643,8 +643,8 @@
 			if (port < 8) s.block_port_usb["dc_motor"] = port;
 			else s.block_port_ble["dc_motor"] = port;
 		}else if (block_id === SCBD_SERVO){
-			if (port < 8) s.block_port_usb["servo"] = port;
-			else s.block_port_ble["servo"] = port;
+			if (port < 8) s.servo_block_usb[s.servo_count_usb++] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
+			else s.servo_block_ble[s.servo_count_ble++] = port;					//패치 완료
 		}
 	}
 	function nullBlock(){
@@ -996,8 +996,6 @@
 		}
 
 		if (port === -1) return;
-		var object = s.blockList[port];
-		
 		var sensor_detail = new Uint8Array([0x10]);	
 		var	dnp = [];
 			dnp[0] = (sensor_detail[0] | port);
@@ -1024,8 +1022,7 @@
 		}
 
 		if (port === -1) return;
-		var object = s.blockList[port],
-			sensor_detail = new Uint8Array([0x80]);
+		var sensor_detail = new Uint8Array([0x80]);
 		var	dnp = [];
 			dnp[0] = (sensor_detail[0] | port);	
 
@@ -1048,8 +1045,7 @@
 		}
 
 		if (port === -1) return;
-		var object = s.blockList[port],
-			sensor_detail = new Uint8Array([0x00]);
+		var sensor_detail = new Uint8Array([0x00]);
 		var	dnp = [];
 			dnp[0] = (sensor_detail[0] | port);	
 
@@ -1093,8 +1089,7 @@
 		}
 
 		if (port === -1) return;
-		var object = s.blockList[port],
-			sensor_detail = new Uint8Array([0x10]);
+		var sensor_detail = new Uint8Array([0x10]);
 		var	dnp = [];
 			dnp[0] = (sensor_detail[0] | port);	
 			
@@ -1143,182 +1138,98 @@
 
 	ext.passDCAD = function(networks, dcMotor, speed, stepDirection){
 		//console.log('passDCAD is run');
-		var hw_normal = blockList.search_normal(SCBD_DC_MOTOR),
-			hw_ble = blockList.search_ble(SCBD_DC_MOTOR),
-			sensor_detail = new Uint8Array([0x10, 0x20, 0x30]);
+		var port = 0;
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["dc_motor"];
+		}else{
+			port = s.block_port_ble["dc_motor"];		//무선
+		}
 
+		if (port === -1) return;
+		var sensor_detail = new Uint8Array([0x10, 0x20, 0x30]);
+		var	dnp = [];
+		
+		for(var i=0; i < 3; i++){
+			dnp[i] = (sensor_detail[i] | port);	
+		}
+		
 		var speed_data = speed,
 			direction_data = 0;
 		
-		if (networks === menus[lang]['networks'][0]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin, sensor_detail[2] | hw_normal.pin]);
-			if (!hw_normal) return;
-			else{
-				if(speed > 1024){
-					speed_data = 1024;
-				}else if (speed < 0){
-					speed_data = 0;
-				}
-
-				if (stepDirection === menus[lang]['stepDirection'][0])
-					direction_data = 1;	//시계
-				else
-					direction_data = 0;	//반시계
-					
-				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-					speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
-					merged_data = (speed_data_low << 14) | (speed_data_high << 7) | dec2hex(direction_data);
-
-				for (var i=0; i < 3; i++ ){
-					if (dcMotor === menus[lang]['dcMotor'][i]){				
-					var check_merged_data = checkSum( dnp[i], merged_data ),
-						DCAD_output = new Uint8Array([START_SYSEX, dnp[i], merged_data, check_merged_data, END_SYSEX]);	
-
-						device.send(DCAD_output.buffer);
-					}
-				}
-			}
-		}else if (networks === menus[lang]['networks'][1]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_ble.pin, sensor_detail[1] | hw_ble.pin, sensor_detail[2] | hw_ble.pin]);
-			if (!hw_ble) return;
-			else{
-				if(speed > 1024){
-					speed_data = 1024;
-				}else if (speed < 0){
-					speed_data = 0;
-				}
-
-				if (stepDirection === menus[lang]['stepDirection'][0])
-					direction_data = 1;	//시계
-				else
-					direction_data = 0;	//반시계
-					
-				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-					speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
-					merged_data = (speed_data_low << 14) | (speed_data_high << 7) | dec2hex(direction_data);
-
-				for (var i=0; i < 3; i++ ){
-					if (dcMotor === menus[lang]['dcMotor'][i]){				
-					var check_merged_data = checkSum( dnp[i], merged_data ),
-						DCAD_output = new Uint8Array([START_SYSEX, dnp[i], merged_data, check_merged_data, END_SYSEX]);	
-
-						device.send(DCAD_output.buffer);
-					}
-				}
-			}
+		if(speed > 1024){
+			speed_data = 1024;
+		}else if (speed < 0){
+			speed_data = 0;
 		}
-		
+
+		if (stepDirection === menus[lang]['stepDirection'][0])
+			direction_data = 1;	//시계
+		else
+			direction_data = 0;	//반시계
+			
+		var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
+			speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
+			merged_data = (speed_data_low * 256 * 256) + (speed_data_high * 256) + dec2hex(direction_data);
+
+		for (var i=0; i < 3; i++ ){
+			if (dcMotor === menus[lang]['dcMotor'][i]){				
+			var check_merged_data = checkSum( dnp[i], merged_data ),
+				DCAD_output = new Uint8Array([START_SYSEX, dnp[i], merged_data, check_merged_data, END_SYSEX]);	
+
+				device.send(DCAD_output.buffer);
+			}
+		}		
 	};
 
 	ext.rotateServo = function(networks, servosport, servos, degree) {
 		//console.log('rotateServo is run');
-		var hw = blockList.search(SCBD_SERVO),
-			sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
 		
-		var servo_hooker = new Uint8Array([blockList.search_bypin(0), blockList.search_bypin(1), blockList.search_bypin(2), blockList.search_bypin(3),
-										blockList.search_bypin(4), blockList.search_bypin(5), blockList.search_bypin(6), blockList.search_bypin(7),
-										blockList.search_bypin(8), blockList.search_bypin(9), blockList.search_bypin(10), blockList.search_bypin(11),
-										blockList.search_bypin(12), blockList.search_bypin(13), blockList.search_bypin(14),blockList.search_bypin(15)]);
-
-		if (!hw) return;
-		else{
-			var mod_degree = 0;
-			if (degree > 180){
-				mod_degree = 180;
-			}else if(degree < 0){
-				mod_degree = 0;
+		//if (port < 8) s.servo_block_usb[s.servo_count_usb++] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
+		//else s.servo_block_ble[s.servo_count_ble++] = port;				//패치 완료
+		
+		var port = new Array(16);
+		
+		if (networks === menus[lang]['networks'][0]){		//일반
+			for(var i=0; i < s.servo_count_usb; i++){
+				port.push(s.servo_block_usb[i]);
 			}
+		}else{		
+			for(var i=0; i < servo_count_ble; i++){						//무선
+				port.push(s.servo_block_ble[i]);
+			}		
+		}
 
-			if (networks === menus[lang]['networks'][0] ){
-				for (var i=0; i < 8; i++){		//네트워크가 일반인경우 0번부터 7번까지 담당함.
-					if (servo_hooker[i].name === SCBD_SERVO){
-						var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[i].pin, sensor_detail[1] | servo_hooker[i].pin, sensor_detail[2] | servo_hooker[i].pin, sensor_detail[3] | servo_hooker[i].pin ]);
-						
-						var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
-							servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
-						if (servosport === menus[lang]['servosport'][i]){
-							if (servos === menus[lang]['servos'][0]){
-							var check_deg_low = checkSum( dnp[0], servo_deg_low ),
-								check_deg_high = checkSum( dnp[0], servo_deg_high ),
-								servo_output_low = new Uint8Array([START_SYSEX, dnp[0], servo_deg_low, check_deg_low, END_SYSEX]),
-								servo_output_high = new Uint8Array([START_SYSEX, dnp[0], servo_deg_high, check_deg_high, END_SYSEX]);
-							
-							device.send(servo_output_low.buffer);
-							device.send(servo_output_high.buffer);
-							}else if(servos === menus[lang]['servos'][1]){
-							var check_deg_low = checkSum( dnp[1], servo_deg_low ),
-								check_deg_high = checkSum( dnp[1], servo_deg_high ),
-								servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low, END_SYSEX]),
-								servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high, END_SYSEX]);
-							
-							device.send(servo_output_low.buffer);
-							device.send(servo_output_high.buffer);
-							}else if (servos === menus[lang]['servos'][2]){
-							var check_deg_low = checkSum( dnp[2], servo_deg_low ),
-								check_deg_high = checkSum( dnp[2], servo_deg_high ),
-								servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low, END_SYSEX]),
-								servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high, END_SYSEX]);
-							
-							device.send(servo_output_low.buffer);
-							device.send(servo_output_high.buffer);
-							}else if (servos === menus[lang]['servos'][3]){
-							var check_deg_low = checkSum( dnp[3], servo_deg_low ),
-								check_deg_high = checkSum( dnp[3], servo_deg_high ),
-								servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low, END_SYSEX]),
-								servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high, END_SYSEX]);
-							
-							device.send(servo_output_low.buffer);
-							device.send(servo_output_high.buffer);
-							}
-						}
-					}
-				}	
-			}else if(networks === menus[lang]['networks'][1]){
-				for (var i=8; i < 16; i++){				//네트워크가 무선인경우 8번부터 15번까지 담당함
-					if (servo_hooker[i].name === SCBD_SERVO){
-						var dnp = new Uint8Array([ sensor_detail[0] | servo_hooker[i].pin, sensor_detail[1] | servo_hooker[i].pin, sensor_detail[2] | servo_hooker[i].pin, sensor_detail[3] | servo_hooker[i].pin ]);
-						
-						var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
-							servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);
-						if (servosport === menus[lang]['servosport'][i]){
-							if (servos === menus[lang]['servos'][0]){
-							var check_deg_low = checkSum( dnp[0], servo_deg_low ),
-								check_deg_high = checkSum( dnp[0], servo_deg_high ),
-								servo_output_low = new Uint8Array([START_SYSEX,dnp[0], servo_deg_low, check_deg_low, END_SYSEX]),
-								servo_output_high = new Uint8Array([START_SYSEX,dnp[0], servo_deg_high, check_deg_high, END_SYSEX]);
-							
-							device.send(servo_output_low.buffer);
-							device.send(servo_output_high.buffer);
-							}else if(servos === menus[lang]['servos'][1]){
-							var check_deg_low = checkSum( dnp[1], servo_deg_low ),
-								check_deg_high = checkSum( dnp[1], servo_deg_high ),
-								servo_output_low = new Uint8Array([START_SYSEX, dnp[1], servo_deg_low, check_deg_low, END_SYSEX]),
-								servo_output_high = new Uint8Array([START_SYSEX, dnp[1], servo_deg_high, check_deg_high, END_SYSEX]);
-							
-							device.send(servo_output_low.buffer);
-							device.send(servo_output_high.buffer);
-							}else if (servos === menus[lang]['servos'][2]){
-							var check_deg_low = checkSum( dnp[2], servo_deg_low ),
-								check_deg_high = checkSum( dnp[2], servo_deg_high ),
-								servo_output_low = new Uint8Array([START_SYSEX, dnp[2], servo_deg_low, check_deg_low, END_SYSEX]),
-								servo_output_high = new Uint8Array([START_SYSEX, dnp[2], servo_deg_high, check_deg_high, END_SYSEX]);
-							
-							device.send(servo_output_low.buffer);
-							device.send(servo_output_high.buffer);
-							}else if (servos === menus[lang]['servos'][3]){
-							var check_deg_low = checkSum( dnp[3], servo_deg_low ),
-								check_deg_high = checkSum( dnp[3], servo_deg_high ),
-								servo_output_low = new Uint8Array([START_SYSEX, dnp[3], servo_deg_low, check_deg_low, END_SYSEX]),
-								servo_output_high = new Uint8Array([START_SYSEX, dnp[3], servo_deg_high, check_deg_high, END_SYSEX]);
-							
-							device.send(servo_output_low.buffer);
-							device.send(servo_output_high.buffer);
-							}
-						}
+		if (port.length === 0) return;		//일반일때도, 무선일때도, servo 의 갯수가 하나도 없다면 되돌림
+		var sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
+		
+		var mod_degree = 0;
+		if (degree > 180){
+			mod_degree = 180;
+		}else if(degree < 0){
+			mod_degree = 0;
+		}
+		
+		var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
+			servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);	
+			
+		var	dnp = [];
+		for(var i=0; i < port.length; i++){
+			if (servosport === port[i]){						//들어온 포트(1~8) 과 연결된 포트리스트를 비교하여 순회하다가 맞다면 때려버림
+				for(var j=0; j < 4; j++){
+					dnp[j] = (sensor_detail[j] | port[i]);		//dnp 배열에는 디테과 연결된 서보블록들에 대한 것이 저장됨
+					
+					if (servos === menus[lang]['servos'][j]){
+					var check_deg_low = checkSum( dnp[j], servo_deg_low ),
+						check_deg_high = checkSum( dnp[j], servo_deg_high ),
+						servo_output_low = new Uint8Array([START_SYSEX, dnp[j], servo_deg_low, check_deg_low, END_SYSEX]),
+						servo_output_high = new Uint8Array([START_SYSEX, dnp[j], servo_deg_high, check_deg_high, END_SYSEX]);
+					
+					device.send(servo_output_low.buffer);
+					device.send(servo_output_high.buffer);
 					}
 				}
-			}
-		}
+			}			
+		}			
 	};
 
 	//Function added Line - end  --------------------------------------------------------------------------------------
