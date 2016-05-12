@@ -202,11 +202,8 @@
 	var s = {action:null, packet_index: 0, packet_buffer: null, block_port_usb : {}, block_port_ble : {}, port : 0, detail : 0, blockList : null,
 		SENSOR_TEMP_VALUE : 0x40, SENSOR_HUMD_VALUE : 0x50, SENSOR_LIGHT_VALUE : 0x60, SENSOR_AN1_VALUE : 0x00, SENSOR_AN2_VALUE : 0x10, SENSOR_AN3_VALUE : 0x20, SENSOR_AN4_VALUE : 0x30,
 		MOTION_IR_VALUE : 0x10, MOTION_ACCEL_VALUE : 0x20, MOTION_PACCEL_VALUE : 0x30, MOTION_PHOTO1_ON : 0x80, MOTION_PHOTO1_OFF : 0x90,
-		MOTION_PHOTO2_ON : 0xA0, MOTION_PHOTO2_OFF : 0xB0, MOTION_ALLPHOTO_STATUS : 0xC0};
+		MOTION_PHOTO2_ON : 0xA0, MOTION_PHOTO2_OFF : 0xB0, MOTION_ALLPHOTO_STATUS : 0xC0, TOUCH_BUTTON_OFF : 0x00, TOUCH_BUTTON_ON : 0x10, TOUCH_ALLBUTTON_STATUS : 0x20};
 		
-		
-		
-	
 	 function sensor_block() {
 		this.analog_sensor1 = 0;
 		this.analog_sensor2 = 0;
@@ -216,31 +213,60 @@
 		this.humidity = 0;
 		this.light = 0;
 		this.name = "sensor";
-
+		
+		var parent = this;
 		this.parser = function(rb) {
 		s.packet_buffer[s.packet_index++] = rb;
 		
 		  if (s.packet_index < 2) return;
-		  if (s.detail === SENSOR_TEMP_VALUE){
-			  this.temperature = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-		  }else if (s.detail === SENSOR_HUMD_VALUE){
-			  this.humidity = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-		  }else if (s.detail === SENSOR_LIGHT_VALUE){
-			 this.light = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-		  }else if (s.detail === SENSOR_AN1_VALUE){
-			  this.humidity = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-		  }else if (s.detail === SENSOR_AN2_VALUE){
-			 this.analog_sensor1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-		  }else if (s.detail === SENSOR_AN3_VALUE){
-			  this.analog_sensor2 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
-		  }else if (s.detail === SENSOR_AN4_VALUE){
-			 this.analog_sensor3 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  if (s.detail === s.SENSOR_TEMP_VALUE){
+			 parent.temperature = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SENSOR_HUMD_VALUE){
+			 parent.humidity = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SENSOR_LIGHT_VALUE){
+			 parent.light = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SENSOR_AN1_VALUE){
+			 parent.humidity = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SENSOR_AN2_VALUE){
+			 parent.analog_sensor1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SENSOR_AN3_VALUE){
+			 parent.analog_sensor2 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+		  }else if (s.detail === s.SENSOR_AN4_VALUE){
+			 parent.analog_sensor3 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 		  }
 		  s.action = actionBranch;
 		};		
 	 }
 
 	function touch_block(){
+		this.touchon_btn = 0;
+		this.touchoff_btn = 0;
+		this.touchStatus = new Array(16);
+		
+		for(var i=0; i < 16; i++){
+			touchStatus[i] = 0;
+		}
+		
+		this.name = "touch";
+		var parent = this;
+		
+		this.parser = function(rb) {
+		s.packet_buffer[s.packet_index++] = rb;
+		
+		  if (s.detail === s.TOUCH_BUTTON_OFF){
+			 if (s.packet_index < 1) return;
+			 parent.touchoff_btn = s.packet_buffer[0];
+		  }else if (s.detail === s.TOUCH_BUTTON_ON){
+			 if (s.packet_index < 1) return;
+			 parent.touchon_btn = s.packet_buffer[0];
+		  }else if (s.detail === TOUCH_ALLBUTTON_STATUS){
+			 if (s.packet_index < 2) return;
+			 for(var i=0; i < 12; i++){
+				parent.touchStatus[i] = ((s.packet_buffer[0] + s.packet_buffer[1] * 256) & 0x0001) >> i;
+			 }
+		  }
+		  s.action = actionBranch;
+		};		
 	}
 
 	function motion_block(){
@@ -275,22 +301,22 @@
 			  parent.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  parent.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  parent.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  console.log("this.infrared1 " +  this.infrared1);
-			  console.log("IR finshed");
+			  //console.log("this.infrared1 " +  this.infrared1);
+			  //console.log("IR finshed");
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ACCEL_VALUE){
 			  if (s.packet_index < 6) return;
 			  parent.accelerX = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  parent.accelerY = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  parent.accelerZ = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  console.log("ACCEL finshed");
+			  //console.log("ACCEL finshed");
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_PACCEL_VALUE){
 			  if (s.packet_index < 6) return;
 			  parent.paccelerU = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  parent.paccelerV = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  parent.paccelerW = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  console.log("PACCEL finshed");
+			  //console.log("PACCEL finshed");
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO1_ON)){
 			  if (s.packet_index < 4) return;
@@ -521,8 +547,8 @@
 				device.send(motion_output.buffer);
 				//console.log("motion_output.buffer" + motion_output.buffer);
 			}
-			//var motion_output = new Uint8Array([START_SYSEX, dnp[4],  0xFF ^ dnp[4], END_SYSEX]);		//포토게이트 샘플링레이트 상태수신 발송. (완성시 패치필요)
-			//	device.send(motion_output.buffer);
+			var motion_output = new Uint8Array([START_SYSEX, dnp[4],  0xFF ^ dnp[4], END_SYSEX]);	
+				device.send(motion_output.buffer);
 			//	console.log("motion_output.buffer" + motion_output.buffer);
 		},
 		sw_sender: function(port){
@@ -741,113 +767,50 @@
 	};
 	//2016.05.11 재구성에 따른 간소화패치 완료
 
-	ext.isTouchButtonPressed = function(networks, touch){
-		var hw_normal = blockList.search_normal(SCBD_TOUCH),
-			hw_ble = blockList.search_ble(SCBD_TOUCH),
-			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
+	ext.isTouchButtonPressed = function(networks, touch){	//이벤트성 터치블록이 아닌, 일반 터치블록
+		var port = 0;
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["touch"];
+		}else{
+			port = s.block_port_ble["touch"];		//무선
+		}
 
-		if (networks === menus[lang]['networks'][0]){
-			if(!hw_normal) return;
-			else{
-				if(TOUCH_REPOTER === sensor_detail[2]){	
-					var button_num = digitalRead(hw_normal.pin) & 0x0FFF;
-						
-					for (var i=0; i < 13; i++){
-						if ((button_num >> i) & 0x0001 === 1){
-							if (touch === menus[lang]['touch'][i])
-								return 1;
-						}else if ((button_num >> i) & 0x0001 === 0){
-							if (touch === menus[lang]['touch'][i])
-								return 0;
-						}
-					}
-					/* 모든 터치센서 번호 전송
-					setDigitalInputs(multiByteChannel, (storedInputData[0] << 7) + storedInputData[1]);  
-					HIGH, LOW, Detail/Port (storedInputData)
-					  0000 0000 0110
-					  0000 0000 0001 &
-					*/
-				}
-			}
-		}else if (networks === menus[lang]['networks'][1]){
-			if(!hw_ble) return;
-			else{
-				if(TOUCH_REPOTER === sensor_detail[2]){	
-					var button_num = digitalRead(hw_ble.pin) & 0x0FFF;
-						
-					for (var i=0; i < 13; i++){
-						if ((button_num >> i) & 0x0001 === 1){
-							if (touch === menus[lang]['touch'][i])
-								return 1;
-						}else if ((button_num >> i) & 0x0001 === 0){
-							if (touch === menus[lang]['touch'][i])
-								return 0;
-						}
-					}
-				}
-			}
+		if (port === -1) return;
+		var object = s.blockList[port];
+
+		for(var i=0; i < 12; i++){
+			if (hwIn === menus[lang]['hwIn'][i]) return object.touchStatus[i];	//1번부터 12번 터치센서까지 순서대로 다다다다다
 		}	
 	};
-	//REPOTER PATCH CLEAR	--2016.05.08 간소화 패치 완료
+	//2016.05.11 재구성에 따른 간소화패치 완료
 
-	ext.whenTouchButtonChandged = function(networks, touch, btnStates){
-		var hw_normal = blockList.search_normal(SCBD_TOUCH),
-			hw_ble = blockList.search_ble(SCBD_TOUCH),
-			sensor_detail = new Uint8Array([0x00, 0x10, 0x20]);
-	
-
-		if (networks === menus[lang]['networks'][0]){
-			if(!hw_normal) return;
-			else{
-				if (TOUCH_REPOTER === sensor_detail[0] ){
-					var	button_num = digitalRead(hw_normal.pin);
-					if (btnStates === 0){
-						//꺼짐
-						if (button_num === touch){
-							return 0;
-						}				
-					}
-					
-					/*  0, Button Number, Detail (on, off)/Port	(storedInputData)
-					setDigitalInputs(multiByteChannel, (storedInputData[1] << 7) + storedInputData[2] );
-					0000 0000 0000 0000
-					0000 0000 1111 0000
-						console.log('networks is ' + networks + ' sended'); 
-					*/				
-				} else if (TOUCH_REPOTER === sensor_detail[1]){
-					var	button_num = digitalRead(hw_normal.pin);
-					if (btnStates === 1){
-						//켜짐
-						if (button_num === touch){
-							return 1;
-						}
-					}
-				}
-			}
-		}else if (networks === menus[lang]['networks'][1]){
-			if(!hw_ble) return;
-			else{
-				if (TOUCH_REPOTER === sensor_detail[0] ){
-					var	button_num = digitalRead(hw_ble.pin);
-					if (btnStates === 0){
-						//꺼짐
-						if (button_num === touch){
-							return 0;
-						}				
-					}			
-				} else if (TOUCH_REPOTER === sensor_detail[1]){
-					var	button_num = digitalRead(hw_ble.pin);
-					if (btnStates === 1){
-						//켜짐
-						if (button_num === touch){
-							return 1;
-						}
-					}
-				}
-			}
+	ext.whenTouchButtonChandged = function(networks, touch, btnStates){	//이벤트성 터치블록
+		var port = 0;
+		
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["touch"];
+		}else{
+			port = s.block_port_ble["touch"];		//무선
 		}
+		
+		if (port === -1) return;
+		var object = s.blockList[port];
+		
+		var touch_functions = {
+			touchOn: function() {
+				if(object.touchOn === touch)
+					return true;
+			},
+			touchOff: function(port){
+				if(object.touchOff === touch)
+					return false;
+			}
+		};
+		
+		if(btnStates === 1)	touch_functions.touchOn();
+		else touch_functions.touchOff();
 	};
-	//REPOTER PATCH CLEAR
+	//2016.05.11 재구성에 따른 간소화패치 완료
 
 	ext.whenButton = function(networks, sw, btnStates) {
 		//스위치 hat 블록에 대한 함수
@@ -1052,18 +1015,15 @@
 		}else{
 			port = s.block_port_ble["motion"];		//무선
 		}
-
-		console.log("port " + port);
-		
+		//console.log("port " + port);
 		if (port === -1) return;
 		var object = s.blockList[port];
-		
+		/*
 		console.log("object name " + object.name);
-		
 		console.log("object.infrared1 " + object.infrared1);
 		console.log("object.infrared2 " + object.infrared2);
 		console.log("object.infrared3 " + object.infrared3);
-		
+		*/
 		if (motionb === menus[lang]['motionb'][0]) return object.infrared1;
 		if (motionb === menus[lang]['motionb'][1]) return object.infrared2;
 		if (motionb === menus[lang]['motionb'][2]) return object.infrared3;
