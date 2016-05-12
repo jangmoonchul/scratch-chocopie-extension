@@ -988,250 +988,157 @@
 
 	ext.passLEDrgb = function(networks, ledPosition, r, g, b){
 		//console.log('passLEDrgb is run');
-		var hw_normal = blockList.search_normal(SCBD_LED), 
-			hw_ble = blockList.search_ble(SCBD_LED),
-			sensor_detail = new Uint8Array([0x00, 0x80]);
-
-		if (networks === menus[lang]['networks'][0]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin ]);
-			if (!hw_normal) return;
-			else{
-				var led_position = escape_control(dec2hex(ledPosition)),
-					red = escape_control(dec2hex(r)),
-					green = escape_control(dec2hex(g)),
-					blue = escape_control(dec2hex(b));
-	
-				var merged_data = (led_position << 21) | (red << 14) | (green << 7) | blue,
-					check_merged_data = checkSum( dnp[0], merged_data );
-
-				var led_output = new Uint8Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);		
-					device.send(led_output.buffer);
-			}
-		}else if (networks === menus[lang]['networks'][1]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_ble.pin, sensor_detail[1] | hw_ble.pin ]);
-			if (!hw_ble) return;
-			else{
-				var led_position = escape_control(dec2hex(ledPosition)),
-					red = escape_control(dec2hex(r)),
-					green = escape_control(dec2hex(g)),
-					blue = escape_control(dec2hex(b));
-	
-				var merged_data = (led_position << 21) | (red << 14) | (green << 7) | blue,
-					check_merged_data = checkSum( dnp[0], merged_data );
-
-				var led_output = new Uint8Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);		
-					device.send(led_output.buffer);
-			}
+		var port = 0;
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["led"];
+		}else{
+			port = s.block_port_ble["led"];		//무선
 		}
+
+		if (port === -1) return;
+		var object = s.blockList[port];
+		
+		var sensor_detail = new Uint8Array([0x10]);	
+		var	dnp = [];
+			dnp[0] = (sensor_detail[0] | port);
+	
+		var led_position = escape_control(dec2hex(ledPosition)),
+			red = escape_control(dec2hex(r)),
+			green = escape_control(dec2hex(g)),
+			blue = escape_control(dec2hex(b)),
+			merged_data = (led_position * 256 * 256 * 256) + (red * 256 * 256) + (green * 256) + blue,
+			check_merged_data = checkSum( dnp[0], merged_data );
+
+		var led_output = new Uint8Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);		
+			device.send(led_output.buffer);
+		
 	};
 	//LED는 수신데이터가 없음.. 오로지 설정뿐
 
 	ext.passBUZEER = function(networks, pitch, playtime){
-		
-		var hw_normal = blockList.search_normal(SCBD_LED),	//SCBD_LED 
-			hw_ble = blockList.search_ble(SCBD_LED),
-			sensor_detail = new Uint8Array([0x00, 0x80]);
-
-		if (networks === menus[lang]['networks'][0]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin ]);
-			if (!hw_normal) return;
-			else{
-				var pitch_data = escape_control(dec2hex(pitch)),
-					playtime_data = escape_control(dec2hex(playtime)),
-					merged_data = (pitch_data << 28) |  playtime_data;
-				
-				var check_merged_data  = checkSum( dnp[1], merged_data );
-				
-				var buzzer_output = new Uint8Array([START_SYSEX, dnp[1], merged_data, check_merged_data, END_SYSEX]);	
-				//낭비되는 데이터 공간의 최대한 절약을 위해서 Uint8Array 로 보냄
-				device.send(buzzer_output.buffer);
-			}
-		}else if (networks === menus[lang]['networks'][1]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_ble.pin, sensor_detail[1] | hw_ble.pin ]);
-			if (!hw_ble) return;
-			else{
-				var pitch_data = escape_control(dec2hex(pitch)),
-					playtime_data = escape_control(dec2hex(playtime)),
-					merged_data = (pitch_data << 28) |  playtime_data;
-				
-				var check_merged_data  = checkSum( dnp[1], merged_data );
-				
-				var buzzer_output = new Uint8Array([START_SYSEX, dnp[1], merged_data, check_merged_data, END_SYSEX]);	
-				//낭비되는 데이터 공간의 최대한 절약을 위해서 Uint8Array 로 보냄
-				device.send(buzzer_output.buffer);
-			}
+		var port = 0;
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["led"];
+		}else{
+			port = s.block_port_ble["led"];		//무선
 		}
+
+		if (port === -1) return;
+		var object = s.blockList[port],
+			sensor_detail = new Uint8Array([0x80]);
+		var	dnp = [];
+			dnp[0] = (sensor_detail[0] | port);	
+
+		var pitch_data = escape_control(dec2hex(pitch)),
+			playtime_data = escape_control(dec2hex(playtime)),
+			merged_data = (pitch_data * 256 * 256 * 256 * 256) +  playtime_data,
+			check_merged_data  = checkSum( dnp[0], merged_data );
+			
+		var buzzer_output = new Uint8Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);	
+		device.send(buzzer_output.buffer);			
 	};
 
 	ext.passSteppingAD = function(networks, steppingMotor, speed, stepDirection){
 		//console.log('passSteppingAD is run');
-		var hw_normal = blockList.search_normal(SCBD_STEPPER),
-			hw_ble = blockList.search_ble(SCBD_STEPPER),
-			sensor_detail = new Uint8Array([0x00, 0x10]);
+		var port = 0;
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["stepper"];
+		}else{
+			port = s.block_port_ble["stepper"];		//무선
+		}
+
+		if (port === -1) return;
+		var object = s.blockList[port],
+			sensor_detail = new Uint8Array([0x00]);
+		var	dnp = [];
+			dnp[0] = (sensor_detail[0] | port);	
 
 		var speed_data = speed,
 			motor_data = dec2hex(steppingMotor);
 
-		if (networks === menus[lang]['networks'][0]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin ]);
-			if (!hw_normal) return;
-			else{
-				if (stepDirection === menus[lang]['stepDirection'][0]){
-				//시계방향
-					if(speed_data < 0){
-						speed_data = speed_data * -1;
-					}else{
-						if (speed_data > 1023)
-							speed_data = 1023;		//데이터 보정
-					}
-				}else if (stepDirection === menus[lang]['stepDirection'][1]){
-				//반시계방향
-					if (speed_data > 0){
-						speed_data = speed_data * -1;
-					}else{
-						if(speed_data < -1023){
-							speed_data = -1023;
-						}
-					}
-				}
-				
-				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-					speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
-					merged_data = (motor_data << 14) | (speed_data_low << 7) | speed_data_high;
-
-				var check_merged_data = checkSum( dnp[0], merged_data ),
-					steppingAD_output = new Int16Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);	//signed 로 전송
-
-				device.send(steppingAD_output.buffer);
+		if (stepDirection === menus[lang]['stepDirection'][0]){	//시계방향
+			if(speed_data < 0){
+				speed_data = speed_data * -1;
+			}else{
+				if (speed_data > 1023)
+					speed_data = 1023;		//데이터 보정
 			}
-		}else if (networks === menus[lang]['networks'][1]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_ble.pin, sensor_detail[1] | hw_ble.pin ]);
-			if (!hw_ble) return;
-			else{
-				if (stepDirection === menus[lang]['stepDirection'][0]){
-				//시계방향
-					if(speed_data < 0){
-						speed_data = speed_data * -1;
-					}else{
-						if (speed_data > 1023)
-							speed_data = 1023;		//데이터 보정
-					}
-				}else if (stepDirection === menus[lang]['stepDirection'][1]){
-				//반시계방향
-					if (speed_data > 0){
-						speed_data = speed_data * -1;
-					}else{
-						if(speed_data < -1023){
-							speed_data = -1023;
-						}
-					}
+		}else if (stepDirection === menus[lang]['stepDirection'][1]){	//반시계방향
+			if (speed_data > 0){
+				speed_data = speed_data * -1;
+			}else{
+				if(speed_data < -1023){
+					speed_data = -1023;
 				}
-				
-				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-					speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
-					merged_data = (motor_data << 14) | (speed_data_low << 7) | speed_data_high;
-
-				var check_merged_data = checkSum( dnp[0], merged_data ),
-					steppingAD_output = new Int16Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);	//signed 로 전송
-
-				device.send(steppingAD_output.buffer);
 			}
 		}
+		
+		var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
+			speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
+			merged_data = (motor_data *256 * 256) + (speed_data_low * 256) + speed_data_high,
+			check_merged_data = checkSum( dnp[0], merged_data ),
+			steppingAD_output = new Int16Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);	//signed 로 전송
+
+		device.send(steppingAD_output.buffer);
+
 	};
 
 	ext.passSteppingADA = function(networks, steppingMotor, speed, stepDirection, rotation_amount){
 		//console.log('passSteppingADA is run');
-		var hw_normal = blockList.search_normal(SCBD_STEPPER),
-			hw_ble = blockList.search_ble(SCBD_STEPPER),
-			sensor_detail = new Uint8Array([0x00, 0x10]);
+		var port = 0;
+		if (networks === menus[lang]['networks'][0]){		//일반
+			port = s.block_port_usb["stepper"];
+		}else{
+			port = s.block_port_ble["stepper"];		//무선
+		}
 
+		if (port === -1) return;
+		var object = s.blockList[port],
+			sensor_detail = new Uint8Array([0x10]);
+		var	dnp = [];
+			dnp[0] = (sensor_detail[0] | port);	
+			
 		var speed_data = speed,
 			motor_data = dec2hex(steppingMotor),
 			rotation_data = rotation_amount;
 
-		if (networks === menus[lang]['networks'][0]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_normal.pin, sensor_detail[1] | hw_normal.pin ]);
-			if (!hw_normal) return;
-			else{
-				if (stepDirection === menus[lang]['stepDirection'][0]){
-				//시계방향
-					if(speed_data < 0){
-						speed_data = speed_data * -1;
-					}else{
-						if (speed_data > 1023)
-							speed_data = 1023;		//데이터 보정
-					}
-				}else if (stepDirection === menus[lang]['stepDirection'][1]){
-				//반시계방향
-					if (speed_data > 0){
-						speed_data = speed_data * -1;
-					}else{
-						if(speed_data < -1023){
-							speed_data = -1023;
-						}
-					}
-				}
-			
-				if(rotation_amount > 65535){
-					rotation_data = 65535;
-				}else if(rotation_amount < -65535){
-					rotation_data = -65535;
-				}
-	
-				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-					speed_data_high = escape_control(dec2hex(speed_data) & HIGH);
 
-				var mod_rotation_data = escape_control(dec2hex( Math.floor(rotation_data / 512) )),
-					merged_data = (motor_data << 42) | (speed_data_low << 35) | (speed_data_high << 28) | mod_rotation_data;
-				console.log('rotation data is ' + mod_rotation_data);
-
-				var check_merged_data = checkSum( dnp[1], merged_data ),
-					steppingAD_output = new Int32Array([START_SYSEX, dnp[1], merged_data, check_merged_data, END_SYSEX]);	//singed 4 Byte
-
-				device.send(steppingAD_output.buffer);
+		if (stepDirection === menus[lang]['stepDirection'][0]){
+		//시계방향
+			if(speed_data < 0){
+				speed_data = speed_data * -1;
+			}else{
+				if (speed_data > 1023)
+					speed_data = 1023;		//데이터 보정
 			}
-		}else if (networks === menus[lang]['networks'][1]){
-			var	dnp = new Uint8Array([ sensor_detail[0] | hw_ble.pin, sensor_detail[1] | hw_ble.pin ]);
-			if (!hw_ble) return;
-			else{
-				if (stepDirection === menus[lang]['stepDirection'][0]){
-				//시계방향
-					if(speed_data < 0){
-						speed_data = speed_data * -1;
-					}else{
-						if (speed_data > 1023)
-							speed_data = 1023;		//데이터 보정
-					}
-				}else if (stepDirection === menus[lang]['stepDirection'][1]){
-				//반시계방향
-					if (speed_data > 0){
-						speed_data = speed_data * -1;
-					}else{
-						if(speed_data < -1023){
-							speed_data = -1023;
-						}
-					}
+		}else if (stepDirection === menus[lang]['stepDirection'][1]){
+		//반시계방향
+			if (speed_data > 0){
+				speed_data = speed_data * -1;
+			}else{
+				if(speed_data < -1023){
+					speed_data = -1023;
 				}
-			
-				if(rotation_amount > 65535){
-					rotation_data = 65535;
-				}else if(rotation_amount < -65535){
-					rotation_data = -65535;
-				}
-	
-				var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-					speed_data_high = escape_control(dec2hex(speed_data) & HIGH);
-
-				var mod_rotation_data = escape_control(dec2hex( Math.floor(rotation_data / 512) )),
-					merged_data = (motor_data << 42) | (speed_data_low << 35) | (speed_data_high << 28) | mod_rotation_data;
-				console.log('rotation data is ' + mod_rotation_data);
-
-				var check_merged_data = checkSum( dnp[1], merged_data ),
-					steppingAD_output = new Int32Array([START_SYSEX, dnp[1], merged_data, check_merged_data, END_SYSEX]);	//singed 4 Byte
-
-				device.send(steppingAD_output.buffer);
 			}
 		}
+	
+		if(rotation_amount > 65535){
+			rotation_data = 65535;
+		}else if(rotation_amount < -65535){
+			rotation_data = -65535;
+		}
+
+		var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
+			speed_data_high = escape_control(dec2hex(speed_data) & HIGH);
+
+		var mod_rotation_data = escape_control(dec2hex( Math.floor(rotation_data / 512) )),
+			merged_data = (motor_data * 256 * 256 * 256) | (speed_data_low * 256 * 256) | (speed_data_high * 256) | mod_rotation_data;
+		console.log('rotation data is ' + mod_rotation_data);
+
+		var check_merged_data = checkSum( dnp[0], merged_data ),
+			steppingAD_output = new Int32Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);	//singed 4 Byte
+
+		device.send(steppingAD_output.buffer);
 	};
 
 	ext.passDCAD = function(networks, dcMotor, speed, stepDirection){
