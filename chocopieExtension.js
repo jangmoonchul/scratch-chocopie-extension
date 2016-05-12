@@ -52,7 +52,7 @@
 	  START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
 	  END_SYSEX = 0x7E;			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
 
-  var SAMPLING_RATE = 128;
+  var SAMPLING_RATE = 1;
 
   var LOW = 0x00FF,
     HIGH = 0xFF00;
@@ -486,7 +486,7 @@
 			}
 		},
 		// 리포터 센더 정의 완료. 터치는 센더가 없음.
-		motion_sendor: function(port) {
+		motion_sender: function(port) {
 			var sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40, 0x50]);	
 			var	dnp = [];
 			for (var i=0; i < sensor_detail.length; i++){
@@ -501,7 +501,7 @@
 			var motion_output = new Uint8Array([START_SYSEX, dnp[4],  0xFF ^ dnp[4], END_SYSEX]);
 				device.send(motion_output.buffer);
 		},
-		sw_sendor: function(port){
+		sw_sender: function(port){
 			var sensor_detail = new Uint8Array([0x10]);	
 			var	dnp = [];
 			dnp[0] = (sensor_detail[0] | port);
@@ -525,7 +525,7 @@
 		}else if (block_id === SCBD_TOUCH){				//s.blockList[port] 의 위치에는 실행가능한 함수들이 담기게됨. (parser 를 통함)
 			if (port < 8) s.block_port_usb["touch"] = port;
 			else s.block_port_ble["touch"] = port;
-			//sample_functions.motion_sendor(port);			//SCBD_TOUCH 에 대한 샘플링 레이트
+			//sample_functions.motion_sender(port);			//SCBD_TOUCH 에 대한 샘플링 레이트
 		}else if (block_id === SCBD_SWITCH){
 			if (port < 8) s.block_port_usb["switch"] = port;
 			else s.block_port_ble["switch"] = port;
@@ -561,11 +561,11 @@
 	//예) s.block_port_usb["sensor"] 에는 연결된 포트들이 담기게됨.
 	function disconectBlock(port){
 		if (port >= 8){
-			s.block_port_ble[s.blockList[port].name] = -1;
+			s.block_port_ble[s.blockList[port].name] = -1;					//s.block_port_ble["sensor"] 의 포트를 -1 로 지정
 			for (var i=8; i < 16; i++){
 				if (s.blockList[i].name === s.blockList[port].name){
 					if (i !== port){
-						s.block_port_usb[s.blockList[port].name] = i;		//블록리스트의 배열안에서 같은 이름을 가지는 녀석이 있다면
+						s.block_port_ble[s.blockList[port].name] = i;		//블록리스트의 배열안에서 같은 이름을 가지는 녀석이 있다면
 					}														//해당 포트의 이름을 가지는 블록에 포트를 배정함. (포트 재배정 예외처리)
 				}
 			}
