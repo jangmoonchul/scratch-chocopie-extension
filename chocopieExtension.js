@@ -581,7 +581,10 @@
 	}
 	//예) s.block_port_usb["sensor"] 에는 연결된 포트들이 담기게됨.
 	function disconectBlock(port){
+		console.log("port " + port);
 		var block_name = s.blockList[port].name;
+		console.log("block_name " + block_name);
+		
 		if (port >= 8){
 			s.block_port_ble[block_name] = -1;					//s.block_port_ble["sensor"] 의 포트를 -1 로 지정
 			for (var i=8; i < 16; i++){
