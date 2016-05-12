@@ -112,7 +112,7 @@
   }
 
   function chocopie_ping(){
-	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB_PING, 0x1B ,END_SYSEX]);
+	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB_PING,  0xFF ^ SCBD_CHOCOPI_USB_PING, END_SYSEX]);
 	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
   }
 
@@ -509,9 +509,11 @@
 				var check = checkSum2data( dnp[i], low_data, high_data );	
 				var motion_output = new Uint8Array([START_SYSEX, dnp[i], low_data, high_data, check, END_SYSEX]);
 				device.send(motion_output.buffer);
+				//console.log("motion_output.buffer" + motion_output.buffer);
 			}
-			var motion_output = new Uint8Array([START_SYSEX, dnp[4],  0xFF ^ dnp[4], END_SYSEX]);
-				device.send(motion_output.buffer);
+			//var motion_output = new Uint8Array([START_SYSEX, dnp[4],  0xFF ^ dnp[4], END_SYSEX]);		//포토게이트 샘플링레이트 상태수신 발송. (완성시 패치필요)
+			//	device.send(motion_output.buffer);
+			//	console.log("motion_output.buffer" + motion_output.buffer);
 		},
 		sw_sender: function(port){
 			var sensor_detail = new Uint8Array([0x10]);	
