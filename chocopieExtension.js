@@ -504,8 +504,8 @@
 			for (var i=0; i < sensor_detail.length; i++){
 				dnp[i] = (sensor_detail[i] | port);
 			}
-
-			for (var i=0;i < dnp.length-1; i++){
+			//dnp.length-1
+			for (var i=0;i < 1; i++){
 				var check = checkSum2data( dnp[i], low_data, high_data );	
 				var motion_output = new Uint8Array([START_SYSEX, dnp[i], low_data, high_data, check, END_SYSEX]);
 				device.send(motion_output.buffer);
