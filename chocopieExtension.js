@@ -530,12 +530,12 @@
 			if (port < 8) s.block_port_usb["switch"] = port;
 			else s.block_port_ble["switch"] = port;
 
-			sample_functions.sw_sendor(port);			//SCBD_SWITCH 에 대한 샘플링 레이트
+			sample_functions.sw_sender(port);			//SCBD_SWITCH 에 대한 샘플링 레이트
 		}else if (block_id === SCBD_MOTION){
 			if (port < 8) s.block_port_usb["motion"] = port;
 			else s.block_port_ble["motion"] = port;
 
-			sample_functions.motion_sendor(port);			
+			sample_functions.motion_sender(port);			
 			s.blockList[port] = new motion_block();		//SCBD_MOTION 에 대한 샘플링 레이트	--> 2016.05.11 작성완료
 		}else if (block_id === SCBD_LED){
 			if (port < 8) s.block_port_usb["led"] = port;
