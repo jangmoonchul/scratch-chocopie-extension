@@ -1194,12 +1194,12 @@
 		if (networks === menus[lang]['networks'][0]){		//일반
 			for(var i=0; i < s.servo_count_usb; i++){
 				port.push(s.servo_block_usb[i]);
-				console.log("s.servo_block_usb " + s.servo_block_usb[i]);
+				console.log("s.servo_block_usb port " + s.servo_block_usb[i]);
 			}
 		}else{		
 			for(var i=0; i < servo_count_ble; i++){						//무선
 				port.push(s.servo_block_ble[i]);
-				console.log("s.servo_block_ble " + s.servo_block_ble[i]);
+				console.log("s.servo_block_ble port " + s.servo_block_ble[i]);
 			}		
 		}
 		console.log("port.length " + port.length);
@@ -1218,7 +1218,9 @@
 			
 		var	dnp = [];
 		for(var i=0; i < port.length; i++){
+			console.log("port.length " + port.length);
 			if (servosport === port[i]){						//들어온 포트(1~8) 과 연결된 포트리스트를 비교하여 순회하다가 맞다면 때려버림
+				console.log("Port " + port[i]);
 				for(var j=0; j < 4; j++){
 					dnp[j] = (sensor_detail[j] | port[i]);		//dnp 배열에는 디테과 연결된 서보블록들에 대한 것이 저장됨
 					
@@ -1271,7 +1273,7 @@
 	  ['-'],
 	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', 1, 0, 'clockwise'],
 	  ['-'],
-	  [' ', '%m.networks Port %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 'Port 1', 'Servo 1', 180]
+	  [' ', '%m.networks Port %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 1, 'Servo 1', 180]
     ],
     ko: [																						
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'reportSensor', '일반', '온도'],										// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
@@ -1296,7 +1298,7 @@
 	  ['-'],																											//DC motor is defined
 	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', 1, 0, '시계'],		//function_name : passDCDA passRDCDA	
 	  ['-'],
-	  [' ', '%m.networks 포트 %m.servosport %m.servos 각도 %n', 'rotateServo', '일반', '포트 1', '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
+	  [' ', '%m.networks 포트 %m.servosport %m.servos 각도 %n', 'rotateServo', '일반',  1, '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
     ]
   };
 
