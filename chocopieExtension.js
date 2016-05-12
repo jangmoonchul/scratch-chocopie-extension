@@ -643,8 +643,9 @@
 			if (port < 8) s.block_port_usb["dc_motor"] = port;
 			else s.block_port_ble["dc_motor"] = port;
 		}else if (block_id === SCBD_SERVO){
-			if (port < 8) s.servo_block_usb[s.servo_count_usb++] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
-			else s.servo_block_ble[s.servo_count_ble++] = port;					//패치 완료
+			if (port < 8) s.servo_block_usb[s.servo_count_usb] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
+			else s.servo_block_ble[s.servo_count_ble] = port;					//패치 완료
+			console.log("s.servo_count_usb " + s.servo_count_usb);
 		}
 	}
 	function nullBlock(){
