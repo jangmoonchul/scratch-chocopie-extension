@@ -581,25 +581,27 @@
 	}
 	//예) s.block_port_usb["sensor"] 에는 연결된 포트들이 담기게됨.
 	function disconectBlock(port){
+		var block_name = s.blockList[port].name;
 		if (port >= 8){
-			s.block_port_ble[s.blockList[port].name] = -1;					//s.block_port_ble["sensor"] 의 포트를 -1 로 지정
+			s.block_port_ble[block_name] = -1;					//s.block_port_ble["sensor"] 의 포트를 -1 로 지정
 			for (var i=8; i < 16; i++){
-				if (s.blockList[i].name === s.blockList[port].name){
+				if (s.blockList[i].name === block_name){
 					if (i !== port){
-						s.block_port_ble[s.blockList[port].name] = i;		//블록리스트의 배열안에서 같은 이름을 가지는 녀석이 있다면
+						s.block_port_ble[block_name] = i;		//블록리스트의 배열안에서 같은 이름을 가지는 녀석이 있다면
 					}														//해당 포트의 이름을 가지는 블록에 포트를 배정함. (포트 재배정 예외처리)
 				}
 			}
 		}else{
-			s.block_port_usb[s.blockList[port].name] = -1;
+			s.block_port_usb[block_name] = -1;
 			for (var i=0; i < 8; i++){
-				if (s.blockList[i].name === s.blockList[port].name){
+				if (s.blockList[i].name ===block_name){
 					if (i !== port){
-						s.block_port_usb[s.blockList[port].name] = i;
+						s.block_port_usb[block_name] = i;
 					}
 				}
 			}
 		}
+		console.log("disconected " + block_name + " from port" + port);
 		s.blockList[port] = new nullBlock();
 	}
 
