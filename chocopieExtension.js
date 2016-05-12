@@ -291,17 +291,15 @@
 		var parent = this;
 		
 		this.parser = function(rb) {
-			console.log("motion started");
+			//console.log("motion started");
 			s.packet_buffer[s.packet_index++] = rb;	
-			
-			
+				
 			//console.log("s.detail " + s.detail);
 		  if (s.detail === s.MOTION_IR_VALUE){
 			  if (s.packet_index < 6) return;
 			  parent.infrared1 = s.packet_buffer[0] + s.packet_buffer[1] * 256;
 			  parent.infrared2 = s.packet_buffer[2] + s.packet_buffer[3] * 256;
 			  parent.infrared3 = s.packet_buffer[4] + s.packet_buffer[5] * 256;
-			  //console.log("this.infrared1 " +  this.infrared1);
 			  //console.log("IR finshed");
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ACCEL_VALUE){
@@ -1018,12 +1016,12 @@
 		//console.log("port " + port);
 		if (port === -1) return;
 		var object = s.blockList[port];
-		/*
+		
 		console.log("object name " + object.name);
 		console.log("object.infrared1 " + object.infrared1);
 		console.log("object.infrared2 " + object.infrared2);
 		console.log("object.infrared3 " + object.infrared3);
-		*/
+		
 		if (motionb === menus[lang]['motionb'][0]) return object.infrared1;
 		if (motionb === menus[lang]['motionb'][1]) return object.infrared2;
 		if (motionb === menus[lang]['motionb'][2]) return object.infrared3;
