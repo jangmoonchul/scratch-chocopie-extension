@@ -1223,8 +1223,8 @@
 		}
 		
 		mod_degree*=100; //
-		var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
-			servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);	
+		var servo_deg_low = escape_control(mod_degree & LOW),
+			servo_deg_high = escape_control(mod_degree & HIGH);	
 			
 		var	dnp = [];
 		for(var j=0; j < 4; j++){
