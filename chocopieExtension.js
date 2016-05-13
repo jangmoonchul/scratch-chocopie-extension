@@ -181,7 +181,10 @@
 		MOTION_PHOTO2_ON : 0xA0, MOTION_PHOTO2_OFF : 0xB0, MOTION_ALLPHOTO_STATUS : 0xC0, TOUCH_BUTTON_OFF : 0x00, TOUCH_BUTTON_ON : 0x10, TOUCH_ALLBUTTON_STATUS : 0x20,
 		SWITCH_BUTTON_ON : 0x10, SWITCH_BUTTON_OFF : 0x00, SWITCH_POTENCY_VALUE : 0x30, SWITCH_JOYX_VALUE : 0x40, SWITCH_JOYY_VALUE : 0x50, SWITCH_ALLBUTTON_STATUS : 0x60};
 
-	 function sensor_block() {
+	function servo_block(){
+		this.name = "servo";
+	}	
+	function sensor_block() {
 		this.analog_sensor1 = 0;
 		this.analog_sensor2 = 0;
 		this.analog_sensor3 = 0;
@@ -651,6 +654,8 @@
 		}else if (block_id === SCBD_SERVO){
 			if (port < 8) s.block_port_usb["servo"] = port;		
 			else s.block_port_ble["servo"] = port;
+			
+			s.blockList[port] = new servo_block();
 		}
 	}
 	function nullBlock(){
@@ -1181,12 +1186,10 @@
 			if(s.blockList[port].name!=="servo"){
 				port =s.block_port_usb["servo"];
 			}
-			port =s.block_port_usb["servo"];
 		}else{						
 			if(s.blockList[port].name!=="servo"){			//무선
 				port =s.block_port_ble["servo"];
 			}
-			port =s.block_port_ble["servo"];
 		}
 		//console.log("port.length " + port.length);
 		if (port === -1) return;		//일반일때도, 무선일때도, servo 의 갯수가 하나도 없다면 되돌림
