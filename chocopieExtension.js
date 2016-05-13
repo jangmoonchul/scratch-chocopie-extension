@@ -1235,7 +1235,7 @@
 				servo_output = new Uint8Array([START_SYSEX, dnp[j], servo_deg_low, servo_deg_high, check_deg, END_SYSEX]);
 				
 			device.send(servo_output.buffer);
-			console.log("Servo Port " + port + "is querySend!");
+			console.log("Servo Port " + port + "is querySend! from detail " + sensor_detail[j]);
 			}
 		}								
 	};
