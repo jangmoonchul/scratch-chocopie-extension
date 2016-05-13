@@ -45,11 +45,7 @@
 		CPC_ALL_SAY = 0x0E;
 	//Chocopie command definition
 	
-  var SENSOR_REPOTER = 0,
-	  TOUCH_REPOTER = 0,
-	  SWITCH_REPOTER = 0,
-	  MOTION_REPOTER = 0,
-	  START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
+  var START_SYSEX = 0x7E,			//메세지의 시작패킷을 알리는 헤더		이스케이핑 필수
 	  END_SYSEX = 0x7E;			//메세지의 꼬리패킷을 알리는 테일러		이스케이핑 필수
 
   var SAMPLING_RATE = 1;
@@ -57,15 +53,7 @@
   var LOW = 0x00FF,
     HIGH = 0xFF00;
 	//LOW, HIGH 를 연산하기 위해서 패치함 -- 2016.04.20 
-  var MAX_DATA_BYTES = 4096;
-
-  var storedInputData = new Uint8Array(MAX_DATA_BYTES);
-
-  var digitalOutputData = new Uint8Array(16),
-    digitalInputData = new Uint8Array(16),
-    analogInputData = new Uint16Array(16),			
-	SanalogInputData = new Int8Array(16);
-
+  
   var majorVersion = 0,
       minorVersion = 0;
 
@@ -152,22 +140,10 @@
 		return sum;
 	}
 
-  function setDigitalInputs(portNum, portData) {
-    digitalInputData[portNum] = portData;
-  }
-
-  function setAnalogInput(pin, val) {
-    analogInputData[pin] = val;
-  }
-
-  function setSAnalogInput(pin, val) {
-	SanalogInputData[pin] = val;	
-  }
-
-  function setVersion(major, minor) {
-    majorVersion = major;
-    minorVersion = minor;
-  }
+	function setVersion(major, minor) {
+		majorVersion = major;
+		minorVersion = minor;
+	}
 
 	function escape_control(source){
 		if(source == 0x7E){
@@ -199,7 +175,7 @@
 	*/
 
 //---------------------------------------------------------------------------------------------------------------
-	var s = {action:null, packet_index: 0, packet_buffer: null, block_port_usb : {}, block_port_ble : {}, servo_block_usb : {}, servo_block_ble : {}, servo_count_usb : 0, servo_count_ble :0, port : 0, detail : 0, blockList : null,
+	var s = {action:null, packet_index: 0, packet_buffer: null, block_port_usb : {}, block_port_ble : {}, port : 0, detail : 0, blockList : null,
 		SENSOR_TEMP_VALUE : 0x40, SENSOR_HUMD_VALUE : 0x50, SENSOR_LIGHT_VALUE : 0x60, SENSOR_AN1_VALUE : 0x00, SENSOR_AN2_VALUE : 0x10, SENSOR_AN3_VALUE : 0x20, SENSOR_AN4_VALUE : 0x30,
 		MOTION_IR_VALUE : 0x10, MOTION_ACCEL_VALUE : 0x20, MOTION_PACCEL_VALUE : 0x30, MOTION_PHOTO1_ON : 0x80, MOTION_PHOTO1_OFF : 0x90,
 		MOTION_PHOTO2_ON : 0xA0, MOTION_PHOTO2_OFF : 0xB0, MOTION_ALLPHOTO_STATUS : 0xC0, TOUCH_BUTTON_OFF : 0x00, TOUCH_BUTTON_ON : 0x10, TOUCH_ALLBUTTON_STATUS : 0x20,
@@ -274,13 +250,16 @@
 		  }else if (s.detail === s.SWITCH_ALLBUTTON_STATUS){
 			 if (s.packet_index < 1) return;
 			 for(var i=0; i < 5; i++){
-				parent.switchStatus[i] = (s.packet_buffer[0] & 0x01) >> i;
+				var sw_status = (s.packet_buffer[0] & 0x01) >> i;
+				if(sw_status === 1) parent.switchStatus[i] = true;
+				else parent.switchStatus[i] = false;
 			 }
 		  }
 		  s.action = actionBranch;
 		};		
 	}
-	 
+	//Boolean 패치 완료
+	
 	function touch_block(){
 		this.touchon_btn = 0;
 		this.touchoff_btn = 0;
@@ -305,13 +284,16 @@
 		  }else if (s.detail === s.TOUCH_ALLBUTTON_STATUS){
 			 if (s.packet_index < 2) return;
 			 for(var i=0; i < 12; i++){
-				parent.touchStatus[i] = ((s.packet_buffer[0] + s.packet_buffer[1] * 256) & 0x0001) >> i;
+				var touch_status =  ((s.packet_buffer[0] + s.packet_buffer[1] * 256) & 0x0001) >> i;
+				if(touch_status === 1) parent.touchStatus[i] = true;
+				else parent.touchStatus[i] = false;
 			 }
 		  }
 		  s.action = actionBranch;
 		};		
 	}
-
+	//Boolean 패치 완료
+	
 	function motion_block(){
 		this.infrared1 = 0;
 		this.infrared2 = 0;
@@ -322,10 +304,14 @@
 		this.paccelerU = 0;
 		this.paccelerV = 0;
 		this.paccelerW = 0;
-		this.photo1_on = 0;		
-		this.photo1_off = 0;		
-		this.photo2_on = 0;		
-		this.photo2_off = 0;		
+		this.photo1_on = 0;
+		this.photo1_off = 0;
+		this.photo2_on = 0;
+		this.photo2_off = 0;
+		this.photo1_on_time = 0;		
+		this.photo1_off_time = 0;		
+		this.photo2_on_time = 0;		
+		this.photo2_off_time = 0;		
 		this.photoStatus1 = 0;
 		this.photoStatus2 = 0;
 
@@ -335,8 +321,7 @@
 		
 		this.parser = function(rb) {
 			//console.log("motion started");
-			s.packet_buffer[s.packet_index++] = rb;	
-				
+			s.packet_buffer[s.packet_index++] = rb;				
 			//console.log("s.detail " + s.detail);
 		  if (s.detail === s.MOTION_IR_VALUE){
 			  if (s.packet_index < 6) return;
@@ -361,19 +346,23 @@
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO1_ON)){
 			  if (s.packet_index < 4) return;
-			  parent.photo1_on = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  parent.photo1_on = true;
+			  parent.photo1_on_time = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO1_OFF)){
 			  if (s.packet_index < 4) return;
-			  parent.photo1_off = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  parent.photo1_off = true;
+			  parent.photo1_off_time = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO2_ON)){
 			  if (s.packet_index < 4) return;
-			  parent.photo2_on = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  parent.photo2_on = true;
+			  parent.photo2_on_time = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
 			  s.action = actionBranch;
 		  }else if ((s.detail === s.MOTION_PHOTO2_OFF)){
 			  if (s.packet_index < 4) return;
-			  parent.photo2_off = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
+			  parent.photo2_off = true;
+			  parent.photo2_off_time = s.packet_buffer[0] + s.packet_buffer[1] * 256 + s.packet_buffer[2] * 256 * 256 + s.packet_buffer[3] * 256 * 256 * 256;
 			  s.action = actionBranch;
 		  }else if (s.detail === s.MOTION_ALLPHOTO_STATUS){
 			 if (s.packet_index < 1) return;
@@ -433,9 +422,8 @@
 		}
 	}
 
-
 	function actionBranch(rb){
-		console.log("ActionBranch Header Data " + rb);
+		console.log("actionBranch Header Data " + rb);
 		if (rb < 0xE0){
 			s.packet_index = 0;
 			s.detail = rb & 0xF0;
@@ -544,9 +532,27 @@
 				s.blockList[i] = new nullBlock();
 			}
 		}
+		
+		var isEscaping = false;
 		for (var rb in  inputData){
 			console.log("inputData[" + rb + "] " + inputData[rb]);
-			s.action(inputData[rb]);
+			s.action(inputData[rb]);	
+			/*	새 보드에 대한 헤더처리
+			if(rb === START_SYSEX){
+				s.action=actionBranch;
+			}else{
+				
+				if(rb==0x7D){
+					isEscaping=true;
+				}else{
+					if(isEscaping === true){
+						rb=rb ^ 0x20;
+					}
+					isEscaping=false;
+					s.action(inputData[rb]);	
+				}
+			}
+			*/
 		}
 	}
 
@@ -643,10 +649,8 @@
 			if (port < 8) s.block_port_usb["dc_motor"] = port;
 			else s.block_port_ble["dc_motor"] = port;
 		}else if (block_id === SCBD_SERVO){
-			if (port < 8) s.servo_block_usb[s.servo_count_usb] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
-			else s.servo_block_ble[s.servo_count_ble] = port;					//패치 완료
-			console.log("s.servo_count_usb " + s.servo_count_usb);
-			s.servo_count_usb++;
+			if (port < 8) s.block_port_usb["servo"] = port;		
+			else s.block_port_ble["servo"] = port;
 		}
 	}
 	function nullBlock(){
@@ -686,48 +690,6 @@
 		s.blockList[port] = new nullBlock();
 	}
 
-//------------------------------------------------------------------------------------------------------------------------
-
-
-	function analogRead(pin) {
-		var hw = blockList.search_bypin(pin);
-		if (!hw){
-			var valid = [];
-			for (var i = 0; i < 15; i++)
-				valid.push(i);
-			console.log('ERROR: valid analog pins are ' + valid.join(', '));
-			return;
-		}else{
-			if (pin >= 0 && 15 <= pin) 
-			return Math.round((analogInputData[pin] * 100) / 4095);
-		}
-	}
-	//analogRead patched 2016.04.24...	Repatch 2016.04.25
-	
-	function SanalogRead(pin) {
-		var hw = blockList.search_bypin(pin);
-		if (!hw){
-			var valid = [];
-			for (var i = 0; i < 15; i++)
-				valid.push(i);
-			console.log('ERROR: valid analog pins are ' + valid.join(', '));
-			return;
-		}else{
-			if (pin >= 0 && 15 <= pin) 
-			return Math.round((SanalogInputData[pin] * 100) / 4095);
-		}
-	}
-
-	function digitalRead(pin) {
-		var hw = blockList.search_bypin(pin);
-		if (!hw) {
-			console.log('ERROR: valid input pins are not found');
-			return;
-		}
-		return digitalInputData[pin];
-	}
-	//digitalRead patched 2016.04.21 .. 04.24 recheck
-//------------------------------------------------------------------------------Above, Successed Line 
 
 //----------------------------------------------------------------------------------- SYSTEM FUNCTION LINE 
   	ext._getStatus = function() {
@@ -914,6 +876,7 @@
 		}
 	};
 	//2016.05.01 스위치 블록 boolean 패치에 따라서 생겨난 함수
+	//2016.05.13 Boolean 패치 완료
 	
 	ext.isButtonPressed = function(networks, buttons){
 		// 조이스틱X, 조이스틱Y, 포텐시오미터
@@ -979,14 +942,36 @@
 		var object = s.blockList[port];
 	
 		if( photoGate === menus[lang]['photoGate'][0] ){
-			if (gateState === menus[lang]['gateState'][1]) return object.photo1_on;	//포토게이트 1번 열릴때.. 실질적으론 시간이 들어옴
-			if(gateState === menus[lang]['gateState'][0]) return object.photo1_off;	//포토게이트 1번 막힐때
-		}else if (photoGate === menus[lang]['photoGate'][1]){
-			if (gateState === menus[lang]['gateState'][1]) return object.photo2_on;	//포토게이트 2번 열릴때
-			if (gateState === menus[lang]['gateState'][0]) return object.photo2_off;	//포토게이트 2번 막힐때					
+			if (gateState === menus[lang]['gateState'][1]){
+				if(object.photo1_on){
+					object.photo1_on=false;
+					return true;
+				} 
+				return false;
+			} 
+			if(gateState === menus[lang]['gateState'][0]){	//포토게이트 1번 막힐때
+				if(object.photo1_off){
+					object.photo1_off = false;
+					return true;
+				}	
+			}
+		}else if (photoGate === menus[lang]['photoGate'][1]){	//포토게이트 2번 열릴때
+			if (gateState === menus[lang]['gateState'][1]){
+				if(object.photo2_on){
+					object.photo2_on = false;
+					return true;
+				}
+			} 
+			if (gateState === menus[lang]['gateState'][0]){		//포토게이트 2번 막힐때
+				if(object.photo2_off){
+					object.photo2_off = false;
+					return true;
+				}
+			}					
 		}						
 	};
 	//2016.05.11 재구성에 따른 간소화패치 완료
+	//2016.05.13 Boolean 패치 완료
 
 	ext.passLEDrgb = function(networks, ledPosition, r, g, b){
 		//console.log('passLEDrgb is run');
@@ -1189,21 +1174,20 @@
 		//if (port < 8) s.servo_block_usb[s.servo_count_usb++] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
 		//else s.servo_block_ble[s.servo_count_ble++] = port;				//패치 완료
 		
-		var port = [];
-		
+		var port;
+		port += servosport-1;	
+
 		if (networks === menus[lang]['networks'][0]){		//일반
-			for(var i=0; i < s.servo_count_usb; i++){
-				port.push(s.servo_block_usb[i]);
-				console.log("s.servo_block_usb port " + s.servo_block_usb[i]);
+			if(s.blockList[port].name!=="servo"){
+				port =s.block_port_usb["servo"];
 			}
-		}else{		
-			for(var i=0; i < servo_count_ble; i++){						//무선
-				port.push(s.servo_block_ble[i]);
-				console.log("s.servo_block_ble port " + s.servo_block_ble[i]);
-			}		
+		}else{						
+			if(s.blockList[port].name!=="servo"){			//무선
+				port =s.block_port_ble["servo"];
+			}
 		}
 		//console.log("port.length " + port.length);
-		if (port.length === 0) return;		//일반일때도, 무선일때도, servo 의 갯수가 하나도 없다면 되돌림
+		if (port === -1) return;		//일반일때도, 무선일때도, servo 의 갯수가 하나도 없다면 되돌림
 		var sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
 		
 		var mod_degree = 0;
@@ -1213,28 +1197,22 @@
 			mod_degree = 0;
 		}
 		
+		mod_degree*=100; //
 		var servo_deg_low = escape_control(dec2hex(mod_degree) & LOW),
 			servo_deg_high = escape_control(dec2hex(mod_degree) & HIGH);	
 			
 		var	dnp = [];
-		for(var i=0; i < port.length; i++){
-			console.log("port.length " + port.length);
-			console.log("servosport " + servosport + "port[i] " + port[i]);
-			if ((servosport-1) === port[i]){						//들어온 포트(1~8) 과 연결된 포트리스트를 비교하여 순회하다가 맞다면 때려버림
-				console.log("Port " + port[i]);
-				for(var j=0; j < 4; j++){
-					dnp[j] = (sensor_detail[j] | port[i]);		//dnp 배열에는 디테과 연결된 서보블록들에 대한 것이 저장됨
-					
-					if (servos === menus[lang]['servos'][j]){
-					var check_deg = checkSum2data( dnp[j], servo_deg_low, servo_deg_high),
-						servo_output = new Uint8Array([START_SYSEX, dnp[j], servo_deg_low, servo_deg_high, check_deg, END_SYSEX]);
-						
-					device.send(servo_output.buffer);
-					console.log("Servo Port " + port[i] + "is querySend!");
-					}
-				}
-			}			
-		}			
+		for(var j=0; j < 4; j++){
+			dnp[j] = (sensor_detail[j] | port);		//dnp 배열에는 디테과 연결된 서보블록들에 대한 것이 저장됨
+			
+			if (servos === menus[lang]['servos'][j]){
+			var check_deg = checkSum2data( dnp[j], servo_deg_low, servo_deg_high),
+				servo_output = new Uint8Array([START_SYSEX, dnp[j], servo_deg_low, servo_deg_high, check_deg, END_SYSEX]);
+				
+			device.send(servo_output.buffer);
+			console.log("Servo Port " + port + "is querySend!");
+			}
+		}								
 	};
 
 	//Function added Line - end  --------------------------------------------------------------------------------------
