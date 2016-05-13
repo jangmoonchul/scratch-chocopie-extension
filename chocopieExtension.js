@@ -1220,7 +1220,7 @@
 		for(var i=0; i < port.length; i++){
 			console.log("port.length " + port.length);
 			console.log("servosport " + servosport + "port[i] " + port[i]);
-			if (servosport === port[i]){						//들어온 포트(1~8) 과 연결된 포트리스트를 비교하여 순회하다가 맞다면 때려버림
+			if ((servosport-1) === port[i]){						//들어온 포트(1~8) 과 연결된 포트리스트를 비교하여 순회하다가 맞다면 때려버림
 				console.log("Port " + port[i]);
 				for(var j=0; j < 4; j++){
 					dnp[j] = (sensor_detail[j] | port[i]);		//dnp 배열에는 디테과 연결된 서보블록들에 대한 것이 저장됨
