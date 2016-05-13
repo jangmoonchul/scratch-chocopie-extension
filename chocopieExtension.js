@@ -1,19 +1,3 @@
-/*
- *This program is free software: you can redistribute it and/or modify
- *it under the terms of the GNU General Public License as published by
- *the Free Software Foundation, either version 3 of the License, or
- *(at your option) any later version.
- *
- *This program is distributed in the hope that it will be useful,
- *but WITHOUT ANY WARRANTY; without even the implied warranty of
- *MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *GNU General Public License for more details.
- *
- *You should have received a copy of the GNU General Public License
- *along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- *It have been writed by TaeHui Lee through KOREA SCIENCE.
- */
 
 (function(ext) {
 
@@ -68,7 +52,53 @@
   var pinging = false;
   var pingCount = 0;
   var pinger = null;
+    function prepareDataToSend(bytearray){
+	  var data = [];
+	  //var data = new Array();
+	  var checksum=0xFF;
+	  data.push(START_SYSEX);
+	  for(var i= 0;i< bytearray.length;i++){
+		  if((bytearray[i]==0x7E ) || (bytearray[i]==0x7D ) ){
+			 data.push(0x7D);
+			 data.push(bytearray[i]^0x20);
+			 checksum^= 0x7D;
+			 checksum^= bytearray[i]^0x20;
+		  }else{
+			 data.push(bytearray[i]);
+			 checksum^= bytearray[i];
+		  }		  		 
+	  }
+	  data.push(checksum);
+	  data.push(START_SYSEX);
+	  var u8a= new Uint8Array(data.length);
+	  var logstring="send:";
+	  for(var i=0;i<data.length;i++){
+		u8a[i]=data[i];
+		logstring+= data[i].toString(16)+", ";
+	  } 
+	  console.log(logstring);
+	  return u8a;
+	
+  }
+  
+ function send2byteCommand(c1, c2){
+	  var data = new Uint8Array(2);	  
+	  data[0]=c1;data[1]=c2;
+	  device.send(prepareDataToSend(data).buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
+  }
+  
+  function send_array(data){
+	  device.send(prepareDataToSend(data).buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
+  }
+  
 
+
+
+  function checkSum(detailnport, data){
+		var sum = 0xFF ^ detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
+		sum ^= data;		
+		return sum;
+	}
   function init() {
 	
     // TEMPORARY WORKAROUND
@@ -93,52 +123,26 @@
           pinger = null;
           return;
         }
-        chocopie_ping();				//패치가 완료되면 이 부분을 주석해제, queryFirmware(); 를 제거시킴 -- 2016.04.25
+        chocopi_ping();				//패치가 완료되면 이 부분을 주석해제, queryFirmware(); 를 제거시킴 -- 2016.04.25
         pinging = true;
       }
     }, 10000);
   }
 
-  function chocopie_ping(){
-	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB_PING,  0xFF ^ SCBD_CHOCOPI_USB_PING, END_SYSEX]);
-	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
+  function chocopi_ping(){
+	var usb_output = new Uint8Array([ SCBD_CHOCOPI_USB_PING]);	
+	send_array(usb_output);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
   }
 
   function queryFirmware() {
 	//해당 함수에서는 QUERY FIRMWARE 를 확인하는 메세지를 전송만 하고, 받아서 처리하는 것은 processInput 에서 처리
 	//processInput 에서 query FIRMWARE 를 확인하는 메세지를 잡아서 처리해야함
-
-	var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_VERSION );
-	
-	var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_VERSION, check_usb ,END_SYSEX]);
-	device.send(usb_output.buffer);		//usb 연결인지 확인하기 위해서 FIRMWARE QUERY 를 한번 보냄
+	send2byteCommand(SCBD_CHOCOPI_USB, CPC_VERSION);	
 	console.log("queryFirmware sended");
   }
   //Changed BY Remoted 2016.04.11
   //Patched BY Remoted 2016.04.15
 
-	function checkSum(detailnport, data){
-		var sum = 0xFF ^ detailnport;		//2016.04.28 패치요청 들어옴.. -> 보드도착시 변경
-		sum ^= data;
-		
-		return sum;
-	}
-	//Port/detail, data를 XOR 시킨 후, checksum 하여 return 시킴	--> check Sum Success 2016.04.21
-	
-	function checkSum2data(detailnport, data1, data2){
-		var sum = 0xFF ^ detailnport;		
-		sum ^= data1;
-		sum ^= data2;
-		return sum;
-	}
-
-	function checkSum3data(detailnport, data1, data2, data3){
-		var sum = 0xFF ^ detailnport;		
-		sum ^= data1;
-		sum ^= data2;
-		sum ^= data3;
-		return sum;
-	}
 
 	function setVersion(major, minor) {
 		majorVersion = major;
@@ -156,23 +160,6 @@
 			return source;
 		}
 	}
-	/*
-	이스케이프 컨트롤러 By Remoted 2016.04.13		-- 2016.04.14 패치완료	--> Detail 과 Port, 앞의 헤더와 테일러가 아닌이상 Data 들에 대해서는 반드시
-	이스케이핑 컨트롤러를 거쳐서 데이터가 나가야만한다.
-	http://m.blog.daum.net/_blog/_m/articleView.do?blogid=050RH&articleno=12109121 에 기반함 */
-
-	function dec2hex(number){
-		hexString = number.toString(16);
-		return hexString;
-	}
-
-	function hex2dec(hexString){
-		yourNumber = parseInt(hexString, 16);
-		return yourNumber;
-	}
-	/*2 Byte -> 1 Byte 간으로 축약 및 재확장에 따라서 데이터 손실을 해결하기 위해서 함수제작 
-	http://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript 
-	*/
 
 //---------------------------------------------------------------------------------------------------------------
 	var s = {action:null, packet_index: 0, packet_buffer: null, block_port_usb : {}, block_port_ble : {}, port : 0, detail : 0, blockList : null,
@@ -183,21 +170,26 @@
 
 	function servo_block(){
 		this.name = "servo";
+		this.port= -1;
 	}	
 	
 	function dc_motor_block(){
 		this.name = "dc_motor";
+		this.port= -1;
 	}
 	
 	function stepper_block(){
 		this.name = "stepper";
+		this.port= -1;
 	}
 	
 	function led_block(){
 		this.name = "led";
+		this.port= -1;
 	}
 	
 	function sensor_block() {
+		this.port= -1;
 		this.analog_sensor1 = 0;
 		this.analog_sensor2 = 0;
 		this.analog_sensor3 = 0;
@@ -209,8 +201,7 @@
 		
 		var parent = this;
 		this.parser = function(rb) {
-		s.packet_buffer[s.packet_index++] = rb;
-		
+		s.packet_buffer[s.packet_index++] = rb;		
 		  if (s.packet_index < 2) return;
 		  if (s.detail === s.SENSOR_TEMP_VALUE){
 			 parent.temperature = s.packet_buffer[0] + s.packet_buffer[1] * 256;
@@ -231,18 +222,17 @@
 		};		
 	 }
 	function switch_block(){
-		this.switchon_btn = 0;
-		this.switchoff_btn = 0;
+		this.port= -1;
+		this.switchon_btn = new Array(6);
+		this.switchoff_btn = new Array(6);
 		this.potencyometer = 0;
 		this.joyX = 0;
 		this.joyY = 0;
 		this.switchStatus = new Array(16);
 		
 		for(var i=0; i < 16; i++){
-			switchStatus[i] = 0;
+			this.switchStatus[i] = 0;
 		}
-		
-		this.name = "switch";
 		
 		var parent = this;
 		this.parser = function(rb) {
@@ -250,10 +240,10 @@
 		
 		  if (s.detail === s.SWITCH_BUTTON_ON){
 			 if (s.packet_index < 1) return;
-			 parent.switchon_btn = s.packet_buffer[0];
+			 parent.switchon_btn[s.packet_buffer[0]]=true ;			 
 		  }else if (s.detail === s.SWITCH_BUTTON_OFF){
 			 if (s.packet_index < 1) return;
-			 parent.switchoff_btn = s.packet_buffer[0];
+			 parent.switchoff_btn[s.packet_buffer[0]]=true ;
 		  }else if (s.detail === s.SWITCH_POTENCY_VALUE){
 			 if (s.packet_index < 2) return;
 			 parent.potencyometer = s.packet_buffer[0] + s.packet_buffer[1] * 256;
@@ -266,23 +256,25 @@
 		  }else if (s.detail === s.SWITCH_ALLBUTTON_STATUS){
 			 if (s.packet_index < 1) return;
 			 for(var i=0; i < 5; i++){
-				var sw_status = (s.packet_buffer[0] & 0x01) >> i;
+				var sw_status = (s.packet_buffer[0] >> i) & 0x01;
 				if(sw_status === 1) parent.switchStatus[i] = true;
 				else parent.switchStatus[i] = false;
 			 }
 		  }
 		  s.action = actionBranch;
-		};		
+		};
+		
 	}
 	//Boolean 패치 완료
 	
 	function touch_block(){
+		this.port= -1;
 		this.touchon_btn = 0;
 		this.touchoff_btn = 0;
 		this.touchStatus = new Array(16);
 		
 		for(var i=0; i < 16; i++){
-			touchStatus[i] = 0;		//기본값으로 모든 터치센서가 꺼진 것으로 배열을 채움
+			this.touchStatus[i] = 0;		//기본값으로 모든 터치센서가 꺼진 것으로 배열을 채움
 		}
 		
 		this.name = "touch";
@@ -300,7 +292,8 @@
 		  }else if (s.detail === s.TOUCH_ALLBUTTON_STATUS){
 			 if (s.packet_index < 2) return;
 			 for(var i=0; i < 12; i++){
-				var touch_status =  ((s.packet_buffer[0] + s.packet_buffer[1] * 256) & 0x0001) >> i;
+				 var touch_bit = s.packet_buffer[0] + s.packet_buffer[1] * 256;
+				var touch_status =  ((touch_bit) >> i )& 0x0001;
 				if(touch_status === 1) parent.touchStatus[i] = true;
 				else parent.touchStatus[i] = false;
 			 }
@@ -311,6 +304,7 @@
 	//Boolean 패치 완료
 	
 	function motion_block(){
+		this.port= -1;
 		this.infrared1 = 0;
 		this.infrared2 = 0;
 		this.infrared3 = 0;
@@ -394,8 +388,7 @@
 		s.packet_buffer[s.packet_index++] = rb;
 		//console.log("s.packet_buffer[" + s.packet_index + "] " + s.packet_buffer[s.packet_index]);
 		//s.packet_index++		
-		var check_usb = checkSum( SCBD_CHOCOPI_USB, CPC_GET_BLOCK );
-		var usb_output = new Uint8Array([START_SYSEX, SCBD_CHOCOPI_USB, CPC_GET_BLOCK, check_usb ,END_SYSEX]);
+		
 			
 		//console.log('I am comming processSysexMessage SCBD_CHOCOPI_USB');
 		if(s.packet_index === 9){
@@ -408,7 +401,7 @@
 
 			  setTimeout(init, 200);
 			  sysexBytesRead = 0;	
-			  device.send(usb_output.buffer);	
+			  send2byteCommand(SCBD_CHOCOPI_USB, CPC_GET_BLOCK);
 			}
 			pinging = false;
 			pingCount = 0;	
@@ -418,48 +411,42 @@
 		}
 	}
 	
-	function checkPing(rb){
-		console.log("ping received");
-		if(rb === 0){
-			if (!connected) {
-			  clearInterval(poller);		
-			  poller = null;				
-			  clearTimeout(watchdog);
-			  watchdog = null;				
-			  connected = true;
+	function checkPing(){
+		console.log("ping received");		
+		if (!connected) {
+		  clearInterval(poller);		
+		  poller = null;				
+		  clearTimeout(watchdog);
+		  watchdog = null;				
+		  connected = true;
 
-			  setTimeout(init, 200);			
-			  sysexBytesRead = 0;		
-			}
-			pinging = false;
-			pingCount = 0;
-			s.action = actionBranch;
-			return;
+		  setTimeout(init, 200);			
+		  sysexBytesRead = 0;		
 		}
+		pinging = false;
+		pingCount = 0;
+		s.action = actionBranch;
+		return;	
 	}
 
 	function actionBranch(rb){
-		console.log("actionBranch Header Data " + rb);
+		s.packet_index = 0;
 		if (rb < 0xE0){
-			s.packet_index = 0;
+			console.log("Header Data for block " + rb.toString(16));			
 			s.detail = rb & 0xF0;
 			s.port = rb & 0x0F;
-
 			s.action = s.blockList[s.port].parser;	//각 블록의 해당함수 파서에게 뒷일을 맡김.
 		}else{
+			console.log("Header Data for Chocopi " + rb.toString(16));
 			s.action = actionChocopi;
-			if(rb === SCBD_CHOCOPI_USB_PING) s.action = checkPing;	//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
+			if(rb === SCBD_CHOCOPI_USB_PING) checkPing();	//PING 의 경우 헤더가 도착하지 않기 때문에, 여기서 판별함
 			if (rb === (SCBD_CHOCOPI_USB | 0x01)){
-				s.packet_index=0;
 				s.action = checkConnect;	//하드웨어 연결시에도 헤더가 도착하지 않음.
 			}else if (rb === (SCBD_CHOCOPI_USB | 0x02)){
-				s.packet_index=0;			//하드웨어 제거시에도 헤더가 도착하지 않음.
 				s.action = checkRemove;
 			}else if (rb === (SCBD_CHOCOPI_BLE | 0x03)){	//BLE 연결 상태에 대한 정의
-				s.packet_index=0;
 				s.action = bleChanged;
 			}else if(rb === (SCBD_CHOCOPI_USB | 0x0F)){		//에러코드에 대한 정의
-				s.packet_index=0;
 				s.action = reportError;
 			}
 		}
@@ -481,7 +468,6 @@
 	function actionChocopi(rb){
 		s.packet_index=0; //start from 	
 		console.log("rb is " + rb);	
-		console.log("s.action " + s.action);
 		if(rb === CPC_VERSION)
 			s.action=checkVersion;
 		if(rb === CPC_GET_BLOCK)
@@ -512,10 +498,10 @@
 	function checkConnect(rb){
 		s.packet_buffer[s.packet_index++] = rb;
 		if (s.packet_index === 3){
-			var block_type = s.packet_buffer[1],
-				connected_port = s.packet_buffer[0];
-			console.log("block_type is" + block_type + " connected into port " + connected_port);
+			var block_type = s.packet_buffer[1] + s.packet_buffer[2]*256 ,
+			connected_port = s.packet_buffer[0];
 			connectBlock(block_type, connected_port);		//PORT, BLOCK_TYPE(LOW), BLOCK_TYPE(HIGH)	(inputData)
+			console.log("block_type is" + block_type + " connected into port " + connected_port);
 			s.action = actionBranch;
 		}
 		return;
@@ -525,15 +511,14 @@
 		// detail/port, CPC_GET_BLOCK 를 제외한 포트가 LOW 8 Bit, HIGH 8 Bit 순으로 등장함
 		s.packet_buffer[s.packet_index++] = rb;
 		var rp = 0;
-		if(s.packet_index === 32){
-			for (var port = 0 ; port < 16; port++){
-				var block_type = s.packet_buffer[rp++];
-					block_type += s.packet_buffer[rp++]*256;						
-				connectBlock(block_type, port);	
-			}
-			s.action = actionBranch;
-			return;
+		if(s.packet_index <32) return;
+		for (var port = 0 ; port < 16; port++){
+			var block_type = s.packet_buffer[rp++];
+				block_type += s.packet_buffer[rp++]*256;						
+			connectBlock(block_type, port);	
 		}
+		s.action = actionBranch;
+		return;
 	}
 	
 	function processInput(inputData) {
@@ -550,14 +535,14 @@
 		}
 		
 		var isEscaping = false;
-		for (var rb in  inputData){
-			console.log("inputData[" + rb + "] " + inputData[rb]);
-			s.action(inputData[rb]);	
-			/*	새 보드에 대한 헤더처리
+		var i=0;
+		var rb=0;
+		for (var ri in  inputData){
+//			s.action(inputData[rb]);	
+			rb=inputData[ri];
 			if(rb === START_SYSEX){
 				s.action=actionBranch;
-			}else{
-				
+			}else{				
 				if(rb==0x7D){
 					isEscaping=true;
 				}else{
@@ -565,10 +550,11 @@
 						rb=rb ^ 0x20;
 					}
 					isEscaping=false;
-					s.action(inputData[rb]);	
+					console.log("D[" + (i++) + "] " + rb.toString(16));
+					s.action(rb);	
+					
 				}
 			}
-			*/
 		}
 	}
 
@@ -591,9 +577,8 @@
 				dnp[i] = (sensor_detail[i] | port);
 			}
 			for (var i=0;i < dnp.length ; i++){
-				var check = checkSum2data( dnp[i], low_data, high_data );
-				var sensor_output = new Uint8Array([START_SYSEX, dnp[i], low_data, high_data, check, END_SYSEX]);
-				device.send(sensor_output.buffer);
+				var sensor_output = new Uint8Array([dnp[i], low_data, high_data]);
+				send_array(sensor_output);
 			}
 		},
 		// 리포터 센더 정의 완료. 터치는 센더가 없음.
@@ -604,31 +589,27 @@
 				dnp[i] = (sensor_detail[i] | port);
 			}
 			//dnp.length-1
-			for (var i=0;i < 1; i++){
-				var check = checkSum2data( dnp[i], low_data, high_data );	
-				var motion_output = new Uint8Array([START_SYSEX, dnp[i], low_data, high_data, check, END_SYSEX]);
-				device.send(motion_output.buffer);
+			for (var i=0;i < dnp.length; i++){
+				var motion_output = new Uint8Array([dnp[i], low_data, high_data]);
+				send_array(motion_output);
 				//console.log("motion_output.buffer" + motion_output.buffer);
 			}
-			var motion_output = new Uint8Array([START_SYSEX, dnp[4],  0xFF ^ dnp[4], END_SYSEX]);	
-				device.send(motion_output.buffer);
+			var motion_output = new Uint8Array([ dnp[4] ]);	
+				send_array(motion_output);
 			//	console.log("motion_output.buffer" + motion_output.buffer);
 		},
 		sw_sender: function(port){
 			var sensor_detail = new Uint8Array([0x10]);	
 			var	dnp = [];
 			dnp[0] = (sensor_detail[0] | port);
-
-			var check = checkSum3data( dnp[0], 0x05, low_data, high_data ),
-				sw_output = new Uint8Array([START_SYSEX, dnp[0], 0x05, low_data, high_data, check, END_SYSEX]);
-
-			device.send(sw_output.buffer);
+			var sw_output = new Uint8Array([dnp[0], 0x0F, low_data, high_data]);
+			send_array(sw_output);
 		}
 	};
 
 	//block_port_usb = {["sensor"], ["touch"], ...};	block_port_usb, block_port_ble 에는 연결된 블록에 대응하는 포트들이 담기게됨.
 	//block_port_ble = {["sensor"], ["touch"], ...};	예) s.block_port_usb["sensor"] 에는 연결된 포트가 담김
-	function connectBlock (block_id, port) {		// 그렇다면 s.block_port_usb["sensor"] 로 접근할경우에는 연결된 포트가 없다면 뭐가 리턴되지?
+	function connectBlock (block_id, port) {		// 그렇다면 s.block_port_usb["sensor"] 로 접근할경우에는 연결된 포트가 없다면 뭐가 리턴되지?	
 		if(block_id === SCBD_SENSOR){				// Array map 에서 운행해서 찾지 못하는 경우에는 -1 이 false 로 떨어지는 듯 함.
 			if (port < 8) s.block_port_usb["sensor"] = port;
 			else s.block_port_ble["sensor"] = port;
@@ -643,11 +624,11 @@
 			
 			s.blockList[port] = new touch_block();
 		}else if (block_id === SCBD_SWITCH){
-			if (port < 8) s.block_port_usb["switch"] = port;
-			else s.block_port_ble["switch"] = port;
-
+			if (port < 8) s.block_port_usb["swch"] = port;
+			else s.block_port_ble["swch"] = port;
 			sample_functions.sw_sender(port);			//SCBD_SWITCH 에 대한 샘플링 레이트
 			s.blockList[port] = new switch_block();
+			console.log("i am not visible");
 		}else if (block_id === SCBD_MOTION){
 			if (port < 8) s.block_port_usb["motion"] = port;
 			else s.block_port_ble["motion"] = port;
@@ -674,13 +655,16 @@
 			if (port < 8) s.block_port_usb["servo"] = port;		
 			else s.block_port_ble["servo"] = port;
 			
-			s.blockList[port] = new servo_block();
+			s.blockList[port] = new servo_block();			
 		}
+		s.blockList[port].port = port;
+		console.log("port:"+ port +" name :" + s.blockList[port].name + "connected !, id was " + block_id );
 	}
 	function nullBlock(){
-		this.name = "null";
+		this.port=-1;
+		this.name = "null Block";
 		this.parser = function(rb){
-			console.log("X!");
+			console.log("X! on " + this.port);
 			s.action = actionBranch;
 		};
 	}
@@ -848,37 +832,36 @@
 		var port = 0;
 		
 		if (networks === menus[lang]['networks'][0]){		//일반
-			port = s.block_port_usb["switch"];
+			port = s.block_port_usb["swch"];
 		}else{
-			port = s.block_port_ble["switch"];		//무선
+			port = s.block_port_ble["swch"];		//무선
 		}
 		
-		if (port === -1) return;
-		var object = s.blockList[port];	
+		if (port === -1) return false;
+		var object = s.blockList[port];			
 		
-		var switch_functions = {
-			switchOn: function() {
-				for(var i=0; i < 5; i++){
-					if(object.switchon_btn === i){
-						if(sw === menus[lang]['sw'][i])
-							return true;
-					}
+		
+		if(btnStates === 1)	{
+			for(var i=0; i < 5; i++){
+				if(sw === menus[lang]['sw'][i]){
+					if(object.switchon_btn[i+1]){
+						object.switchon_btn[i+1]=false;
+						return true;
+					}							
 				}
-			},
-			switchOff: function(){
-				for(var i=0; i < 5; i++){
-					if(object.switchoff_btn === i){
-						if(sw === menus[lang]['sw'][i])
-							return false;
-					}
-				}				
 			}
-		};
-		
-		if(btnStates === 1)	
-			switch_functions.switchOn();
-		else 
-			switch_functions.switchOff();		
+		}			
+		else {
+			for(var i=0; i < 5; i++){
+				if(sw === menus[lang]['sw'][i]){
+					if(object.switchoff_btn[i+1]){
+						object.switchoff_btn[i+1]=false;
+						return true;
+					}							
+				}
+			}
+		}
+			
 	};
 	
 	ext.isSwButtonPressed = function(networks, sw){
@@ -886,9 +869,9 @@
 		var port = 0;
 		
 		if (networks === menus[lang]['networks'][0]){		//일반
-			port = s.block_port_usb["switch"];
+			port = s.block_port_usb["swch"];
 		}else{
-			port = s.block_port_ble["switch"];		//무선
+			port = s.block_port_ble["swch"];		//무선
 		}
 		
 		if (port === -1) return;
@@ -902,14 +885,14 @@
 	//2016.05.01 스위치 블록 boolean 패치에 따라서 생겨난 함수
 	//2016.05.13 Boolean 패치 완료
 	
-	ext.isButtonPressed = function(networks, buttons){
+	ext.reportJogValue = function(networks, buttons){
 		// 조이스틱X, 조이스틱Y, 포텐시오미터
 		var port = 0;
 		
 		if (networks === menus[lang]['networks'][0]){		//일반
-			port = s.block_port_usb["switch"];
+			port = s.block_port_usb["swch"];
 		}else{
-			port = s.block_port_ble["switch"];		//무선
+			port = s.block_port_ble["swch"];		//무선
 		}
 		
 		if (port === -1) return;
@@ -1005,21 +988,11 @@
 		}else{
 			port = s.block_port_ble["led"];		//무선
 		}
-
 		if (port === -1) return;
-		var sensor_detail = new Uint8Array([0x10]);	
-		var	dnp = [];
-			dnp[0] = (sensor_detail[0] | port);
-	
-		var led_position = escape_control(dec2hex(ledPosition)),
-			red = escape_control(dec2hex(r)),
-			green = escape_control(dec2hex(g)),
-			blue = escape_control(dec2hex(b)),
-			merged_data = (led_position * 256 * 256 * 256) + (red * 256 * 256) + (green * 256) + blue,
-			check_merged_data = checkSum( dnp[0], merged_data );
-
-		var led_output = new Uint8Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);		
-			device.send(led_output.buffer);
+		
+		port = 0x10| port;
+		var led_output = new Uint8Array([port , ledPosition,r,g,b]);		
+			send_array(led_output);
 		
 	};
 	//LED는 수신데이터가 없음.. 오로지 설정뿐
@@ -1033,17 +1006,15 @@
 		}
 
 		if (port === -1) return;
-		var sensor_detail = new Uint8Array([0x80]);
-		var	dnp = [];
-			dnp[0] = (sensor_detail[0] | port);	
-
-		var pitch_data = escape_control(dec2hex(pitch)),
-			playtime_data = escape_control(dec2hex(playtime)),
-			merged_data = (pitch_data * 256 * 256 * 256 * 256) +  playtime_data,
-			check_merged_data  = checkSum( dnp[0], merged_data );
-			
-		var buzzer_output = new Uint8Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);	
-		device.send(buzzer_output.buffer);			
+		port= 0x80| port;
+		var data = new Uint8Array([port, pitch]);
+		for(var i=0;i<4;i++){			
+			data[data.length]=playtime & 0xFF;
+			playtime>>=8;
+		} 
+		send_array(buzzer_output);
+		
+		
 	};
 
 	ext.passSteppingAD = function(networks, steppingMotor, speed, stepDirection){
@@ -1056,37 +1027,31 @@
 		}
 
 		if (port === -1) return;
-		var sensor_detail = new Uint8Array([0x00]);
-		var	dnp = [];
-			dnp[0] = (sensor_detail[0] | port);	
-
+		var d=0, isDirectionCW; 
+		
 		var speed_data = speed,
 			motor_data = dec2hex(steppingMotor);
 
 		if (stepDirection === menus[lang]['stepDirection'][0]){	//시계방향
-			if(speed_data < 0){
-				speed_data = speed_data * -1;
-			}else{
-				if (speed_data > 1023)
-					speed_data = 1023;		//데이터 보정
-			}
+			isDirectionCW = true;
+			if (speed_data > 1023)	speed_data = 1023;		//데이터 보정
+			if (speed_data < -1023)	speed_data = -1023;		//데이터 보정
 		}else if (stepDirection === menus[lang]['stepDirection'][1]){	//반시계방향
-			if (speed_data > 0){
-				speed_data = speed_data * -1;
-			}else{
-				if(speed_data < -1023){
-					speed_data = -1023;
-				}
-			}
+			isDirectionCW = false;
+			speed_data = speed_data * -1;
+			if (speed_data > 1023)	speed_data = 1023;		//데이터 보정
+			if (speed_data < -1023)	speed_data = -1023;		//데이터 보정
 		}
-		
-		var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-			speed_data_high = escape_control(dec2hex(speed_data) & HIGH),
-			merged_data = (motor_data *256 * 256) + (speed_data_low * 256) + speed_data_high,
-			check_merged_data = checkSum( dnp[0], merged_data ),
-			steppingAD_output = new Int16Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);	//signed 로 전송
-
-		device.send(steppingAD_output.buffer);
+		if(speed_data<0 ){
+			speed_data = -speed_data;
+			isDirectionCW = (isDirectionCW) ?false : true;
+		}
+		d = (isDirectionCW) ? 0x00:0x10;
+		d |= port;
+		var data = new Int8Array([d, speed_data]);		
+			data[data.length]=speed & 0xFF;	speed_data>>=8;
+			data[data.length]=speed & 0xFF ; //생각해조 
+		send_array(data);
 
 	};
 
@@ -1100,51 +1065,37 @@
 		}
 
 		if (port === -1) return;
-		var sensor_detail = new Uint8Array([0x10]);
-		var	dnp = [];
-			dnp[0] = (sensor_detail[0] | port);	
-			
+		var d=0, isDirectionCW; 
+		
 		var speed_data = speed,
-			motor_data = dec2hex(steppingMotor),
-			rotation_data = rotation_amount;
+			motor_data = dec2hex(steppingMotor);
 
-
-		if (stepDirection === menus[lang]['stepDirection'][0]){
-		//시계방향
-			if(speed_data < 0){
-				speed_data = speed_data * -1;
-			}else{
-				if (speed_data > 1023)
-					speed_data = 1023;		//데이터 보정
-			}
-		}else if (stepDirection === menus[lang]['stepDirection'][1]){
-		//반시계방향
-			if (speed_data > 0){
-				speed_data = speed_data * -1;
-			}else{
-				if(speed_data < -1023){
-					speed_data = -1023;
-				}
-			}
+		if (stepDirection === menus[lang]['stepDirection'][0]){	//시계방향
+			isDirectionCW = true;
+			if (speed_data > 1023)	speed_data = 1023;		//데이터 보정
+			if (speed_data < -1023)	speed_data = -1023;		//데이터 보정
+		}else if (stepDirection === menus[lang]['stepDirection'][1]){	//반시계방향
+			isDirectionCW = false;
+			speed_data = speed_data * -1;
+			if (speed_data > 1023)	speed_data = 1023;		//데이터 보정
+			if (speed_data < -1023)	speed_data = -1023;		//데이터 보정
 		}
-	
-		if(rotation_amount > 65535){
-			rotation_data = 65535;
-		}else if(rotation_amount < -65535){
-			rotation_data = -65535;
+		if(speed_data<0 ){
+			speed_data = -speed_data;
+			isDirectionCW = (isDirectionCW) ?false : true;
 		}
-
-		var	speed_data_low = escape_control(dec2hex(speed_data) & LOW),
-			speed_data_high = escape_control(dec2hex(speed_data) & HIGH);
-
-		var mod_rotation_data = escape_control(dec2hex( Math.floor(rotation_data / 512) )),
-			merged_data = (motor_data * 256 * 256 * 256) | (speed_data_low * 256 * 256) | (speed_data_high * 256) | mod_rotation_data;
-		console.log('rotation data is ' + mod_rotation_data);
-
-		var check_merged_data = checkSum( dnp[0], merged_data ),
-			steppingAD_output = new Int32Array([START_SYSEX, dnp[0], merged_data, check_merged_data, END_SYSEX]);	//singed 4 Byte
-
-		device.send(steppingAD_output.buffer);
+		d = (isDirectionCW) ? 0x20:0x30;
+		d |= port;
+		var data = new Int8Array([d, speed_data]);		
+			data[data.length]=speed & 0xFF;	speed_data>>=8;
+			data[data.length]=speed & 0xFF ; //생각해조 
+		
+		data[data.length]=rotation_amount & 0xFF;	rotation_amount_data>>=8;
+		data[data.length]=rotation_amount & 0xFF;	rotation_amount_data>>=8;
+		data[data.length]=rotation_amount & 0xFF;	rotation_amount_data>>=8;
+		data[data.length]=rotation_amount & 0xFF;	rotation_amount_data>>=8;		
+		
+		send_array(data);
 	};
 
 	ext.passDCAD = function(networks, dcMotor, speed, stepDirection){
@@ -1199,7 +1150,7 @@
 		//else s.servo_block_ble[s.servo_count_ble++] = port;				//패치 완료
 		
 		var port = 0;
-		port += servosport-1;	
+		port = servosport-1;	
 
 		if (networks === menus[lang]['networks'][0]){		//일반
 			if(s.blockList[port].name!=="servo"){
@@ -1215,26 +1166,26 @@
 		var sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
 		console.log("port " + port);
 
-		var mod_degree = 0;
+
 		if (degree > 180){
-			mod_degree = 180;
+			degree = 180;
 		}else if(degree < 0){
-			mod_degree = 0;
+			degree = 0;
 		}
 		
-		mod_degree*=100; //
-		var servo_deg_low = escape_control(mod_degree & LOW),
-			servo_deg_high = escape_control(mod_degree & HIGH);	
-			
-		var	dnp = [];
+		degree*=100; //
+
+		var	d = 0;
+		var output= new Uint8Array(3);
 		for(var j=0; j < 4; j++){
-			dnp[j] = (sensor_detail[j] | port);		//dnp 배열에는 디테과 연결된 서보블록들에 대한 것이 저장됨
-			
+			d = sensor_detail[j] | port ;		//dnp 배열에는 디테과 연결된 서보블록들에 대한 것이 저장됨			
+			output[0]=d;
 			if (servos === menus[lang]['servos'][j]){
-			var check_deg = checkSum2data( dnp[j], servo_deg_low, servo_deg_high),
-				servo_output = new Uint8Array([START_SYSEX, dnp[j], servo_deg_low, servo_deg_high, check_deg, END_SYSEX]);
-				
-			device.send(servo_output.buffer);
+			for(var i=0;i<2;i++){			
+				output[i+1]=degree & 0xFF;
+				degree>>=8;
+			}			
+			send_array(output);
 			console.log("Servo Port " + port + "is querySend! from detail " + sensor_detail[j]);
 			}
 		}								
@@ -1261,8 +1212,8 @@
 	  ['h', 'when %m.networks touch sensor %m.touch is %m.btnStates', 'whenTouchButtonChandged', 'normal', 1, 0],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
       ['-'],
       ['h', 'when %m.networks sw block %m.sw to %m.btnStates', 'whenButton', 'normal', 'Button 1', 0],	//sw block (button 1, .. )		function_name :
-      ['r', '%m.networks sw block %m.buttons of value', 'isButtonPressed', 'normal','Joystick X'],			//buttons ( button 1, 2, 3, 4)	whenButton
-	  ['r', '%m.networks sw block %m.sw of value', 'isSwButtonPressed', 'normal','Button 1'],					//Joystick and Potencyometer	isButtonPressed
+      ['r', '%m.networks sw block %m.buttons of value', 'reportJogValue', 'normal','Joystick X'],			//buttons ( button 1, 2, 3, 4)	whenButton
+	  ['b', '%m.networks sw block %m.sw of value', 'isSwButtonPressed', 'normal','Button 1'],					//Joystick and Potencyometer	reportJogValue
 	  ['-'],																									
 	  ['r', '%m.networks motion-block %m.motionb of value', 'motionbRead', 'normal','infrared 1'],								//Motion block is infrared, acceler and so on
 	  ['h', 'when %m.networks motion-block %m.photoGate is %m.gateState', 'photoGateRead', 'normal', 'photoGate 1', 'blocked'],	//function_name : motionbRead	photoGateRead	
@@ -1277,7 +1228,7 @@
 	  ['-'],
 	  [' ', '%m.networks %m.dcMotor DC Motor Accel %n Direction %m.stepDirection', 'passDCAD', 'normal', 1, 0, 'clockwise'],
 	  ['-'],
-	  [' ', '%m.networks Port %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 1, 'Servo 1', 180]
+	  [' ', '%m.networks Port %m.servosport %m.servos to %n degrees', 'rotateServo', 'normal', 1, 'Servo 1', 90]
     ],
     ko: [																						
       ['r', '%m.networks 센서블록 %m.hwIn 의 값', 'reportSensor', '일반', '온도'],										// 조도, 온도, 습도, 아날로그 통합함수 (일반, 무선)
@@ -1286,9 +1237,9 @@
 	  ['h', '%m.networks 터치센서 %m.touch 가 %m.btnStates 가 될 때', 'whenTouchButtonChandged', '일반', 1, 0],		//function_name : isTouchButtonPressed	whenTouchButtonChandged
 	  ['-'],																											//function_name : isTouchButtonPressed 
       ['h', '%m.networks 스위치블록 %m.sw 이 %m.btnStates 될 때', 'whenButton', '일반', '버튼 1', 0],				//sw block (button 1, .. )
-      ['r', '%m.networks 스위치블록 %m.buttons 의 값', 'isButtonPressed', '일반','조이스틱 X'],							//buttons ( button 1, 2, 3, 4, J)				
-	  ['r', '%m.networks 스위치블록 %m.sw 의 값', 'isSwButtonPressed', '일반','버튼 1'],							//Joystick and Potencyometer function is combined.
-	  ['-'],																										//function_name :  isButtonPressed	whenButton
+      ['r', '%m.networks 스위치블록 %m.buttons 의 값', 'reportJogValue', '일반','조이스틱 X'],							//buttons ( button 1, 2, 3, 4, J)				
+	  ['b', '%m.networks 스위치블록 %m.sw 의 값', 'isSwButtonPressed', '일반','버튼 1'],							//Joystick and Potencyometer function is combined.
+	  ['-'],																										//function_name :  reportJogValue	whenButton
 	  ['r', '%m.networks 모션블록 %m.motionb 의 값', 'motionbRead', '일반','적외선 감지 1'],								//Motion block is infrared, acceler and so on
 	  ['h', '%m.networks 모션블록 %m.photoGate 가 %m.gateState', 'photoGateRead', '일반', '포토게이트 1', '막힐때'],	//function_name : motionbRead	photoGateRead	
 	  ['-'],																	//LED RGB definition
@@ -1302,7 +1253,7 @@
 	  ['-'],																											//DC motor is defined
 	  [' ', '%m.networks %m.dcMotor 번 DC모터 속도 %n 방향 %m.stepDirection', 'passDCAD', '일반', 1, 0, '시계'],		//function_name : passDCDA passRDCDA	
 	  ['-'],
-	  [' ', '%m.networks 포트 %m.servosport %m.servos 각도 %n', 'rotateServo', '일반',  1, '서보모터 1', 180]	//ServoMotor, Multiple Servo and Remote Servo is defined.
+	  [' ', '%m.networks 포트 %m.servosport %m.servos 각도 %n', 'rotateServo', '일반',  1, '서보모터 1', 90]	//ServoMotor, Multiple Servo and Remote Servo is defined.
     ]
   };
 
@@ -1386,9 +1337,9 @@
   var descriptor = {
     blocks: blocks[lang],
     menus: menus[lang],
-    url: 'http://remoted.github.io/scratch-chocopie-extension'
+    url: 'http://remoted.github.io/scratch-chocopie-extension'    
   };
 
-  ScratchExtensions.register('ChocopieBoard', descriptor, ext, {type:'serial'});
+  ScratchExtensions.register('ChocopiBoard', descriptor, ext, {type:'serial'});
 
 })({});
