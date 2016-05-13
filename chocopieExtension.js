@@ -1174,17 +1174,19 @@
 		//if (port < 8) s.servo_block_usb[s.servo_count_usb++] = port;		//만약 "servo" 에 이미 데이터가 존재하는 경우에는 port가 덮어씌워질 듯 하다
 		//else s.servo_block_ble[s.servo_count_ble++] = port;				//패치 완료
 		
-		var port;
+		var port = 0;
 		port += servosport-1;	
 
 		if (networks === menus[lang]['networks'][0]){		//일반
 			if(s.blockList[port].name!=="servo"){
 				port =s.block_port_usb["servo"];
 			}
+			port =s.block_port_usb["servo"];
 		}else{						
 			if(s.blockList[port].name!=="servo"){			//무선
 				port =s.block_port_ble["servo"];
 			}
+			port =s.block_port_ble["servo"];
 		}
 		//console.log("port.length " + port.length);
 		if (port === -1) return;		//일반일때도, 무선일때도, servo 의 갯수가 하나도 없다면 되돌림
