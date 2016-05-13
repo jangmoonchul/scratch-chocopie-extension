@@ -1202,7 +1202,7 @@
 				console.log("s.servo_block_ble port " + s.servo_block_ble[i]);
 			}		
 		}
-		console.log("port.length " + port.length);
+		//console.log("port.length " + port.length);
 		if (port.length === 0) return;		//일반일때도, 무선일때도, servo 의 갯수가 하나도 없다면 되돌림
 		var sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
 		
@@ -1219,6 +1219,7 @@
 		var	dnp = [];
 		for(var i=0; i < port.length; i++){
 			console.log("port.length " + port.length);
+			console.log("servosport " + servosport + "port[i] " + port[i]);
 			if (servosport === port[i]){						//들어온 포트(1~8) 과 연결된 포트리스트를 비교하여 순회하다가 맞다면 때려버림
 				console.log("Port " + port[i]);
 				for(var j=0; j < 4; j++){
