@@ -611,8 +611,8 @@
 	//block_port_usb = {["sensor"], ["touch"], ...};	block_port_usb, block_port_ble 에는 연결된 블록에 대응하는 포트들이 담기게됨.
 	//block_port_ble = {["sensor"], ["touch"], ...};	예) s.block_port_usb["sensor"] 에는 연결된 포트가 담김
 	function connectBlock (block_id, port) {		// 그렇다면 s.block_port_usb["sensor"] 로 접근할경우에는 연결된 포트가 없다면 뭐가 리턴되지?	
-		if(block_id === 0x00) return;
-		if(block_id === SCBD_SENSOR){				// Array map 에서 운행해서 찾지 못하는 경우에는 -1 이 false 로 떨어지는 듯 함.
+		if(block_id === 0x00) return;				// Array map 에서 운행해서 찾지 못하는 경우에는 -1 이 false 로 떨어지는 듯 함.
+		if(block_id === SCBD_SENSOR){				
 			if (port < 8) s.block_port_usb["sensor"] = port;
 			else s.block_port_ble["sensor"] = port;
 
@@ -673,6 +673,7 @@
 	
 	//예) s.block_port_usb["sensor"] 에는 연결된 포트들이 담기게됨.
 	function disconectBlock(port){
+		return;
 		console.log("port " + port);
 		var block_name = s.blockList[port].name;
 		console.log("block_name " + block_name);
@@ -697,7 +698,7 @@
 			}
 		}
 		console.log("disconected " + block_name + " from port" + port);
-		s.blockList[port] = new nullBlock();
+		//s.blockList[port] = new nullBlock();
 	}
 
 
