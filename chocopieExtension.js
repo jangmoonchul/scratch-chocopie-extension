@@ -674,6 +674,7 @@
 	//예) s.block_port_usb["sensor"] 에는 연결된 포트들이 담기게됨.
 	function disconectBlock(port){
 		return;
+		
 		/*
 		console.log("port " + port);
 		var block_name = s.blockList[port].name;
