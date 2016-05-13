@@ -184,6 +184,19 @@
 	function servo_block(){
 		this.name = "servo";
 	}	
+	
+	function dc_motor_block(){
+		this.name = "dc_motor";
+	}
+	
+	function stepper_block(){
+		this.name = "stepper";
+	}
+	
+	function led_block(){
+		this.name "led";
+	}
+	
 	function sensor_block() {
 		this.analog_sensor1 = 0;
 		this.analog_sensor2 = 0;
@@ -645,12 +658,18 @@
 		}else if (block_id === SCBD_LED){
 			if (port < 8) s.block_port_usb["led"] = port;
 			else s.block_port_ble["led"] = port;
+			
+			s.blockList[port] = new led_block();
 		}else if (block_id === SCBD_STEPPER){
 			if (port < 8) s.block_port_usb["stepper"] = port;
 			else s.block_port_ble["stepper"] = port;
+			
+			s.blockList[port] = new stepper_block();
 		}else if (block_id === SCBD_DC_MOTOR){
 			if (port < 8) s.block_port_usb["dc_motor"] = port;
 			else s.block_port_ble["dc_motor"] = port;
+			
+			s.blockList[port] = new dc_motor_block();
 		}else if (block_id === SCBD_SERVO){
 			if (port < 8) s.block_port_usb["servo"] = port;		
 			else s.block_port_ble["servo"] = port;
@@ -1191,10 +1210,11 @@
 				port =s.block_port_ble["servo"];
 			}
 		}
-		//console.log("port.length " + port.length);
+		
 		if (port === -1) return;		//일반일때도, 무선일때도, servo 의 갯수가 하나도 없다면 되돌림
 		var sensor_detail = new Uint8Array([0x10, 0x20, 0x30, 0x40]);
-		
+		console.log("port " + port);
+
 		var mod_degree = 0;
 		if (degree > 180){
 			mod_degree = 180;
