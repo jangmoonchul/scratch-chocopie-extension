@@ -194,7 +194,7 @@
 	}
 	
 	function led_block(){
-		this.name "led";
+		this.name = "led";
 	}
 	
 	function sensor_block() {
