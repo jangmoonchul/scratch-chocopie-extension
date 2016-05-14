@@ -559,10 +559,6 @@
 		}
 	}
 
-	function blockFuncIsNull(){
-		console.log("should not call");
-	}
-
 //-------------------------------------------------------------------SAMPLING FUNCTION START -- 2016.05.11 재패치 완료
 	var low_data = escape_control(SAMPLING_RATE & LOW),
 		high_data = escape_control(SAMPLING_RATE & HIGH);
@@ -662,11 +658,14 @@
 		s.blockList[port].port = port;
 		console.log("port:"+ port +" name :" + s.blockList[port].name + "connected !, id was " + block_id );
 	}
+	
 	function nullBlock(){
 		this.port=-1;
 		this.name = "null Block";
+		
+		var parent = this;				//2016.05.14 추가패치
 		this.parser = function(rb){
-			console.log("X! on " + this.port);
+			console.log("X! on " + parent.port);
 			s.action = actionBranch;
 		};
 	}
@@ -686,8 +685,8 @@
 				if (s.blockList[i].name === block_name){
 					if (i !== port){
 						s.block_port_ble[block_name] = i;		//블록리스트의 배열안에서 같은 이름을 가지는 녀석이 있다면
-					}														//해당 포트의 이름을 가지는 블록에 포트를 배정함. (포트 재배정 예외처리)
-				}
+					}											//해당 포트의 이름을 가지는 블록에 포트를 배정함. (포트 재배정 예외처리)
+				}												//처리하기 위해서 slice 는 사용 불가능 -> index 가 아닌 map으로써 사용되기 때문
 			}
 		}else{
 			s.block_port_usb[block_name] = -1;
@@ -702,6 +701,7 @@
 		console.log("disconected " + block_name + " from port" + port);
 		*/
 		//s.blockList[port] = new nullBlock();
+		//s.blockList[port].port = -1;		//2016.05.14 추가패치
 	}
 
 
